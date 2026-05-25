@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(node -e \"console.log\\(require\\('three/package.json'\\).version, require\\('@react-three/fiber/package.json'\\).version, require\\('@react-three/drei/package.json'\\).version\\)\")",
+      "Bash(node -e \"const fs=require\\('fs'\\); const p=JSON.parse\\(fs.readFileSync\\('node_modules/@react-three/fiber/package.json','utf8'\\)\\); console.log\\(p.version\\)\")",
+      "Bash(node -e \"const fs=require\\('fs'\\); const p=JSON.parse\\(fs.readFileSync\\('node_modules/@react-three/drei/package.json','utf8'\\)\\); console.log\\(p.version\\)\")",
+      "Bash(node -e \"const fs=require\\('fs'\\); const p=JSON.parse\\(fs.readFileSync\\('node_modules/three/package.json','utf8'\\)\\); console.log\\(p.version\\)\")",
+      "Bash(npx tsc *)",
+      "Bash(node -e \"require\\('stripe'\\); console.log\\('stripe ok:', require\\('./node_modules/stripe/package.json'\\).version\\)\")",
+      "Bash(node -e \"console.log\\(require\\('./node_modules/prisma/package.json'\\).version\\)\")",
+      "Bash(npx prisma *)",
+      "Bash(node -e \"const m = require\\('./node_modules/@prisma/adapter-libsql/dist/index.js'\\); console.log\\(Object.keys\\(m\\)\\)\")",
+      "Bash(node -e \"const m = require\\('./node_modules/@prisma/adapter-libsql/dist/index-node.js'\\); console.log\\(Object.keys\\(m\\)\\)\")",
+      "Bash(node -e \"const m = require\\('./node_modules/@prisma/adapter-pg'\\); console.log\\(Object.keys\\(m\\)\\)\")",
+      "Bash(node test-db.mjs)",
+      "Bash(node -e \"const p = require\\('./node_modules/ai/package.json'\\); console.log\\('ai:', p.version\\)\")",
+      "Bash(node -e \"const p = require\\('./node_modules/@ai-sdk/openai/package.json'\\); console.log\\('@ai-sdk/openai:', p.version\\)\")"
+    ]
+  }
+}

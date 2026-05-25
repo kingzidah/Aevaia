@@ -1,0 +1,95 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c \"import json,sys; p=json.load\\(sys.stdin\\); print\\('deps:', list\\(p.get\\('dependencies',{}\\).keys\\(\\)\\)\\)\")",
+      "Bash(node -e \"console.log\\(require\\('./node_modules/jose/package.json'\\).version\\)\")",
+      "Bash(node -e \"console.log\\(require\\('./node_modules/bcryptjs/package.json'\\).version\\)\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); deps={**d.get\\('dependencies',{}\\),**d.get\\('devDependencies',{}\\)}; print\\('\\\\n'.join\\(k for k in deps if any\\(x in k for x in ['sonner','toast','hot-toast','framer']\\)\\)\\)\")",
+      "Bash(npx next *)",
+      "Bash(not exist *)",
+      "Bash(node -e \"const p = require\\('./package.json'\\); console.log\\(p.dependencies?.next || p.devDependencies?.next\\)\")",
+      "Bash(node -e \"const p = require\\('./package.json'\\); console.log\\(JSON.stringify\\({tailwind: p.dependencies?.tailwindcss || p.devDependencies?.tailwindcss, framer: p.dependencies?.['framer-motion']}, null, 2\\)\\)\")",
+      "Bash(node -e \"const p = require\\('./package.json'\\); console.log\\(p.dependencies?.sonner ?? 'not installed'\\)\")",
+      "Bash(node -e \"const p = require\\('./package.json'\\); console.log\\(p.dependencies?.sonner\\)\")",
+      "Bash(node -e \"const p = require\\('./package.json'\\); console.log\\(JSON.stringify\\({lottie: p.dependencies?.['lottie-react'] ?? p.dependencies?.['@lottiefiles/react-lottie-player'] ?? 'none'}\\)\\)\")",
+      "Bash(node -e \"const p = require\\('./package.json'\\); console.log\\('lottie-react:', p.dependencies?.['lottie-react']\\)\")",
+      "Bash(node -e \"const m = require\\('./node_modules/lottie-react/dist/index.cjs'\\); console.log\\(Object.keys\\(m\\)\\)\")",
+      "Bash(node -e \"const p = require\\('./node_modules/lottie-react/package.json'\\); console.log\\(p.main, p.module, p.exports\\)\")",
+      "Bash(node -e \"const p = require\\('./package.json'\\); const ai = Object.entries\\({...p.dependencies,...\\(p.devDependencies||{}\\)}\\).filter\\(\\([k]\\)=>k.includes\\('ai'\\)||k.includes\\('openai'\\)||k.includes\\('anthropic'\\)||k.includes\\('gemini'\\)||k.includes\\('vercel'\\)\\); console.log\\(JSON.stringify\\(Object.fromEntries\\(ai\\),null,2\\)\\)\")",
+      "Bash(node -e \"const p = require\\('./node_modules/ai/package.json'\\); console.log\\('version:', p.version\\); const exports = Object.keys\\(p.exports || {}\\); console.log\\('exports:', exports.join\\(', '\\)\\)\")",
+      "Bash(node -e \"const fs = require\\('fs'\\); const d = require\\('./node_modules/ai/dist/index.d.ts'\\) || ''; \")",
+      "Bash(node -e \"require\\('@clerk/nextjs'\\); console.log\\('ok'\\)\")",
+      "Bash(node -e \"const c = require\\('@clerk/nextjs'\\); console.log\\(Object.keys\\(c\\).filter\\(k => k.includes\\('heme'\\) || k.includes\\('dark'\\)\\)\\)\")",
+      "Bash(node -e \"const c = require\\('@clerk/nextjs/server'\\); console.log\\(Object.keys\\(c\\).slice\\(0,20\\)\\)\")",
+      "Bash(node -e \"try{const c = require\\('@clerk/nextjs'\\); const keys = Object.keys\\(c\\); const themeKeys = keys.filter\\(k => k.toLowerCase\\(\\).includes\\('dark'\\) || k.toLowerCase\\(\\).includes\\('theme'\\)\\); console.log\\(themeKeys\\);}catch\\(e\\){console.error\\(e.message\\)}\")",
+      "Bash(npm list *)",
+      "Bash(node -e \"console.log\\(require\\('@clerk/nextjs/package.json'\\).version\\)\")",
+      "Bash(cat next.config.ts)",
+      "Bash(cat next.config.js)",
+      "Bash(cat next.config.mjs)",
+      "PowerShell(if \\(Test-Path \"c:\\\\Users\\\\tayoa\\\\heartcraft\\\\.env.local\"\\) { Get-Content \"c:\\\\Users\\\\tayoa\\\\heartcraft\\\\.env.local\" | Where-Object { $_ -match \"CLERK\" } } else { Write-Output \".env.local not found\" })",
+      "Bash(mkdir -p \"c:/Users/tayoa/heartcraft/app/studio/[id]\")",
+      "Bash(Remove-Item -Recurse -Force \"c:\\\\Users\\\\tayoa\\\\heartcraft\\\\.next\" -ErrorAction SilentlyContinue)",
+      "Bash(Write-Host \"Cache cleared\")",
+      "Bash(npm run *)",
+      "Bash(node -e \"require\\('lucide-react'\\)\")",
+      "Bash(node -e \"require\\('zod'\\)\")",
+      "Bash(node -e \"console.log\\(require\\('zod/package.json'\\).version\\)\")",
+      "Bash(node -e \"require\\('html2canvas'\\)\")",
+      "Bash(node -e \"require\\('html2canvas'\\); console.log\\('OK', require\\('html2canvas/package.json'\\).version\\)\")",
+      "Bash(node -e \"console.log\\(require\\('@clerk/themes/package.json'\\).version\\)\")",
+      "Bash(node -e \"require\\('@clerk/themes'\\); console.log\\('ok'\\)\")",
+      "Bash(npx jsrepo *)",
+      "Bash(curl -s \"https://reactbits.dev/registry.json\")",
+      "Bash(curl -s \"https://reactbits.dev/api/registry\")",
+      "Bash(xargs grep -l \"interface Block\\\\|type Block\")",
+      "Bash(xargs grep -l \"block.*type\\\\|Headline.*Paragraph\")",
+      "Bash(node -e \"const l = require\\('c:/Users/tayoa/heartcraft/node_modules/lucide-react'\\); const icons = ['Type','AlignLeft','MousePointerClick','Upload','Video','LayoutGrid','GalleryHorizontal','Wind','Timer','ClipboardList','MapPin','Shapes','Pencil','RefreshCw','Flower2','Flame','Snowflake','Music','Guitar','Headphones','Heart','Sparkles','Moon','PartyPopper','Smile','Hand','ImageIcon','Music2']; icons.forEach\\(n => console.log\\(n, !!l[n]\\)\\);\")",
+      "Bash(Select-String -Path \"c:\\\\Users\\\\tayoa\\\\heartcraft\\\\.env.local\" -Pattern \"STRIPE\")",
+      "Bash(Select-Object -ExpandProperty Line)",
+      "Bash(git checkout *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\tayoa\\\\heartcraft\" -Force)",
+      "Bash(Select-Object Name, PSIsContainer)",
+      "Bash(npm audit *)",
+      "Bash(pip --version)",
+      "Bash(npx --version)",
+      "Bash(Select-String -Pattern \"\\(STRIPE_SECRET|SUPABASE_SERVICE_ROLE|OPENROUTER_API_KEY|REPLICATE_API_TOKEN|DEEPSEEK_API_KEY|JWT_SECRET|sk-|eyJ\\)\")",
+      "Bash(pip install *)",
+      "Bash(grep -E \"\\(STRIPE_SECRET|SUPABASE_SERVICE_ROLE|OPENROUTER_API_KEY|REPLICATE_API_TOKEN|DEEPSEEK_API_KEY|JWT_SECRET|sk-[a-zA-Z0-9]{20,}|eyJ[a-zA-Z0-9]\\)\")",
+      "Bash(semgrep scan *)",
+      "Bash(python -m semgrep scan --config \"p/security-audit\" --config \"p/owasp-top-ten\" --config \"p/javascript\" --json --output semgrep-results.json .)",
+      "Bash(where semgrep *)",
+      "Read(//c/Python314/Scripts/**)",
+      "Bash(ls /c/Python314/Scripts/ 2>&1 | grep -i semgrep; ls /usr/local/bin/ 2>&1 | grep -i semgrep; find / -name \"semgrep\" -type f 2>/dev/null | head -5)",
+      "Read(//usr/local/**)",
+      "Read(//c//**)",
+      "Bash(npx semgrep *)",
+      "Bash(pip show *)",
+      "Bash(\"/c/Users/tayoa/AppData/Roaming/Python/Python314/Scripts/semgrep.exe\" scan *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(npm uninstall *)",
+      "Bash(git restore *)",
+      "Bash(node -e ' *)",
+      "Bash(New-Item -ItemType Directory -Force \"c:\\\\Users\\\\tayoa\\\\heartcraft\\\\app\\\\api\\\\rsvp\")",
+      "Bash(Out-Null)",
+      "Bash(Get-ChildItem components *)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\tayoa\\heartcraft\\app\\studio"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/check-gstack.sh\""
+          }
+        ]
+      }
+    ]
+  }
+}
