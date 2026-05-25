@@ -1,10 +1,17 @@
 import { Ratelimit, type Duration } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
-const redis = new Redis({
-  url:   process.env.UPSTASH_REDIS_REST_URL!,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-});
+// Lazy singleton — not constructed until the first rateLimit() call so a
+// missing env var during module import does not crash the entire API route.
+let _redis: Redis | null = null;
+function getRedis(): Redis | null {
+  if (_redis) return _redis;
+  const url   = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token) return null;
+  _redis = new Redis({ url, token });
+  return _redis;
+}
 
 function msToDuration(ms: number): Duration {
   const secs = Math.round(ms / 1000);
@@ -15,11 +22,11 @@ function msToDuration(ms: number): Duration {
 
 // Cache Ratelimit instances by config so they are not re-created on every request.
 const limiterCache = new Map<string, Ratelimit>();
-function getLimiter(limit: number, windowMs: number): Ratelimit {
+function getLimiter(client: Redis, limit: number, windowMs: number): Ratelimit {
   const key = `${limit}:${windowMs}`;
   if (!limiterCache.has(key)) {
     limiterCache.set(key, new Ratelimit({
-      redis,
+      redis:   client,
       limiter: Ratelimit.slidingWindow(limit, msToDuration(windowMs)),
       prefix:  "@hc/rl",
     }));
@@ -37,12 +44,23 @@ export async function rateLimit(
   key: string,
   opts: { limit: number; windowMs: number },
 ): Promise<RateLimitResult> {
-  const { success, remaining, reset } = await getLimiter(opts.limit, opts.windowMs).limit(key);
-  return {
-    success,
-    remaining,
-    retryAfter: success ? 0 : Math.ceil((reset - Date.now()) / 1000),
-  };
+  const client = getRedis();
+  if (!client) {
+    // No Redis configured (env vars absent in local dev) — fail open.
+    return { success: true, remaining: -1, retryAfter: 0 };
+  }
+  try {
+    const { success, remaining, reset } = await getLimiter(client, opts.limit, opts.windowMs).limit(key);
+    return {
+      success,
+      remaining,
+      retryAfter: success ? 0 : Math.ceil((reset - Date.now()) / 1000),
+    };
+  } catch (err) {
+    // Redis temporarily unavailable — fail open rather than returning a 500 to the client.
+    console.warn("[rate-limit] Redis error, failing open:", err);
+    return { success: true, remaining: -1, retryAfter: 0 };
+  }
 }
 
 /**
