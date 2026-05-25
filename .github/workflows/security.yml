@@ -1,0 +1,45 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [main, security-hardening]
+  pull_request:
+    branches: [main]
+
+jobs:
+  dependency-audit:
+    name: Dependency Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run npm audit (high+critical only)
+        # Fails the job on high or critical vulnerabilities.
+        # Moderate findings are surfaced as warnings via the audit log but do
+        # not block CI — review them manually in the full audit output.
+        run: npm audit --audit-level=high
+
+  secrets-scan:
+    name: Secrets Scan (TruffleHog)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history so TruffleHog can diff all commits in the push/PR
+          fetch-depth: 0
+
+      - name: TruffleHog OSS
+        uses: trufflesecurity/trufflehog@v3
+        with:
+          # Scan only the commits introduced by this push/PR, not the full repo
+          # history, to keep the job fast while still catching new leaks.
+          extra_args: --only-verified
