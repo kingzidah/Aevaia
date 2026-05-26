@@ -459,19 +459,15 @@ function LeftSidebar() {
   };
 
   // Insert-tab local state
-  const [insertSearch,     setInsertSearch]     = useState('');
-  const [openCategories,   setOpenCategories]   = useState<string[]>(['basics', 'event']);
+  const [insertSearch,   setInsertSearch]   = useState('');
+  // Single-active hoist: only one category is expanded; it floats to the top of the list.
+  const [activeCategory, setActiveCategory] = useState<string | null>('basics');
   // Which React Bits sub-categories are expanded inside "WebGL & Effects"
   const [openRbCats, setOpenRbCats] = useState<string[]>(['Backgrounds']);
   const toggleRbCat = (cat: string) =>
     setOpenRbCats(prev => prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]);
 
-  const toggleCategory = (id: string) =>
-    setOpenCategories(prev =>
-      prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
-    );
-
-  // Auto-expand the accordion matching the active right-panel feature
+  // Auto-hoist the category that matches the active right-panel feature
   useEffect(() => {
     const featureToCategoryId: Record<string, string> = {
       text:      'basics',
@@ -487,9 +483,7 @@ function LeftSidebar() {
       arctext:   'art',
     };
     const catId = featureToCategoryId[activeFeature];
-    if (catId) {
-      setOpenCategories(prev => prev.includes(catId) ? prev : [...prev, catId]);
-    }
+    if (catId) setActiveCategory(catId);
   }, [activeFeature]);
 
   return (
@@ -549,14 +543,18 @@ function LeftSidebar() {
             )}
           </div>
 
-          {/* ── Accordion categories ── */}
-          {INSERT_CATEGORIES.map(cat => {
+          {/* ── Accordion categories — active section hoists to top ── */}
+          {(activeCategory && !insertSearch.trim()
+            ? [INSERT_CATEGORIES.find(c => c.id === activeCategory)!, ...INSERT_CATEGORIES.filter(c => c.id !== activeCategory)]
+            : INSERT_CATEGORIES
+          ).map(cat => {
             const q = insertSearch.trim().toLowerCase();
             const visibleItems = q
               ? cat.items.filter(it => it.label.toLowerCase().includes(q) || it.desc.toLowerCase().includes(q))
               : cat.items;
             if (q && visibleItems.length === 0) return null;
-            const isOpen = q ? true : openCategories.includes(cat.id);
+            const isOpen = q ? true : activeCategory === cat.id;
+            const isActive = activeCategory === cat.id;
 
             return (
               <div key={cat.id} className="overflow-hidden rounded-lg">
@@ -565,21 +563,25 @@ function LeftSidebar() {
                 <button
                   type="button"
                   onClick={() => {
-                    toggleCategory(cat.id);
+                    setActiveCategory(prev => prev === cat.id ? null : cat.id);
                     const featureMap: Record<string, 'general' | 'text' | 'media' | 'audio' | 'icons'> = {
                       basics: 'text', media: 'media', atmosphere: 'audio', icons: 'icons',
                     };
                     const feature = featureMap[cat.id];
                     if (feature) setActiveFeature(feature);
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2 hover:bg-zinc-800/50 transition-colors rounded-md"
+                  className={`w-full flex items-center gap-2 px-3 py-2 transition-colors rounded-md ${
+                    isActive
+                      ? 'bg-zinc-800/50 hover:bg-zinc-800/70'
+                      : 'hover:bg-zinc-800/40'
+                  }`}
                 >
-                  <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${cat.dotCls}`} />
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 flex-1 text-left">{cat.title}</p>
+                  <div className={`w-1.5 h-1.5 rounded-full shrink-0 transition-all ${cat.dotCls} ${isActive ? 'shadow-[0_0_5px_currentColor]' : ''}`} />
+                  <p className={`text-[10px] font-semibold uppercase tracking-wider flex-1 text-left transition-colors ${isActive ? 'text-zinc-300' : 'text-zinc-500'}`}>{cat.title}</p>
                   <svg
                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                     strokeWidth={2.5} stroke="currentColor"
-                    className={`w-3 h-3 text-neutral-600 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                    className={`w-3 h-3 transition-transform duration-200 ${isActive ? 'text-zinc-400 rotate-180' : 'text-neutral-600'}`}
                   >
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
                   </svg>
