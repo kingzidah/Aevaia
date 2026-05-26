@@ -19,7 +19,7 @@ interface OrchestratorPayload {
 
 const deepseek = new OpenAI({
   baseURL: "https://api.deepseek.com/v1",
-  apiKey:  process.env.DEEPSEEK_API_KEY ?? "",
+  apiKey:  process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY || "",
 });
 
 // ── System prompt ─────────────────────────────────────────────────────────────
@@ -79,8 +79,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (!process.env.DEEPSEEK_API_KEY) {
-    return NextResponse.json({ error: "DEEPSEEK_API_KEY is not configured" }, { status: 503 });
+  if (!process.env.DEEPSEEK_API_KEY && !process.env.OPENAI_API_KEY) {
+    return NextResponse.json({ error: "AI service is not configured" }, { status: 503 });
   }
 
   // ── Rate limit: 30 orchestrator calls per user per minute ────────────────
@@ -118,31 +118,78 @@ export async function POST(request: Request) {
 
   // ── DeepSeek call ───────────────────────────────────────────────────────────
   try {
-    const completion = await deepseek.chat.completions.create({
-      model:           "deepseek-chat",
-      response_format: { type: "json_object" },
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "user",   content: userMessage   },
-      ],
-      max_tokens:  512,
-      temperature: 0.3,
-    });
+    const completion = await deepseek.chat.completions.create(
+      {
+        model:           "deepseek-chat",
+        response_format: { type: "json_object" },
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "user",   content: userMessage   },
+        ],
+        max_tokens:  512,
+        temperature: 0.3,
+      },
+      { timeout: 15_000 },
+    );
 
-    const raw     = completion.choices[0]?.message?.content ?? "";
-    const cleaned = raw.replace(/```[a-z]*\n?/gi, "").trim();
-    const parsedResponse  = JSON.parse(cleaned) as unknown;
-    const payload = validate(parsedResponse);
+    const raw            = completion.choices[0]?.message?.content ?? "";
+    const cleaned        = raw.replace(/```[a-z]*\n?/gi, "").trim();
+    const parsedResponse = JSON.parse(cleaned) as unknown;
+    const payload        = validate(parsedResponse);
 
     return NextResponse.json(payload);
+
   } catch (err) {
-    const isParseOrValidation = err instanceof SyntaxError ||
-      (err instanceof Error && err.message.startsWith("Invalid"));
-    if (isParseOrValidation) {
+    // ── Upstream rate limit ──────────────────────────────────────────────────
+    if (err instanceof OpenAI.RateLimitError) {
+      console.error("[orchestrator] DeepSeek rate limit hit:", err.status, err.message);
+      return NextResponse.json(
+        { error: "AI service is rate-limited. Please wait a moment and try again." },
+        { status: 429, headers: { "Retry-After": "30" } },
+      );
+    }
+
+    // ── Request timeout ──────────────────────────────────────────────────────
+    if (err instanceof OpenAI.APIConnectionTimeoutError) {
+      console.error("[orchestrator] DeepSeek request timed out");
+      return NextResponse.json(
+        { error: "AI request timed out. Please try again." },
+        { status: 504 },
+      );
+    }
+
+    // ── Auth / key misconfiguration ──────────────────────────────────────────
+    if (err instanceof OpenAI.AuthenticationError) {
+      console.error("[orchestrator] DeepSeek authentication error:", err.status, err.message);
+      return NextResponse.json(
+        { error: "AI service is misconfigured. Contact support." },
+        { status: 503 },
+      );
+    }
+
+    // ── Generic upstream API error ───────────────────────────────────────────
+    if (err instanceof OpenAI.APIError) {
+      console.error("[orchestrator] DeepSeek API error:", err.status, err.message);
+      return NextResponse.json(
+        { error: "AI service returned an error. Please try again." },
+        { status: 502 },
+      );
+    }
+
+    // ── JSON parse / schema validation error ─────────────────────────────────
+    if (
+      err instanceof SyntaxError ||
+      (err instanceof Error && err.message.startsWith("Invalid"))
+    ) {
       console.error("[orchestrator] JSON parse/validation error:", err);
       return NextResponse.json({ error: "AI returned malformed response" }, { status: 502 });
     }
-    console.error("[orchestrator] DeepSeek request failed:", err);
-    return NextResponse.json({ error: "AI request failed" }, { status: 502 });
+
+    // ── Unknown fallback ─────────────────────────────────────────────────────
+    console.error("[orchestrator] Unexpected error:", err);
+    return NextResponse.json(
+      { error: "An unexpected error occurred. Please try again." },
+      { status: 500 },
+    );
   }
 }
