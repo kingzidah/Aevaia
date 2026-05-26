@@ -24,7 +24,7 @@ const deepseek = new OpenAI({
 
 // ── System prompt ─────────────────────────────────────────────────────────────
 
-const SYSTEM_PROMPT = `You are a backend routing machine for HeartCraft. You have ONE job: output valid JSON. Nothing else.
+const SYSTEM_PROMPT = `You are a backend routing machine for Aevaia. You have ONE job: output valid JSON. Nothing else.
 
 NEVER output conversational text, greetings, explanations, or markdown. Your entire response must be a single raw JSON object.
 

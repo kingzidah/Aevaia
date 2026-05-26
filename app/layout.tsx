@@ -33,7 +33,7 @@ const cinzel = Cinzel({
 });
 
 export const metadata: Metadata = {
-  title: "HeartCraft — Gift-Giving, Reimagined in 3D",
+  title: "Aevaia — Gift-Giving, Reimagined in 3D",
   description: "Build cinematic digital gift experiences with 3D canvases, AI-crafted copy, and a secure bouncer gate.",
 };
 

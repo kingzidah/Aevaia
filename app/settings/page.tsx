@@ -7,7 +7,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import SettingsClient from "@/components/settings/SettingsClient";
 
-export const metadata = { title: "Account Settings — HeartCraft" };
+export const metadata = { title: "Account Settings — Aevaia" };
 
 export default async function SettingsPage() {
   const { userId } = await auth();

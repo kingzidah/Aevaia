@@ -38,7 +38,7 @@ export default function AppHeader({ actions }: AppHeaderProps) {
           </div>
           <span className="font-bold text-sm tracking-tight text-zinc-900 dark:text-white
                            group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors">
-            HeartCraft
+            Aevaia
           </span>
         </Link>
 

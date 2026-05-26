@@ -99,7 +99,7 @@ export default function CheckoutModal({ isOpen, onClose, giftId, tier, guestName
                 </div>
 
                 <h2 className="text-2xl font-bold text-white text-center mb-1 tracking-tight">
-                  Unlock your HeartCraft
+                  Unlock your Aevaia
                 </h2>
                 <p className="text-xs text-neutral-500 text-center mb-6">{display.label}</p>
 

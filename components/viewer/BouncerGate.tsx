@@ -133,7 +133,7 @@ export default function BouncerGate({ payload }: BouncerGateProps) {
                 </motion.button>
 
                 <p className="text-neutral-700 text-[10px] tracking-widest uppercase">
-                  Secured by HeartCraft
+                  Secured by Aevaia
                 </p>
               </form>
 

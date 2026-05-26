@@ -371,7 +371,7 @@ export default function AudioEffectsPanel({
       <div className="w-full p-4 bg-blue-500/5 border border-blue-500/10 rounded-xl">
         <p className="text-sm font-bold text-blue-200/70 mb-2 flex items-center gap-1.5"><Music className="w-3.5 h-3.5" /> Sensory Engine</p>
         <p className="text-xs text-blue-400/50 leading-relaxed">
-          Upload audio directly from your device for CORS-free waveform rendering. Use HeartCraft AI in the right panel to generate music.
+          Upload audio directly from your device for CORS-free waveform rendering. Use Aevaia AI in the right panel to generate music.
         </p>
       </div>
 

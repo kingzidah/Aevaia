@@ -58,7 +58,7 @@ export default function LandingPage() {
               <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" />
             </svg>
           </div>
-          <span className="font-bold text-sm tracking-tight text-zinc-900 dark:text-white">HeartCraft</span>
+          <span className="font-bold text-sm tracking-tight text-zinc-900 dark:text-white">Aevaia</span>
         </div>
         <div className="flex items-center gap-3">
           <ThemeToggle variant="icon" />
@@ -133,7 +133,7 @@ export default function LandingPage() {
       {/* FEATURES */}
       <section className="px-6 md:px-12 py-24 max-w-6xl mx-auto">
         <div className="text-center mb-16">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-purple-400 mb-3">Why HeartCraft</p>
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-purple-400 mb-3">Why Aevaia</p>
           <h2 className="text-3xl md:text-4xl font-black tracking-tight text-zinc-900 dark:text-white">
             Everything you need to craft<br className="hidden md:block" /> the perfect gift experience.
           </h2>
@@ -230,7 +230,7 @@ export default function LandingPage() {
               <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" />
             </svg>
           </div>
-          <span className="text-sm font-semibold text-zinc-900 dark:text-white">HeartCraft</span>
+          <span className="text-sm font-semibold text-zinc-900 dark:text-white">Aevaia</span>
         </div>
         <div className="flex flex-col md:flex-row items-center gap-4 md:gap-6">
           <div className="flex items-center gap-4 text-xs text-zinc-400 dark:text-neutral-600">
@@ -241,7 +241,7 @@ export default function LandingPage() {
             <Link href="/contact" className="hover:text-zinc-600 dark:hover:text-neutral-400 transition-colors">Support</Link>
           </div>
           <p className="text-xs text-zinc-400 dark:text-neutral-700">
-            © {new Date().getFullYear()} HeartCraft · Secured by Stripe
+            © {new Date().getFullYear()} Aevaia · Secured by Stripe
           </p>
         </div>
       </footer>

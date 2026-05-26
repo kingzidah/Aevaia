@@ -13,13 +13,13 @@ function getClient() {
     apiKey:  process.env.OPENROUTER_API_KEY,
     headers: {
       "HTTP-Referer": "https://heartcraft.app",
-      "X-Title":      "HeartCraft Studio",
+      "X-Title":      "Aevaia Studio",
     },
   });
 }
 
 const SYSTEM_PROMPT =
-  "You are the premium asset engine for HeartCraft, a luxury milestone builder. " +
+  "You are the premium asset engine for Aevaia, a luxury milestone builder. " +
   "The user will give you a theme or description (e.g. 'anniversary dinner', 'beach wedding'). " +
   "Analyze the emotional vibe and return an array of EXACTLY 5 valid string icon names from the " +
   "Lucide React library that best match the request. " +

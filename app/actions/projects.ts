@@ -51,7 +51,7 @@ export async function createProject(): Promise<string> {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const project = await (prisma as any).project.create({
-    data:   { userId, title: "Untitled HeartCraft", scenesJson: DEFAULT_SCENES_JSON },
+    data:   { userId, title: "Untitled Aevaia", scenesJson: DEFAULT_SCENES_JSON },
     select: { id: true },
   }) as { id: string };
 

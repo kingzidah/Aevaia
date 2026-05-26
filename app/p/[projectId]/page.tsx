@@ -55,9 +55,9 @@ export async function generateMetadata({
       where:  { id: projectId },
       select: { title: true },
     }) as { title: string } | null;
-    return { title: p ? `${p.title} — HeartCraft` : "HeartCraft Experience" };
+    return { title: p ? `${p.title} — Aevaia` : "Aevaia Experience" };
   } catch {
-    return { title: "HeartCraft Experience" };
+    return { title: "Aevaia Experience" };
   }
 }
 

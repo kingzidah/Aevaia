@@ -288,7 +288,7 @@ export default function CommandPalette({
 
               {/* Footer */}
               <div className="px-4 py-2 border-t border-zinc-800/80 flex items-center justify-between">
-                <span className="text-[9px] text-zinc-700 font-mono">HeartCraft Palette</span>
+                <span className="text-[9px] text-zinc-700 font-mono">Aevaia Palette</span>
                 <div className="flex items-center gap-1">
                   <Kbd>↑ ↓</Kbd>
                   <span className="text-[9px] text-zinc-700">navigate</span>

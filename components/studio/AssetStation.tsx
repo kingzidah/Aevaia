@@ -47,7 +47,7 @@ function Slider({
   );
 }
 
-// ── HeartCraft AI Property Panel ──────────────────────────────────────────────
+// ── Aevaia AI Property Panel ──────────────────────────────────────────────────
 // Right-panel property inspector + AI icon prompter.
 // All slider/color values are controlled from parent (Studio context).
 

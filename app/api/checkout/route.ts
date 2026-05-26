@@ -12,7 +12,7 @@ export async function POST(request: Request) {
       {
         price_data: {
           currency: "eur",
-          product_data: { name: "500 Credit Top-Up", description: "500 HeartCraft AI generation credits" },
+          product_data: { name: "500 Credit Top-Up", description: "500 Aevaia AI generation credits" },
           unit_amount: 499,
         },
         quantity: 1,

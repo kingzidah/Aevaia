@@ -42,7 +42,7 @@ export async function generateCanvasImage(prompt: string): Promise<string> {
     where:  { clerkId: userId },
     create: {
       clerkId: userId,
-      email:   `${userId}@placeholder.heartcraft`,
+      email:   `${userId}@placeholder.aevaia`,
       credits: 1000,
     },
     update:  {},
@@ -62,7 +62,7 @@ export async function generateCanvasImage(prompt: string): Promise<string> {
       input: { prompt: safePrompt, go_fast: true },
     });
   } catch (err) {
-    console.error("[HeartCraft] Replicate generation error:", err);
+    console.error("[Aevaia] Replicate generation error:", err);
     throw new Error(
       "The Image Studio is currently experiencing high traffic. Please try again in a moment."
     );
@@ -78,7 +78,7 @@ export async function generateCanvasImage(prompt: string): Promise<string> {
   // ── 7. Extract and return the image URL ─────────────────────────────────────
   const url = Array.isArray(output) ? String(output[0]) : String(output);
   if (!url || url === "undefined") {
-    console.error("[HeartCraft] Replicate returned empty output:", output);
+    console.error("[Aevaia] Replicate returned empty output:", output);
     throw new Error(
       "The Image Studio is currently experiencing high traffic. Please try again in a moment."
     );

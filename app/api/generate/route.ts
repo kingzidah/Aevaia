@@ -12,7 +12,7 @@ function getOpenRouter() {
     apiKey: process.env.OPENROUTER_API_KEY,
     headers: {
       "HTTP-Referer": "https://heartcraft.app",
-      "X-Title": "HeartCraft Studio",
+      "X-Title": "Aevaia Studio",
     },
   });
 }
@@ -92,7 +92,7 @@ export async function POST(request: Request) {
       const { text } = await generateText({
         model: openRouter.chat("google/gemini-1.5-pro"),
         system:
-          "You are HeartCraft's AI orchestrator. Help craft deeply personal, " +
+          "You are Aevaia's AI orchestrator. Help craft deeply personal, " +
           "emotionally resonant gift messages. Be concise, warm, and human. " +
           "No hashtags. No emojis unless the user specifically asks.",
         prompt,
@@ -105,7 +105,7 @@ export async function POST(request: Request) {
       const { text } = await generateText({
         model: openRouter.chat("google/gemini-1.5-pro"),
         system:
-          "You are HeartCraft's AI orchestrator and UI navigator. " +
+          "You are Aevaia's AI orchestrator and UI navigator. " +
           "Based on the user's message, either set the visual atmosphere, navigate to a UI panel, or both.\n" +
           "Output ONLY a valid JSON object — no markdown, no code fences, no explanation.\n" +
           "Use exactly these keys (omit or set to null any key that is not applicable):\n" +

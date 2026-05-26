@@ -165,7 +165,7 @@ export default function ViewerGate({ payload, tier, guestList }: ViewerGateProps
           </motion.button>
 
           <p className="text-neutral-700 text-[10px] tracking-wider uppercase mt-2">
-            Secured by HeartCraft
+            Secured by Aevaia
           </p>
         </form>
 

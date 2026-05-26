@@ -2,8 +2,8 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Terms of Service — HeartCraft",
-  description: "Platform usage policies, billing terms, and user guidelines for HeartCraft.",
+  title: "Terms of Service — Aevaia",
+  description: "Platform usage policies, billing terms, and user guidelines for Aevaia.",
 };
 
 const LAST_UPDATED = "18 May 2026";
@@ -20,7 +20,7 @@ export default function TermsPage() {
               <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" />
             </svg>
           </div>
-          <span className="font-bold text-sm tracking-tight">HeartCraft</span>
+          <span className="font-bold text-sm tracking-tight">Aevaia</span>
         </Link>
         <Link href="/" className="text-xs text-neutral-500 hover:text-white transition-colors">← Home</Link>
       </nav>
@@ -30,7 +30,7 @@ export default function TermsPage() {
         <p className="text-xs text-neutral-600 mb-2">Last updated: {LAST_UPDATED}</p>
         <h1 className="text-3xl font-black tracking-tight text-zinc-900 dark:text-white mb-2">Terms of Service</h1>
         <p className="text-zinc-500 dark:text-neutral-500 text-sm leading-relaxed mb-10">
-          By accessing or using HeartCraft (&quot;the Platform&quot;), you agree to be bound by these Terms of Service.
+          By accessing or using Aevaia (&quot;the Platform&quot;), you agree to be bound by these Terms of Service.
           Please read them carefully before creating an account or making a purchase.
         </p>
 
@@ -39,7 +39,7 @@ export default function TermsPage() {
           <section>
             <h2 className="text-base font-bold text-white mb-3">1. Acceptance of Terms</h2>
             <p className="text-sm text-neutral-400 leading-relaxed">
-              These Terms constitute a legally binding agreement between you and HeartCraft. If you do not agree to these
+              These Terms constitute a legally binding agreement between you and Aevaia. If you do not agree to these
               Terms, you may not access or use the Platform. By registering an account, you confirm that you are at least
               16 years old and have the legal capacity to enter this agreement.
             </p>
@@ -48,7 +48,7 @@ export default function TermsPage() {
           <section>
             <h2 className="text-base font-bold text-white mb-3">2. Platform Description</h2>
             <p className="text-sm text-neutral-400 leading-relaxed">
-              HeartCraft is a digital gift-creation studio. It allows registered users to design interactive 3D gift
+              Aevaia is a digital gift-creation studio. It allows registered users to design interactive 3D gift
               experiences (&quot;Projects&quot;) that can be shared via a secure link with designated recipients. Features include
               AI-assisted copywriting, visual scene editing, and access-controlled gift viewing.
             </p>
@@ -88,7 +88,7 @@ export default function TermsPage() {
               </li>
               <li>
                 <strong className="text-neutral-200">Payment processing.</strong> All payments are handled by Stripe. Your card details are never
-                stored by HeartCraft.
+                stored by Aevaia.
               </li>
               <li>
                 <strong className="text-neutral-200">AI credits.</strong> Each account receives 10 complimentary AI Rewrite credits. Additional
@@ -109,12 +109,12 @@ export default function TermsPage() {
           <section>
             <h2 className="text-base font-bold text-white mb-3">6. Intellectual Property</h2>
             <p className="text-sm text-neutral-400 leading-relaxed">
-              You retain ownership of all content you create on HeartCraft. By using the Platform, you grant us a
+              You retain ownership of all content you create on Aevaia. By using the Platform, you grant us a
               limited, non-exclusive licence to host and serve your Projects solely for the purpose of delivering them
               to your designated recipients. We will never use your content for marketing without explicit consent.
             </p>
             <p className="text-sm text-neutral-400 leading-relaxed mt-3">
-              HeartCraft&apos;s platform code, design system, and brand assets are our exclusive property. Nothing in
+              Aevaia&apos;s platform code, design system, and brand assets are our exclusive property. Nothing in
               these Terms transfers any ownership of Platform IP to you.
             </p>
           </section>
@@ -132,9 +132,9 @@ export default function TermsPage() {
           <section>
             <h2 className="text-base font-bold text-white mb-3">8. Limitation of Liability</h2>
             <p className="text-sm text-neutral-400 leading-relaxed">
-              To the fullest extent permitted by law, HeartCraft is not liable for indirect, incidental, or consequential
+              To the fullest extent permitted by law, Aevaia is not liable for indirect, incidental, or consequential
               damages arising from your use of the Platform. Our total liability for any direct damages shall not exceed
-              the amount you paid to HeartCraft in the 12 months preceding the claim.
+              the amount you paid to Aevaia in the 12 months preceding the claim.
             </p>
           </section>
 
@@ -166,7 +166,7 @@ export default function TermsPage() {
 
       {/* Footer */}
       <footer className="border-t border-zinc-200 dark:border-white/5 px-6 md:px-12 py-8 flex flex-col md:flex-row items-center justify-between gap-4 max-w-3xl mx-auto">
-        <p className="text-xs text-neutral-700">© {new Date().getFullYear()} HeartCraft</p>
+        <p className="text-xs text-neutral-700">© {new Date().getFullYear()} Aevaia</p>
         <div className="flex items-center gap-4 text-xs text-neutral-700">
           <Link href="/privacy" className="hover:text-neutral-400 transition-colors">Privacy</Link>
           <span>·</span>

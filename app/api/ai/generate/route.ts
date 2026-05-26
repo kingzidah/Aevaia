@@ -12,7 +12,7 @@ function getOpenRouter() {
     apiKey:  process.env.OPENROUTER_API_KEY,
     headers: {
       "HTTP-Referer": "https://heartcraft.app",
-      "X-Title":      "HeartCraft Studio",
+      "X-Title":      "Aevaia Studio",
     },
   });
 }
@@ -37,7 +37,7 @@ function buildSystemPrompt(tone: string, blockType: string): string {
   const toneInstruction = TONE_INSTRUCTIONS[tone] ?? TONE_INSTRUCTIONS.romantic;
   const wordLimit       = WORD_LIMITS[blockType] ?? WORD_LIMITS.paragraph;
   return (
-    "You are the AI writing engine for HeartCraft — a luxury digital gift-card studio. " +
+    "You are the AI writing engine for Aevaia — a luxury digital gift-card studio. " +
     "Your sole job is to transform the user's raw text into beautiful, emotionally resonant copy " +
     "that will appear inside a premium gift experience.\n\n" +
     `Tone: ${toneInstruction}\n\n` +

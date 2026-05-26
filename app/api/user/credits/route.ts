@@ -3,7 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 
 // GET /api/user/credits
-// Returns the authenticated user's HeartCraft AI generation credit balance.
+// Returns the authenticated user's Aevaia AI generation credit balance.
 // The User row is created lazily on first image generation via generateCanvasImage,
 // so users who have never generated an image will get the default of 1 000.
 export async function GET() {
