@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import OnboardingWizard from "@/components/onboarding-wizard";
 import AppHeader from "@/components/app-header";
@@ -25,7 +26,7 @@ export interface DesignRecord {
 
 // ─── Gift card ───────────────────────────────────────────────────────────────
 
-function ProjectCard({ project, onOpen }: { project: ProjectRecord; onOpen: (id: string) => void }) {
+function ProjectCard({ project }: { project: ProjectRecord }) {
   const date    = new Date(project.createdAt);
   const dateStr = date.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
   const timeStr = date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
@@ -72,15 +73,14 @@ function ProjectCard({ project, onOpen }: { project: ProjectRecord; onOpen: (id:
             View Live
           </a>
         )}
-        <button
-          type="button"
-          onClick={() => onOpen(project.id)}
+        <Link
+          href={`/studio/${project.id}`}
           className="flex-1 py-2 rounded-xl bg-purple-600/10 hover:bg-purple-600/20 border
                      border-purple-500/20 hover:border-purple-500/40 text-purple-300 hover:text-purple-200
-                     text-xs font-bold transition-all"
+                     text-xs font-bold transition-all text-center"
         >
           Open in Studio
-        </button>
+        </Link>
       </div>
     </div>
   );
@@ -91,18 +91,17 @@ function ProjectCard({ project, onOpen }: { project: ProjectRecord; onOpen: (id:
 function DesignCard({ design }: { design: DesignRecord }) {
   const [copied, setCopied] = useState(false);
 
-  const liveUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/gift/${design.id}`;
-
   const date    = new Date(design.createdAt);
   const dateStr = date.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
   const timeStr = date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
   const shortId = design.id.slice(-8).toUpperCase();
 
   const handleCopy = useCallback(() => {
-    navigator.clipboard.writeText(liveUrl).catch(() => {});
+    const url = `${window.location.origin}/gift/${design.id}`;
+    navigator.clipboard.writeText(url).catch(() => {});
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
-  }, [liveUrl]);
+  }, [design.id]);
 
   return (
     <div className="group flex flex-col gap-4 p-5 rounded-2xl bg-white dark:bg-neutral-900/60 border border-zinc-200 dark:border-neutral-800
@@ -134,14 +133,14 @@ function DesignCard({ design }: { design: DesignRecord }) {
       </div>
 
       <div className="flex gap-2">
-        <a
+        <Link
           href={`/studio?design=${design.id}`}
           className="flex-1 py-2 rounded-xl bg-purple-600/10 hover:bg-purple-600/20 border
                      border-purple-500/20 hover:border-purple-500/40 text-purple-300 hover:text-purple-200
                      text-xs font-bold text-center transition-all"
         >
           Edit
-        </a>
+        </Link>
         <button
           type="button"
           onClick={handleCopy}
@@ -189,10 +188,6 @@ export default function DashboardClient({ userName, userEmail, initialProjects, 
     }
   }, [router]);
 
-  const handleOpenInStudio = useCallback((id: string) => {
-    router.push(`/studio/${id}`);
-  }, [router]);
-
   const handleSelectTemplate = useCallback(async (templateId: string) => {
     setSelectingTmpl(templateId);
     try {
@@ -213,7 +208,8 @@ export default function DashboardClient({ userName, userEmail, initialProjects, 
     }
   }, [router]);
 
-  const greeting = userName ? `Welcome back, ${userName.split(" ")[0]}.` : "Your Creative Lounge";
+  const headerActions = useMemo(() => <CreditsWallet />, []);
+  const greeting      = userName ? `Welcome back, ${userName.split(" ")[0]}.` : "Your Creative Lounge";
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-neutral-950 text-zinc-900 dark:text-white">
@@ -232,7 +228,7 @@ export default function DashboardClient({ userName, userEmail, initialProjects, 
       <AppHeader
         userName={userName}
         userEmail={userEmail}
-        actions={<CreditsWallet />}
+        actions={headerActions}
       />
 
       {/* Body */}
@@ -301,7 +297,7 @@ export default function DashboardClient({ userName, userEmail, initialProjects, 
           ) : (
             <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
               {initialProjects.map(project => (
-                <ProjectCard key={project.id} project={project} onOpen={handleOpenInStudio} />
+                <ProjectCard key={project.id} project={project} />
               ))}
             </div>
           )}

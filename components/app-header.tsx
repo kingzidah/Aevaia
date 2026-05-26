@@ -45,11 +45,7 @@ export default function AppHeader({ actions }: AppHeaderProps) {
         {/* Primary nav links — hidden on mobile to avoid overflow */}
         <ul className="hidden sm:flex items-center gap-1" aria-label="Main navigation">
           {NAV_LINKS.map(({ href, label }) => {
-            // Active if the pathname starts with the link's href, except
-            // /studio must be an exact match so it doesn't light up on /settings.
-            const isActive = href === "/studio"
-              ? pathname === "/studio" || pathname.startsWith("/studio/")
-              : pathname.startsWith(href);
+            const isActive = pathname.startsWith(href);
             return (
               <li key={href}>
                 <Link
