@@ -1,26 +1,209 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* Class-based dark mode — .dark on <html> activates all dark: variants */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Base background responds to theme class; .dark is set by theme-provider.tsx */
+html {
+  background-color: #fafafa; /* zinc-50 */
+}
+html.dark {
+  background-color: #0a0a0a; /* near-black — same as before for studio chrome */
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* Hide scrollbar while preserving scroll functionality */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Tiptap Editor Styles - Samsung Notes Inspired */
+.tiptap-editor {
+    outline: none;
+    min-height: 40px;
+    border-radius: 8px;
+    transition: all 0.3s;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+.tiptap-editor:focus-within {
+    outline: 2px solid rgb(168 85 247);
+    background: rgb(168 85 247 / 0.05);
+}
+
+.tiptap-editor p {
+    margin: 0;
+    line-height: 1.6;
+}
+
+.tiptap-editor p.is-editor-empty:first-child::before {
+  color: #737373;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+.tiptap-editor ul,
+.tiptap-editor ol {
+  padding-left: 1.5rem;
+  margin: 0.5rem 0;
+}
+
+.tiptap-editor ul {
+  list-style-type: disc;
+}
+
+.tiptap-editor ol {
+  list-style-type: decimal;
+}
+
+.tiptap-editor ul[data-type="taskList"] {
+  list-style: none;
+  padding-left: 0;
+}
+
+.tiptap-editor li[data-type="taskItem"] {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.tiptap-editor li[data-type="taskItem"] > label {
+  flex: 0 0 auto;
+  margin-right: 0.5rem;
+  user-select: none;
+}
+
+.tiptap-editor li[data-type="taskItem"] > div {
+  flex: 1 1 auto;
+}
+
+.tiptap-editor input[type="checkbox"] {
+  cursor: pointer;
+  width: 1rem;
+  height: 1rem;
+  margin-top: 0.25rem;
+}
+
+.tiptap-editor strong {
+  font-weight: 700;
+}
+
+.tiptap-editor em {
+  font-style: italic;
+}
+
+.tiptap-editor u {
+  text-decoration: underline;
+}
+
+.tiptap-editor s {
+  text-decoration: line-through;
+}
+
+.tiptap-editor mark {
+  background-color: #FFFF7F;
+  border-radius: 2px;
+  padding: 0 2px;
+}
+
+.tiptap-editor code {
+  background-color: rgba(97, 97, 97, 0.1);
+  border-radius: 0.25rem;
+  color: #616161;
+  font-size: 0.9rem;
+  padding: 0.25em 0.3em;
+}
+
+.tiptap-editor pre {
+  background: #0d0d0d;
+  border-radius: 0.5rem;
+  color: #fff;
+  font-family: 'JetBrainsMono', monospace;
+  padding: 0.75rem 1rem;
+}
+
+.tiptap-editor pre code {
+  background: none;
+  color: inherit;
+  font-size: 0.8rem;
+  padding: 0;
+}
+
+.tiptap-editor blockquote {
+  border-left: 3px solid #a855f7;
+  padding-left: 1rem;
+  margin: 1rem 0;
+}
+
+.tiptap-editor hr {
+  border: none;
+  border-top: 2px solid rgba(255, 255, 255, 0.1);
+  margin: 2rem 0;
+}
+
+/* ─── Premium Scrollbars ─────────────────────────────────────────────
+   Design principles applied:
+   · Track is fully transparent — blends into any panel background
+   · Thumb is a 6 px pill (~35–50 % thinner than OS default)
+   · Opacity chosen so the thumb is visible on both near-black panels
+     (left/right) and light canvas themes (white, yellow-50)
+   · Hover lifts opacity for clear feedback; active drag turns purple
+   ─────────────────────────────────────────────────────────────────── */
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(130, 130, 130, 0.4) transparent;
+}
+
+/* Webkit — Chrome / Edge / Safari */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(130, 130, 130, 0.4);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(130, 130, 130, 0.65);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: rgba(168, 85, 247, 0.6);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* ─── Ambient Effects Keyframes ─────────────────────────────────────── */
+@keyframes firefly-float {
+  0%   { transform: translate(0, 0);                                    opacity: 0;   }
+  20%  {                                                                 opacity: 1;   }
+  50%  { transform: translate(var(--drift-x, 20px), var(--drift-y, -30px)); opacity: 0.85; }
+  80%  {                                                                 opacity: 0.4; }
+  100% { transform: translate(0, 0);                                    opacity: 0;   }
+}
+
+@keyframes orb-drift {
+  0%,  100% { transform: translate(0, 0)       scale(1);    }
+  33%       { transform: translate(40px, -30px) scale(1.08); }
+  66%       { transform: translate(-25px, 20px) scale(0.95); }
+}
+
+/* ─── Text animation keyframes ───────────────────────────────────────────── */
+/* Used by the ShinyText overlay and the inline shimmer in the studio canvas. */
+@keyframes hc-shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
 }

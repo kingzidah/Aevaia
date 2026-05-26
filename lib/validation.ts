@@ -163,6 +163,15 @@ export const publishSchema = z.object({
   blocks:         z.unknown().optional(),
 });
 
+// ── RSVP submissions ──────────────────────────────────────────────────────────
+
+export const rsvpSubmitSchema = z.object({
+  gift_id:    idSchema,
+  guest_name: z.string().trim().min(1, "Name is required").max(100, "Name must be 100 characters or less"),
+  attending:  z.boolean(),
+  message:    z.string().trim().max(1_000, "Message must be 1 000 characters or less").optional(),
+});
+
 // ── Support ───────────────────────────────────────────────────────────────────
 
 export const supportSchema = z.object({

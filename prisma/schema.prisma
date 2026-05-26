@@ -1,0 +1,112 @@
+// ── Prisma 7 notes ───────────────────────────────────────────────────────────
+//  • generator provider stays "prisma-client" (renamed from "prisma-client-js" in v7)
+//  • url is NOT in the datasource block — Prisma 7 requires it in prisma.config.ts
+//    (adding it here causes P1012: "The datasource property `url` is no longer supported in schema files")
+//  • output path preserved so lib/prisma.ts keeps its import from ./generated/prisma/client
+// ─────────────────────────────────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ── Enums ────────────────────────────────────────────────────────────────────
+
+enum Tier {
+  FREE
+  INTIMATE
+  EVENT
+}
+
+enum SubscriptionStatus {
+  INACTIVE
+  ACTIVE
+  PAST_DUE
+  CANCELED
+}
+
+// ── Models ───────────────────────────────────────────────────────────────────
+
+// The User model is retained for Subscription and UsageTracking relations.
+// Authentication is handled by Clerk — userId fields throughout the schema
+// store Clerk user IDs (format: user_xxxxxxxxxxxxxxxxxxxx) directly, with
+// no FK constraint to this table so no local User record is required on login.
+model User {
+  id           String   @id @default(uuid())
+  clerkId      String?  @unique // Clerk user ID — set on first subscription/usage write
+  email        String   @unique
+  name         String?
+  credits      Int      @default(1000) // HeartCraft AI generation credits
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Project {
+  id          String  @id @default(uuid())
+  // Clerk user ID — plain string, no FK so any Clerk userId works immediately
+  userId      String
+  title       String  @default("Untitled Masterpiece")
+  scenesJson  String  @db.Text // Serialized canvas state
+  isPublished String  @default("DRAFT") // DRAFT | PUBLISHED
+  isPaid      Boolean @default(false)
+  tier        Tier    @default(FREE)
+
+  // Bouncer security fields
+  guestList    String[] @default([])
+  claimedNames String[] @default([])
+  deviceCount  Int      @default(0)
+  deviceCap    Int      @default(5)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  aiGenerations AiGeneration[]
+
+  @@index([userId]) // fast lookup of all projects for a given Clerk user
+}
+
+model AiGeneration {
+  id        String   @id @default(uuid())
+  projectId String
+  prompt    String   @db.Text
+  response  String   @db.Text
+  modelUsed String   @default("google/gemini-2.5-flash")
+  tokensUsed Int     @default(0)
+  createdAt DateTime @default(now())
+
+  // Relations
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model Subscription {
+  id               String             @id @default(uuid())
+  userId           String             @unique // Clerk user ID
+  stripeCustomerId String             @unique
+  stripePriceId    String?
+  status           SubscriptionStatus @default(INACTIVE)
+  currentPeriodEnd DateTime?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+}
+
+model UsageTracking {
+  id           String   @id @default(uuid())
+  userId       String   // Clerk user ID
+  aiCredits    Int      @default(10)
+  requestCount Int      @default(0)
+  date         DateTime @default(now())
+
+  @@index([userId])
+}
+
+model SupportTicket {
+  id        String   @id @default(uuid())
+  email     String
+  message   String   @db.Text
+  createdAt DateTime @default(now())
+}

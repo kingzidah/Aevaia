@@ -9,9 +9,16 @@ import CountdownBlock from "@/components/canvas/CountdownBlock";
 import AmbientEffects from "@/components/canvas/AmbientEffects";
 import AtmosphereRenderer from "@/components/studio/atmosphere-renderer";
 import MasonryGallery from "@/components/blocks/masonry-gallery";
-import SpotifyPlayer from "@/components/blocks/spotify-player";
+import AudioBlock from "@/components/blocks/audio-block";
+import { ShinyText, BlurWords } from "@/components/blocks/text-animations";
 import GoogleMap from "@/components/blocks/google-map";
 import RsvpForm from "@/components/blocks/rsvp-form";
+import ScribbleBlock from "@/components/blocks/scribble-block";
+import ArcTextBlock from "@/components/blocks/arc-text-block";
+import VideoBlock from "@/components/blocks/video-block";
+import LottiePlayer from "@/components/blocks/lottie-player";
+import CarouselSlideshow from "@/components/blocks/carousel-slideshow";
+import VectorArt from "@/components/blocks/vector-art";
 import type { WebGLMode } from "@/components/ui/WebGLBackground";
 import { getEffectComponent } from "@/lib/effectsRegistry";
 
@@ -81,38 +88,54 @@ const SHADOW_STYLES: Record<string, string> = {
 
 // ─── Block renderer ───────────────────────────────────────────────────────
 
-function ViewerBlock({ block, g, theme }: {
-  block: Block;
-  g: GlobalState;
-  theme: typeof THEMES[string];
+function ViewerBlock({ block, g, theme, giftId }: {
+  block:  Block;
+  g:      GlobalState;
+  theme:  typeof THEMES[string];
+  giftId: string;
 }) {
   switch (block.type) {
 
     case "headline": {
-      // Per-block font/size/color from properties; fall back to legacy global state
-      const hFont  = (block.properties?.fontFamily as string) || (g.selectedFont ?? undefined);
-      const hSize  = (block.properties?.fontSize   as number) || 48;
-      const hColor = (block.properties?.color      as string) || undefined;
-      return (
+      const hFont    = (block.properties?.fontFamily as string) || (g.selectedFont ?? undefined);
+      const hSize    = (block.properties?.fontSize   as number) || 48;
+      const hColor   = (block.properties?.color      as string) || undefined;
+      const hAnimType = block.properties?.animationType as string | undefined;
+      const hStyle   = { fontFamily: hFont, fontSize: `${hSize}px`, lineHeight: 1.2, color: hColor };
+
+      if (hAnimType === 'blur-words') {
+        const plainText = (block.content || g.headlineHtml || "").replace(/<[^>]*>/g, '');
+        return <BlurWords text={plainText} className="text-center" style={hStyle} />;
+      }
+      const hContent = (
         <div
           className="text-center"
-          style={{ fontFamily: hFont, fontSize: `${hSize}px`, lineHeight: 1.2, color: hColor }}
+          style={hStyle}
           dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(block.content || g.headlineHtml || "") }}
         />
       );
+      return hAnimType === 'shiny' ? <ShinyText>{hContent}</ShinyText> : hContent;
     }
 
     case "paragraph": {
-      const pFont  = (block.properties?.fontFamily as string) || (g.selectedFont ?? undefined);
-      const pSize  = (block.properties?.fontSize   as number) || 16;
-      const pColor = (block.properties?.color      as string) || undefined;
-      return (
+      const pFont    = (block.properties?.fontFamily as string) || (g.selectedFont ?? undefined);
+      const pSize    = (block.properties?.fontSize   as number) || 16;
+      const pColor   = (block.properties?.color      as string) || undefined;
+      const pAnimType = block.properties?.animationType as string | undefined;
+      const pStyle   = { fontFamily: pFont, fontSize: `${pSize}px`, lineHeight: 1.6, color: pColor };
+
+      if (pAnimType === 'blur-words') {
+        const plainText = (block.content || g.paragraphHtml || "").replace(/<[^>]*>/g, '');
+        return <BlurWords text={plainText} className="text-center" style={pStyle} />;
+      }
+      const pContent = (
         <div
           className="text-center"
-          style={{ fontFamily: pFont, fontSize: `${pSize}px`, lineHeight: 1.6, color: pColor }}
+          style={pStyle}
           dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(block.content || g.paragraphHtml || "") }}
         />
       );
+      return pAnimType === 'shiny' ? <ShinyText>{pContent}</ShinyText> : pContent;
     }
 
     case "image": {
@@ -156,14 +179,58 @@ function ViewerBlock({ block, g, theme }: {
     case "countdown":
       if (!block.targetDate) return null;
       return <CountdownBlock targetDate={block.targetDate} />;
+    case "button": {
+      const btnLabel  = block.content || "Click Here";
+      const btnColor  = (block.properties?.accentColor as string) || "#10b981";
+      const btnRadius = (block.properties?.blockBorderRadius as number) ?? 12;
+      return (
+        <div className="flex items-center justify-center py-2">
+          <button
+            type="button"
+            style={{ backgroundColor: btnColor, borderRadius: `${btnRadius}px` }}
+            className="px-8 py-3 text-white text-sm font-bold tracking-wide shadow-lg"
+          >
+            {btnLabel}
+          </button>
+        </div>
+      );
+    }
+    case "video":
+      return <VideoBlock content={block.content} />;
     case "gallery-stack":
       return <MasonryGallery images={block.images} properties={block.properties} />;
     case "audio":
-      return <SpotifyPlayer audioUrl={block.audioUrl} properties={block.properties} />;
+      return <AudioBlock audioUrl={block.audioUrl} audioVolume={block.audioVolume ?? 80} />;
     case "map":
       return <GoogleMap properties={block.properties} />;
     case "rsvp-form":
-      return <RsvpForm properties={block.properties} />;
+      return <RsvpForm properties={block.properties} giftId={giftId} />;
+    case "scribble":
+      return (
+        <ScribbleBlock
+          paths={(block.properties?.scribblePaths as string[]) ?? []}
+          strokeColor={(block.properties?.scribbleColor as string) ?? '#a855f7'}
+          strokeWidth={(block.properties?.scribbleWidth as number) ?? 3}
+          onPathsChange={() => {}}
+          readOnly
+        />
+      );
+    case "arc-text":
+      return (
+        <ArcTextBlock
+          text={(block.properties?.arcText as string) ?? undefined}
+          radius={(block.properties?.arcRadius as number) ?? undefined}
+          color={(block.properties?.arcColor as string) ?? undefined}
+          fontSize={(block.properties?.arcFontSize as number) ?? undefined}
+          startAngle={(block.properties?.arcStartAngle as number) ?? undefined}
+        />
+      );
+    case "lottie":
+      return <LottiePlayer properties={block.properties} />;
+    case "carousel":
+      return <CarouselSlideshow images={block.images} properties={block.properties} />;
+    case "vector":
+      return <VectorArt properties={block.properties} />;
     default:
       return null;
   }
@@ -319,7 +386,7 @@ export default function GiftViewer({ payload }: { payload: GiftPayload }) {
                     {scene.blocks
                       .filter(b => b.x === undefined)
                       .map(block => (
-                        <ViewerBlock key={block.id} block={block} g={g} theme={theme} />
+                        <ViewerBlock key={block.id} block={block} g={g} theme={theme} giftId={payload.id} />
                       ))}
                   </motion.div>
                 </AnimatePresence>

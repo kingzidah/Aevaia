@@ -1,0 +1,19 @@
+# Ignore Next.js build folders
+.next/
+out/
+build/
+
+# Ignore dependencies
+node_modules/
+package-lock.json
+
+# Ignore environment variables (Security!)
+.env
+.env.local
+
+# Ignore media assets (Claude doesn't need to read the raw bytes of your audio/images)
+public/assets/
+*.mp3
+*.wav
+*.jpg
+*.png

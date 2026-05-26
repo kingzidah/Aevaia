@@ -21,6 +21,7 @@ import {
   type EffectCategory,
 } from "@/lib/effectsRegistry";
 import { getContrastColor } from "@/lib/utils";
+import { uploadImage } from "@/lib/storage";
 
 // html2canvas must be loaded in the browser only — it accesses window/document.
 // The dynamic import also keeps it out of the initial JS bundle.
@@ -47,12 +48,16 @@ import { SortableBlock } from "@/components/canvas/SortableBlock";
 import SceneNavigator from "@/components/canvas/SceneNavigator";
 import LiveCountdown from "@/components/blocks/live-countdown";
 import RsvpForm from "@/components/blocks/rsvp-form";
+import { BlurWords } from "@/components/blocks/text-animations";
 import MasonryGallery from "@/components/blocks/masonry-gallery";
-import SpotifyPlayer from "@/components/blocks/spotify-player";
+import AudioBlock from "@/components/blocks/audio-block";
 import GoogleMap from "@/components/blocks/google-map";
 import LottiePlayer from "@/components/blocks/lottie-player";
-import VectorArt from "@/components/blocks/vector-art";
+import VectorArt, { VECTOR_PRESETS } from "@/components/blocks/vector-art";
 import CarouselSlideshow from "@/components/blocks/carousel-slideshow";
+import ScribbleBlock from "@/components/blocks/scribble-block";
+import ArcTextBlock from "@/components/blocks/arc-text-block";
+import VideoBlock from "@/components/blocks/video-block";
 import CheckoutModal from "@/components/ui/CheckoutModal";
 import TierModal from "@/components/studio/TierModal";
 import CommandPalette from "@/components/studio/command-palette";
@@ -245,6 +250,8 @@ type InsertItem = {
   feature?: string;
   // Special actions that don't map to a block type or named feature.
   action?: 'upload-photo';
+  // Applies an animationType to the currently selected text block.
+  animType?: string;
 };
 
 type InsertCategory = {
@@ -262,7 +269,7 @@ const INSERT_CATEGORIES: InsertCategory[] = [
     items: [
       { Icon: LucideIcons.Type,             label: 'Headline',  desc: 'Bold title or heading text',       blockType: 'headline'  },
       { Icon: LucideIcons.AlignLeft,        label: 'Paragraph', desc: 'Body copy and rich text',           blockType: 'paragraph' },
-      { Icon: LucideIcons.MousePointerClick,label: 'Button',    desc: 'Clickable call-to-action element',  feature: 'button'      },
+      { Icon: LucideIcons.MousePointerClick,label: 'Button',    desc: 'Clickable call-to-action element', blockType: 'button' as const, feature: 'button' },
     ],
   },
   {
@@ -272,7 +279,7 @@ const INSERT_CATEGORIES: InsertCategory[] = [
     items: [
       { Icon: LucideIcons.ImageIcon,        label: 'Image',           desc: 'Single photo or AI artwork',    blockType: 'image'             },
       { Icon: LucideIcons.Upload,           label: 'Upload Photo',    desc: 'Add a photo from your device',  action:  'upload-photo'        },
-      { Icon: LucideIcons.Video,            label: 'Video',           desc: 'Embed a video clip',            feature: 'video'               },
+      { Icon: LucideIcons.Video,            label: 'Video',           desc: 'Embed a video clip',           blockType: 'video' as const, feature: 'video' },
       { Icon: LucideIcons.LayoutGrid,       label: 'Masonry Gallery', desc: 'Pinterest-style photo mosaic',  blockType: 'gallery-stack'     },
       { Icon: LucideIcons.GalleryHorizontal,label: 'Slideshow',       desc: 'Auto-scrolling carousel',       blockType: 'carousel' as const },
     ],
@@ -301,9 +308,19 @@ const INSERT_CATEGORIES: InsertCategory[] = [
     title: 'Art & Vectors',
     dotCls: 'bg-violet-400',
     items: [
-      { Icon: LucideIcons.Shapes, label: 'Custom SVG', desc: 'Import your own vector art',  blockType: 'vector' as const, feature: 'svg' },
-      { Icon: LucideIcons.Pencil, label: 'Scribbles',  desc: 'Hand-drawn freeform layers',  feature: 'scribbles'                          },
-      { Icon: LucideIcons.RefreshCw, label: 'Arc Text', desc: 'Text along a curved path',   feature: 'arctext'                            },
+      { Icon: LucideIcons.Shapes,    label: 'Custom SVG', desc: 'Import your own vector art',  blockType: 'vector'   as const, feature: 'svg'      },
+      { Icon: LucideIcons.Pencil,    label: 'Scribbles',  desc: 'Hand-drawn freeform layers',  blockType: 'scribble' as const, feature: 'scribbles' },
+      { Icon: LucideIcons.RefreshCw, label: 'Arc Text',   desc: 'Text along a curved path',    blockType: 'arc-text' as const, feature: 'arctext'   },
+    ],
+  },
+  {
+    id: 'text-animations',
+    title: 'Text Animations',
+    dotCls: 'bg-pink-400',
+    items: [
+      { Icon: LucideIcons.Sparkles, label: 'Shiny',        desc: 'Sweeping metallic shimmer',  animType: 'shiny'      },
+      { Icon: LucideIcons.Eye,      label: 'Blur Words',   desc: 'Word-by-word blur reveal',   animType: 'blur-words' },
+      { Icon: LucideIcons.Minus,    label: 'No Animation', desc: 'Remove text animation',      animType: 'none'       },
     ],
   },
   {
@@ -341,7 +358,7 @@ function LeftSidebar() {
     selectedItem, setSelectedItem, activeBlockId, setActiveBlockId,
     activeBlock, activeFilters, setFilter, resetFilters,
     headlineEditor, paragraphEditor, activeEditor,
-    isTextSelected, isImageSelected, isCountdownSelected, isGallerySelected, isAudioSelected, isMapSelected, isIconSelected, isNoneSelected,
+    isTextSelected, isImageSelected, isCountdownSelected, isGallerySelected, isAudioSelected, isMapSelected, isIconSelected, isLottieSelected, isVectorSelected, isScribbleSelected, isArcTextSelected, isNoneSelected,
     imageBorderRadius, setImageBorderRadius, imageShadow, setImageShadow,
     activeSoundscape, soundscapePlaying, toggleSoundscape,
     particleDensity, setParticleDensity, particleSpeed, setParticleSpeed,
@@ -364,27 +381,29 @@ function LeftSidebar() {
 
   // ── Local photo upload ──────────────────────────────────────────────────────
   const uploadRef = useRef<HTMLInputElement>(null);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
-  // Reads the picked file as a Base64 data URL then injects a pre-populated
-  // image block into the active scene.  No external API or upload cost.
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // ── Insert click feedback ───────────────────────────────────────────────────
+  const [flashItem, setFlashItem] = useState<string | null>(null);
+  const flashInsert = (key: string) => {
+    setFlashItem(key);
+    setTimeout(() => setFlashItem(null), 350);
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    e.target.value = '';
 
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const dataUrl = ev.target?.result;
-      if (typeof dataUrl !== 'string') return;
-
-      // Build a fully-formed image block with the photo pre-loaded so it
-      // appears on canvas immediately without a separate "paste URL" step.
+    setIsUploadingPhoto(true);
+    try {
+      const publicUrl = await uploadImage(file);
       const newBlock: Block = {
         id:      `block-${Date.now()}`,
         type:    'image',
-        content: dataUrl,
+        content: publicUrl,
         filters: { ...DEFAULT_FILTERS },
       };
-
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setScenes((prev: any[]) => prev.map((scene: any) =>
         scene.id === activeSceneId
@@ -392,11 +411,12 @@ function LeftSidebar() {
           : scene
       ));
       setLeftPanelTab('style');
-    };
-    reader.readAsDataURL(file);
-
-    // Reset so the same file can be re-selected if the user uploads again.
-    e.target.value = '';
+    } catch {
+      // Surface error without crashing — console only; no toast system here.
+      console.error('[upload] Failed to upload image to Supabase storage.');
+    } finally {
+      setIsUploadingPhoto(false);
+    }
   };
 
   // Insert-tab local state
@@ -677,40 +697,59 @@ function LeftSidebar() {
                     )}
 
                     {/* ── Standard block items (hidden for icon/webgl-effects categories) ── */}
-                    {cat.id !== 'webgl-effects' && visibleItems.map(item => (
-                      <button
-                        key={item.label}
-                        type="button"
-                        draggable={!!item.blockType}
-                        onDragStart={item.blockType ? (e) => {
-                          e.dataTransfer.setData('blockType', item.blockType!);
-                          e.dataTransfer.effectAllowed = 'copy';
-                        } : undefined}
-                        onClick={() => {
-                          if (item.blockType)                  { addBlock(item.blockType); setLeftPanelTab('style'); }
-                          if (item.feature)                    { setActiveFeature(item.feature as any); }
-                          if (item.action === 'upload-photo')  { uploadRef.current?.click(); }
-                        }}
-                        className={`w-full flex items-center gap-2.5 px-3 py-2 text-left transition-all group rounded-md hover:bg-zinc-800/60 ${item.blockType ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}`}
-                      >
-                        <item.Icon className="w-4 h-4 shrink-0 text-zinc-400 group-hover:text-purple-400 transition-colors" />
-                        <div className="min-w-0 flex-1">
-                          <p className="text-[11px] font-semibold text-zinc-400 group-hover:text-white transition-colors">{item.label}</p>
-                          <p className="text-[10px] text-zinc-600 mt-0.5 leading-snug">{item.desc}</p>
-                        </div>
-                        {item.blockType ? (
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"
-                            className="w-3 h-3 text-neutral-700 shrink-0 opacity-0 group-hover:opacity-100 group-hover:text-purple-400 transition-all">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 9h16.5m-16.5 6.75h16.5" />
-                          </svg>
-                        ) : (
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"
-                            className="w-3 h-3 text-neutral-700 shrink-0 opacity-0 group-hover:opacity-100 group-hover:text-purple-400 transition-all">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-                          </svg>
-                        )}
-                      </button>
-                    ))}
+                    {cat.id !== 'webgl-effects' && visibleItems.map(item => {
+                      const isUploading = item.action === 'upload-photo' && isUploadingPhoto;
+                      return (
+                        <button
+                          key={item.label}
+                          type="button"
+                          disabled={isUploading}
+                          draggable={!!item.blockType}
+                          onDragStart={item.blockType ? (e) => {
+                            e.dataTransfer.setData('blockType', item.blockType!);
+                            e.dataTransfer.effectAllowed = 'copy';
+                          } : undefined}
+                          onClick={() => {
+                            if (item.blockType)                  { addBlock(item.blockType); setLeftPanelTab('style'); flashInsert(item.label); }
+                            if (item.feature)                    { setActiveFeature(item.feature as any); }
+                            if (item.action === 'upload-photo')  { uploadRef.current?.click(); }
+                            if (item.animType !== undefined) {
+                              if (activeBlockId && (selectedItem === 'headline' || selectedItem === 'paragraph')) {
+                                patchBlockProperties(activeBlockId, { animationType: item.animType as 'none' | 'shiny' | 'blur-words' });
+                              }
+                              flashInsert(item.label);
+                            }
+                          }}
+                          className={`w-full flex items-center gap-2.5 px-3 py-2 text-left transition-all group rounded-md hover:bg-zinc-800/60 ${item.blockType ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'} ${isUploading ? 'opacity-60 pointer-events-none' : ''} ${flashItem === item.label ? 'bg-purple-500/20 scale-[0.97]' : ''}`}
+                        >
+                          {isUploading ? (
+                            <svg className="w-4 h-4 shrink-0 text-purple-400 animate-spin" viewBox="0 0 24 24" fill="none">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                            </svg>
+                          ) : (
+                            <item.Icon className="w-4 h-4 shrink-0 text-zinc-400 group-hover:text-purple-400 transition-colors" />
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[11px] font-semibold text-zinc-400 group-hover:text-white transition-colors">
+                              {isUploading ? 'Uploading…' : item.label}
+                            </p>
+                            <p className="text-[10px] text-zinc-600 mt-0.5 leading-snug">{item.desc}</p>
+                          </div>
+                          {item.blockType ? (
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"
+                              className="w-3 h-3 text-neutral-700 shrink-0 opacity-0 group-hover:opacity-100 group-hover:text-purple-400 transition-all">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 9h16.5m-16.5 6.75h16.5" />
+                            </svg>
+                          ) : (
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"
+                              className="w-3 h-3 text-neutral-700 shrink-0 opacity-0 group-hover:opacity-100 group-hover:text-purple-400 transition-all">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                            </svg>
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
 
@@ -771,6 +810,27 @@ function LeftSidebar() {
                     onAudioUrlChange={(url: string) => updateBlock((activeBlock as Block).id, { audioUrl: url })}
                     onVolumeChange={(vol: number) => updateBlock((activeBlock as Block).id, { audioVolume: vol })}
                     onSpeedChange={(speed: number) => updateBlock((activeBlock as Block).id, { audioSpeed: speed })} />
+                </div>
+              )}
+
+              {isLottieSelected && activeBlock && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 pb-3 border-b border-neutral-800/80">
+                    <div className="w-1.5 h-3.5 rounded-full bg-purple-500 shadow-[0_0_6px_#a855f7]" />
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-purple-400">Lottie Animation</p>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-500">Animation URL</p>
+                    <input
+                      type="text"
+                      defaultValue={(activeBlock as Block).properties?.lottieUrl as string ?? ''}
+                      onBlur={(e) => patchBlockProperties((activeBlock as Block).id, { lottieUrl: e.target.value.trim() })}
+                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); patchBlockProperties((activeBlock as Block).id, { lottieUrl: (e.target as HTMLInputElement).value.trim() }); } }}
+                      placeholder="https://assets.lottiefiles.com/..."
+                      className="w-full bg-neutral-900 border border-neutral-800 text-neutral-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all placeholder:text-neutral-600"
+                    />
+                    <p className="text-[10px] text-neutral-600">Paste any public Lottie JSON URL</p>
+                  </div>
                 </div>
               )}
 
@@ -1049,6 +1109,178 @@ function LeftSidebar() {
                   </div>
                 );
               })()}
+
+              {/* ── Vector (Custom SVG) Style Panel ── */}
+              {isVectorSelected && activeBlock && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 pb-3 border-b border-neutral-800/80">
+                    <div className="w-1.5 h-3.5 rounded-full bg-violet-500 shadow-[0_0_6px_#7c3aed]" />
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-violet-400">Custom SVG</p>
+                  </div>
+
+                  {/* Preset picker */}
+                  <div className="space-y-1.5">
+                    <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-500">Presets</p>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {(Object.keys(VECTOR_PRESETS) as (keyof typeof VECTOR_PRESETS)[]).map(key => {
+                        const active = (activeBlock as Block).properties?.vectorType === key && !(activeBlock as Block).properties?.svgCode;
+                        return (
+                          <button key={key} type="button"
+                            onClick={() => patchBlockProperties((activeBlock as Block).id, { vectorType: key, svgCode: '' })}
+                            className={`py-1.5 px-3 rounded-lg border text-[10px] font-semibold capitalize transition-all ${active ? 'border-violet-500 bg-violet-500/15 text-violet-200' : 'border-neutral-800 text-neutral-500 hover:border-neutral-700 hover:text-neutral-300'}`}>
+                            {key}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Raw SVG paste */}
+                  <div className="space-y-1.5">
+                    <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-500">Paste SVG Code</p>
+                    <textarea
+                      rows={5}
+                      defaultValue={(activeBlock as Block).properties?.svgCode as string ?? ''}
+                      placeholder={'<svg xmlns="http://www.w3.org/2000/svg" ...>…</svg>'}
+                      onBlur={(e) => patchBlockProperties((activeBlock as Block).id, { svgCode: e.target.value.trim(), vectorType: '' })}
+                      className="w-full bg-neutral-900 border border-neutral-800 text-neutral-300 rounded-lg px-3 py-2 text-[10px] font-mono focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500/20 transition-all placeholder:text-neutral-600 resize-none"
+                    />
+                    <p className="text-[10px] text-neutral-600">Paste any valid SVG · DOMPurify sanitised</p>
+                  </div>
+                </div>
+              )}
+
+              {/* ── Scribble Style Panel ── */}
+              {isScribbleSelected && activeBlock && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 pb-3 border-b border-neutral-800/80">
+                    <div className="w-1.5 h-3.5 rounded-full bg-pink-500 shadow-[0_0_6px_#ec4899]" />
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-pink-400">Scribble</p>
+                  </div>
+
+                  {/* Stroke color */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-500">Stroke Color</p>
+                      <span className="text-[10px] font-mono text-neutral-600">{(activeBlock as Block).properties?.scribbleColor as string || '#a855f7'}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <label className="relative w-7 h-7 rounded-lg overflow-hidden border border-neutral-700 cursor-pointer shrink-0">
+                        <input type="color" aria-label="Scribble stroke color"
+                          value={(activeBlock as Block).properties?.scribbleColor as string || '#a855f7'}
+                          onChange={e => patchBlockProperties((activeBlock as Block).id, { scribbleColor: e.target.value })}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                        {/* eslint-disable-next-line react/forbid-dom-props */}
+                        <span className="absolute inset-0 rounded-lg" style={{ backgroundColor: (activeBlock as Block).properties?.scribbleColor as string || '#a855f7' }} />
+                      </label>
+                      <input type="text" maxLength={7} aria-label="Scribble color hex"
+                        value={(activeBlock as Block).properties?.scribbleColor as string || '#a855f7'}
+                        onChange={e => { const v = e.target.value; if (/^#[0-9a-fA-F]{0,6}$/.test(v)) patchBlockProperties((activeBlock as Block).id, { scribbleColor: v }); }}
+                        className="flex-1 px-2 py-1 rounded-lg text-[11px] font-mono bg-neutral-900 border border-neutral-700 text-neutral-200 focus:outline-none focus:border-pink-500 transition-all" />
+                    </div>
+                  </div>
+
+                  {/* Stroke width */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-500">Stroke Width</p>
+                      <span className="text-[10px] font-mono text-neutral-400">{(activeBlock as Block).properties?.scribbleWidth as number || 3}px</span>
+                    </div>
+                    <input type="range" aria-label="Scribble stroke width" min={1} max={20} step={1}
+                      value={(activeBlock as Block).properties?.scribbleWidth as number || 3}
+                      onChange={e => patchBlockProperties((activeBlock as Block).id, { scribbleWidth: Number(e.target.value) })}
+                      className="w-full h-1 rounded-full appearance-none cursor-pointer bg-neutral-700 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-pink-500 [&::-webkit-slider-thumb]:cursor-pointer" />
+                  </div>
+
+                  {/* Clear all */}
+                  <button type="button"
+                    onClick={() => patchBlockProperties((activeBlock as Block).id, { scribblePaths: [] })}
+                    className="w-full py-1.5 rounded-lg border border-neutral-800 text-[10px] font-semibold text-neutral-500 hover:border-red-500/50 hover:text-red-400 transition-all">
+                    Clear All Strokes
+                  </button>
+                </div>
+              )}
+
+              {/* ── Arc Text Style Panel ── */}
+              {isArcTextSelected && activeBlock && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 pb-3 border-b border-neutral-800/80">
+                    <div className="w-1.5 h-3.5 rounded-full bg-teal-500 shadow-[0_0_6px_#14b8a6]" />
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-teal-400">Arc Text</p>
+                  </div>
+
+                  {/* Text content */}
+                  <div className="space-y-1.5">
+                    <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-500">Text</p>
+                    <input
+                      type="text"
+                      defaultValue={(activeBlock as Block).properties?.arcText as string ?? 'Forever & Always'}
+                      onBlur={(e) => patchBlockProperties((activeBlock as Block).id, { arcText: e.target.value })}
+                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); patchBlockProperties((activeBlock as Block).id, { arcText: (e.target as HTMLInputElement).value }); } }}
+                      placeholder="Forever & Always"
+                      className="w-full bg-neutral-900 border border-neutral-800 text-neutral-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-teal-500 transition-all placeholder:text-neutral-600"
+                    />
+                  </div>
+
+                  {/* Radius */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-500">Curvature</p>
+                      <span className="text-[10px] font-mono text-neutral-400">{(activeBlock as Block).properties?.arcRadius as number ?? 120}px</span>
+                    </div>
+                    <input type="range" aria-label="Arc radius" min={80} max={200} step={5}
+                      value={(activeBlock as Block).properties?.arcRadius as number ?? 120}
+                      onChange={e => patchBlockProperties((activeBlock as Block).id, { arcRadius: Number(e.target.value) })}
+                      className="w-full h-1 rounded-full appearance-none cursor-pointer bg-neutral-700 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-teal-500 [&::-webkit-slider-thumb]:cursor-pointer" />
+                  </div>
+
+                  {/* Font size */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-500">Font Size</p>
+                      <span className="text-[10px] font-mono text-neutral-400">{(activeBlock as Block).properties?.arcFontSize as number ?? 22}px</span>
+                    </div>
+                    <input type="range" aria-label="Arc font size" min={12} max={48} step={1}
+                      value={(activeBlock as Block).properties?.arcFontSize as number ?? 22}
+                      onChange={e => patchBlockProperties((activeBlock as Block).id, { arcFontSize: Number(e.target.value) })}
+                      className="w-full h-1 rounded-full appearance-none cursor-pointer bg-neutral-700 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-teal-500 [&::-webkit-slider-thumb]:cursor-pointer" />
+                  </div>
+
+                  {/* Start angle */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-500">Rotation</p>
+                      <span className="text-[10px] font-mono text-neutral-400">{(activeBlock as Block).properties?.arcStartAngle as number ?? 0}°</span>
+                    </div>
+                    <input type="range" aria-label="Arc start angle" min={0} max={360} step={5}
+                      value={(activeBlock as Block).properties?.arcStartAngle as number ?? 0}
+                      onChange={e => patchBlockProperties((activeBlock as Block).id, { arcStartAngle: Number(e.target.value) })}
+                      className="w-full h-1 rounded-full appearance-none cursor-pointer bg-neutral-700 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-teal-500 [&::-webkit-slider-thumb]:cursor-pointer" />
+                  </div>
+
+                  {/* Color */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-500">Color</p>
+                      <span className="text-[10px] font-mono text-neutral-600">{(activeBlock as Block).properties?.arcColor as string || '#ffffff'}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <label className="relative w-7 h-7 rounded-lg overflow-hidden border border-neutral-700 cursor-pointer shrink-0">
+                        <input type="color" aria-label="Arc text color"
+                          value={(activeBlock as Block).properties?.arcColor as string || '#ffffff'}
+                          onChange={e => patchBlockProperties((activeBlock as Block).id, { arcColor: e.target.value })}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                        {/* eslint-disable-next-line react/forbid-dom-props */}
+                        <span className="absolute inset-0 rounded-lg" style={{ backgroundColor: (activeBlock as Block).properties?.arcColor as string || '#ffffff' }} />
+                      </label>
+                      <input type="text" maxLength={7} aria-label="Arc color hex"
+                        value={(activeBlock as Block).properties?.arcColor as string || '#ffffff'}
+                        onChange={e => { const v = e.target.value; if (/^#[0-9a-fA-F]{0,6}$/.test(v)) patchBlockProperties((activeBlock as Block).id, { arcColor: v }); }}
+                        className="flex-1 px-2 py-1 rounded-lg text-[11px] font-mono bg-neutral-900 border border-neutral-700 text-neutral-200 focus:outline-none focus:border-teal-500 transition-all" />
+                    </div>
+                  </div>
+                </div>
+              )}
 
             </motion.div>
           </AnimatePresence>
@@ -1522,19 +1754,23 @@ function LeftSidebar() {
 // ─── Free-placed block shared metadata ───────────────────────────────────────
 
 const PLACED_BLOCK_META: Record<string, { Icon: React.ComponentType<{ className?: string }>; label: string; accentCls: string }> = {
-  headline:        { Icon: LucideIcons.Type,             label: 'Headline',   accentCls: 'border-purple-500/60 bg-purple-500/10'  },
-  paragraph:       { Icon: LucideIcons.AlignLeft,        label: 'Paragraph',  accentCls: 'border-purple-500/60 bg-purple-500/10'  },
-  image:           { Icon: LucideIcons.ImageIcon,        label: 'Image',      accentCls: 'border-blue-500/60   bg-blue-500/10'    },
-  countdown:       { Icon: LucideIcons.Timer,            label: 'Countdown',  accentCls: 'border-amber-500/60  bg-amber-500/10'   },
-  'gallery-stack': { Icon: LucideIcons.LayoutGrid,       label: 'Gallery',    accentCls: 'border-emerald-500/60 bg-emerald-500/10'},
-  audio:           { Icon: LucideIcons.Music,            label: 'Audio',      accentCls: 'border-green-500/60  bg-green-500/10'   },
-  'rsvp-form':     { Icon: LucideIcons.ClipboardList,   label: 'RSVP Form',  accentCls: 'border-pink-500/60   bg-pink-500/10'    },
-  lottie:          { Icon: LucideIcons.Wind,             label: 'Lottie',     accentCls: 'border-purple-500/60 bg-purple-500/10'  },
-  vector:          { Icon: LucideIcons.Shapes,           label: 'Vector',     accentCls: 'border-violet-500/60 bg-violet-500/10'  },
-  carousel:        { Icon: LucideIcons.GalleryHorizontal,label: 'Carousel',   accentCls: 'border-sky-500/60    bg-sky-500/10'     },
+  headline:        { Icon: LucideIcons.Type,              label: 'Headline',   accentCls: 'border-purple-500/60  bg-purple-500/10'  },
+  paragraph:       { Icon: LucideIcons.AlignLeft,         label: 'Paragraph',  accentCls: 'border-purple-500/60  bg-purple-500/10'  },
+  button:          { Icon: LucideIcons.MousePointerClick, label: 'Button',     accentCls: 'border-emerald-500/60 bg-emerald-500/10' },
+  video:           { Icon: LucideIcons.Video,             label: 'Video',      accentCls: 'border-red-500/60     bg-red-500/10'     },
+  image:           { Icon: LucideIcons.ImageIcon,         label: 'Image',      accentCls: 'border-blue-500/60    bg-blue-500/10'    },
+  countdown:       { Icon: LucideIcons.Timer,             label: 'Countdown',  accentCls: 'border-amber-500/60   bg-amber-500/10'   },
+  'gallery-stack': { Icon: LucideIcons.LayoutGrid,        label: 'Gallery',    accentCls: 'border-emerald-500/60 bg-emerald-500/10' },
+  audio:           { Icon: LucideIcons.Music,             label: 'Audio',      accentCls: 'border-green-500/60   bg-green-500/10'   },
+  'rsvp-form':     { Icon: LucideIcons.ClipboardList,     label: 'RSVP Form',  accentCls: 'border-pink-500/60    bg-pink-500/10'    },
+  lottie:          { Icon: LucideIcons.Wind,              label: 'Lottie',     accentCls: 'border-purple-500/60  bg-purple-500/10'  },
+  vector:          { Icon: LucideIcons.Shapes,            label: 'Vector',     accentCls: 'border-violet-500/60  bg-violet-500/10'  },
+  carousel:        { Icon: LucideIcons.GalleryHorizontal, label: 'Carousel',   accentCls: 'border-sky-500/60     bg-sky-500/10'     },
+  scribble:        { Icon: LucideIcons.Pencil,            label: 'Scribble',   accentCls: 'border-pink-500/60    bg-pink-500/10'    },
+  'arc-text':      { Icon: LucideIcons.RefreshCw,         label: 'Arc Text',   accentCls: 'border-teal-500/60    bg-teal-500/10'    },
 };
 
-const FIDELITY_TYPES = new Set(['countdown', 'rsvp-form', 'headline', 'paragraph', 'gallery-stack', 'audio', 'map', 'lottie', 'vector', 'carousel']);
+const FIDELITY_TYPES = new Set(['countdown', 'rsvp-form', 'headline', 'paragraph', 'button', 'video', 'gallery-stack', 'audio', 'map', 'lottie', 'vector', 'carousel', 'scribble', 'arc-text']);
 
 // ─── FreePlacedBlock — self-contained draggable block ────────────────────────
 
@@ -1618,9 +1854,10 @@ function FreePlacedBlock({ block }: { block: Block }) {
     const hFont    = (block.properties?.fontFamily as string) || FONTS.find(f => f.id === selectedFont)?.css;
     const hSize    = (block.properties?.fontSize as number)   || 36;
     const hEditing = editingBlockId === block.id;
+    const hAnimType = block.properties?.animationType as string | undefined;
     const hTextStyle: React.CSSProperties = { fontFamily: hFont, fontSize: `${hSize}px`, lineHeight: 1.2 };
     innerNode = (
-      <div className="w-full px-5 pt-5 pb-6 text-center" style={hTextStyle}>
+      <div className="relative w-full px-5 pt-5 pb-6 text-center overflow-hidden" style={hTextStyle}>
         {hEditing ? (
           <textarea
             autoFocus
@@ -1637,8 +1874,13 @@ function FreePlacedBlock({ block }: { block: Block }) {
             className="w-full bg-transparent border-none outline-none resize-none text-center font-bold text-white break-words placeholder:text-neutral-600"
             style={hTextStyle}
           />
+        ) : hAnimType === 'blur-words' ? (
+          <BlurWords text={displayText || 'New Headline'} className="font-bold text-white break-words" />
         ) : (
           <p className="font-bold text-white break-words">{displayText || 'New Headline'}</p>
+        )}
+        {hAnimType === 'shiny' && !hEditing && (
+          <div aria-hidden="true" className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(90deg, transparent 20%, rgba(255,255,255,0.52) 50%, transparent 80%)", animation: "hc-shimmer 2.4s linear infinite" }} />
         )}
       </div>
     );
@@ -1646,9 +1888,10 @@ function FreePlacedBlock({ block }: { block: Block }) {
     const pFont    = (block.properties?.fontFamily as string) || FONTS.find(f => f.id === selectedFont)?.css;
     const pSize    = (block.properties?.fontSize as number)   || 16;
     const pEditing = editingBlockId === block.id;
+    const pAnimType = block.properties?.animationType as string | undefined;
     const pTextStyle: React.CSSProperties = { fontFamily: pFont, fontSize: `${pSize}px`, lineHeight: 1.6 };
     innerNode = (
-      <div className="w-full px-5 pt-4 pb-5 text-center" style={pTextStyle}>
+      <div className="relative w-full px-5 pt-4 pb-5 text-center overflow-hidden" style={pTextStyle}>
         {pEditing ? (
           <textarea
             autoFocus
@@ -1665,16 +1908,43 @@ function FreePlacedBlock({ block }: { block: Block }) {
             className="w-full bg-transparent border-none outline-none resize-none text-center text-neutral-300 break-words placeholder:text-neutral-600"
             style={pTextStyle}
           />
+        ) : pAnimType === 'blur-words' ? (
+          <BlurWords text={displayText || 'Start writing your story...'} className="text-neutral-300 break-words" />
         ) : (
           <p className="text-neutral-300 break-words">{displayText || 'Start writing your story...'}</p>
         )}
+        {pAnimType === 'shiny' && !pEditing && (
+          <div aria-hidden="true" className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(90deg, transparent 20%, rgba(255,255,255,0.52) 50%, transparent 80%)", animation: "hc-shimmer 2.4s linear infinite" }} />
+        )}
       </div>
+    );
+  } else if (block.type === 'button') {
+    const btnLabel  = block.content || 'Click Here';
+    const btnColor  = (block.properties?.accentColor as string) || '#10b981';
+    const btnRadius = (block.properties?.blockBorderRadius as number) ?? 12;
+    innerNode = (
+      <div className="flex items-center justify-center px-5 py-5">
+        <button
+          type="button"
+          style={{ backgroundColor: btnColor, borderRadius: `${btnRadius}px` }}
+          className="px-8 py-3 text-white text-sm font-bold tracking-wide pointer-events-none shadow-lg"
+        >
+          {btnLabel}
+        </button>
+      </div>
+    );
+  } else if (block.type === 'video') {
+    innerNode = (
+      <VideoBlock
+        content={block.content}
+        onContentChange={(url) => updateBlock(block.id, { content: url })}
+      />
     );
   } else if (block.type === 'gallery-stack') {
     innerNode = <MasonryGallery images={block.images} properties={block.properties}
       onImagesChange={(urls) => updateBlock(block.id, { images: urls })} />;
   } else if (block.type === 'audio') {
-    innerNode = <SpotifyPlayer audioUrl={block.audioUrl} properties={block.properties} />;
+    innerNode = <AudioBlock audioUrl={block.audioUrl} audioVolume={block.audioVolume ?? 80} onVolumeChange={(vol) => updateBlock(block.id, { audioVolume: vol })} />;
   } else if (block.type === 'map') {
     innerNode = <GoogleMap properties={block.properties} />;
   } else if (block.type === 'lottie') {
@@ -1695,6 +1965,25 @@ function FreePlacedBlock({ block }: { block: Block }) {
       <div className="flex items-center justify-center p-5">
         {React.createElement(FpIconComp, { size: fpIconSize, strokeWidth: fpIconStr, color: fpIconCol })}
       </div>
+    );
+  } else if (block.type === 'scribble') {
+    innerNode = (
+      <ScribbleBlock
+        paths={(block.properties?.scribblePaths as string[]) ?? []}
+        strokeColor={(block.properties?.scribbleColor as string) ?? '#a855f7'}
+        strokeWidth={(block.properties?.scribbleWidth as number) ?? 3}
+        onPathsChange={(paths) => updateBlock(block.id, { properties: { ...block.properties, scribblePaths: paths } })}
+      />
+    );
+  } else if (block.type === 'arc-text') {
+    innerNode = (
+      <ArcTextBlock
+        text={(block.properties?.arcText as string) ?? undefined}
+        radius={(block.properties?.arcRadius as number) ?? undefined}
+        color={(block.properties?.arcColor as string) ?? undefined}
+        fontSize={(block.properties?.arcFontSize as number) ?? undefined}
+        startAngle={(block.properties?.arcStartAngle as number) ?? undefined}
+      />
     );
   } else {
     innerNode = (
@@ -1961,10 +2250,17 @@ function CenterCanvas() {
             style={{ opacity: layerOpacity / 100, transform: `scale(${layerScale / 100}) rotate(${layerRotation}deg)`, transformOrigin: 'top center' }}>
             <AnimatePresence mode="wait">
               <motion.div key={activeSceneId} initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.96 }} transition={{ duration: 0.35, ease: "easeInOut" }} className="relative">
-                {/* ── Interactive background effect — rendered behind all blocks ── */}
+                {/* ── BackgroundRenderer — absolute lowest z-index layer ── */}
                 {canvasBackground !== 'none' && (() => {
                   const Effect = getEffectComponent(canvasBackground);
-                  return Effect ? <Effect /> : null;
+                  return Effect ? (
+                    <div
+                      className="absolute inset-0 z-0 overflow-hidden pointer-events-none"
+                      aria-hidden="true"
+                    >
+                      <Effect />
+                    </div>
+                  ) : null;
                 })()}
                 <AtmosphereRenderer particles={(environment as { particles: string }).particles} />
                 <AmbientEffects effect={ambientEffect} />
@@ -2005,10 +2301,11 @@ function CenterCanvas() {
                           const hFont = (block.properties?.fontFamily as string) || FONTS.find((f: typeof FONTS[0]) => f.id === selectedFont)?.css;
                           const hSize = (block.properties?.fontSize as number) || 48;
                           const hIsSelected = activeBlockId === block.id;
+                          const hAnimType = block.properties?.animationType as string | undefined;
                           return (
                             <SortableBlock key={block.id} id={block.id} isSelected={hIsSelected} onClick={() => { setSelectedItem('headline'); setActiveBlockId(block.id); setLeftPanelTab('style'); }}>
                               <div
-                                className={`rounded-xl transition-all ${hIsSelected ? 'ring-2 ring-purple-500 ring-offset-2 ring-offset-transparent shadow-[0_0_20px_rgba(168,85,247,0.2)]' : ''}`}
+                                className={`relative rounded-xl transition-all overflow-hidden ${hIsSelected ? 'ring-2 ring-purple-500 ring-offset-2 ring-offset-transparent shadow-[0_0_20px_rgba(168,85,247,0.2)]' : ''}`}
                                 style={{
                                   opacity: ((block.properties?.blockOpacity as number) ?? 100) / 100,
                                   backdropFilter: (block.properties?.backdropBlur as number) ? `blur(${block.properties?.backdropBlur}px)` : undefined,
@@ -2042,6 +2339,17 @@ function CenterCanvas() {
                                   }}
                                   className="w-full bg-transparent border-none outline-none resize-none cursor-text px-4 py-3 placeholder:text-neutral-600 overflow-hidden"
                                 />
+                                {hAnimType === 'shiny' && (
+                                  <div aria-hidden="true" className="absolute inset-0 pointer-events-none overflow-hidden">
+                                    <div className="absolute inset-0" style={{ background: "linear-gradient(90deg, transparent 20%, rgba(255,255,255,0.52) 50%, transparent 80%)", animation: "hc-shimmer 2.4s linear infinite" }} />
+                                  </div>
+                                )}
+                                {hAnimType === 'blur-words' && (
+                                  <div aria-hidden="true" className="absolute top-2 right-2 pointer-events-none flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-blue-500/15 border border-blue-500/25">
+                                    <LucideIcons.Eye className="w-2.5 h-2.5 text-blue-400" />
+                                    <span className="text-[8px] font-bold text-blue-400 uppercase tracking-wide">Blur</span>
+                                  </div>
+                                )}
                               </div>
                             </SortableBlock>
                           );
@@ -2050,10 +2358,11 @@ function CenterCanvas() {
                           const pFont = (block.properties?.fontFamily as string) || FONTS.find((f: typeof FONTS[0]) => f.id === selectedFont)?.css;
                           const pSize = (block.properties?.fontSize as number) || 16;
                           const pIsSelected = activeBlockId === block.id;
+                          const pAnimType = block.properties?.animationType as string | undefined;
                           return (
                             <SortableBlock key={block.id} id={block.id} isSelected={pIsSelected} onClick={() => { setSelectedItem('paragraph'); setActiveBlockId(block.id); setLeftPanelTab('style'); }}>
                               <div
-                                className={`rounded-xl transition-all ${pIsSelected ? 'ring-2 ring-purple-500 ring-offset-2 ring-offset-transparent shadow-[0_0_20px_rgba(168,85,247,0.2)]' : ''}`}
+                                className={`relative rounded-xl transition-all overflow-hidden ${pIsSelected ? 'ring-2 ring-purple-500 ring-offset-2 ring-offset-transparent shadow-[0_0_20px_rgba(168,85,247,0.2)]' : ''}`}
                                 style={{
                                   opacity: ((block.properties?.blockOpacity as number) ?? 100) / 100,
                                   backdropFilter: (block.properties?.backdropBlur as number) ? `blur(${block.properties?.backdropBlur}px)` : undefined,
@@ -2087,6 +2396,17 @@ function CenterCanvas() {
                                   }}
                                   className="w-full bg-transparent border-none outline-none resize-none cursor-text px-4 py-3 placeholder:text-neutral-600 overflow-hidden"
                                 />
+                                {pAnimType === 'shiny' && (
+                                  <div aria-hidden="true" className="absolute inset-0 pointer-events-none overflow-hidden">
+                                    <div className="absolute inset-0" style={{ background: "linear-gradient(90deg, transparent 20%, rgba(255,255,255,0.52) 50%, transparent 80%)", animation: "hc-shimmer 2.4s linear infinite" }} />
+                                  </div>
+                                )}
+                                {pAnimType === 'blur-words' && (
+                                  <div aria-hidden="true" className="absolute top-2 right-2 pointer-events-none flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-blue-500/15 border border-blue-500/25">
+                                    <LucideIcons.Eye className="w-2.5 h-2.5 text-blue-400" />
+                                    <span className="text-[8px] font-bold text-blue-400 uppercase tracking-wide">Blur</span>
+                                  </div>
+                                )}
                               </div>
                             </SortableBlock>
                           );
@@ -2146,6 +2466,18 @@ function CenterCanvas() {
                             </SortableBlock>
                           );
                         }
+                        if (block.type === 'rsvp-form') {
+                          const isSel = activeBlockId === block.id;
+                          return (
+                            <SortableBlock key={block.id} id={block.id} isSelected={isSel} onClick={() => { setSelectedItem('rsvp-form'); setActiveBlockId(block.id); setLeftPanelTab('style'); }}>
+                              <div
+                                className={`cursor-pointer rounded-xl transition-all ${isSel ? 'ring-2 ring-pink-500/50 scale-[1.01]' : 'hover:bg-white/5'}`}
+                                onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); setContextMenu({ x: e.clientX, y: e.clientY, blockId: block.id }); }}>
+                                <RsvpForm properties={block.properties} />
+                              </div>
+                            </SortableBlock>
+                          );
+                        }
                         if (block.type === 'audio') {
                           const isSel = activeBlockId === block.id;
                           return (
@@ -2153,7 +2485,7 @@ function CenterCanvas() {
                               <div
                                 className={`cursor-pointer rounded-xl transition-all ${isSel ? 'ring-2 ring-purple-500/50 scale-[1.01]' : ''}`}
                                 onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); setContextMenu({ x: e.clientX, y: e.clientY, blockId: block.id }); }}>
-                                <SpotifyPlayer audioUrl={block.audioUrl} properties={block.properties} />
+                                <AudioBlock audioUrl={block.audioUrl} audioVolume={block.audioVolume ?? 80} onVolumeChange={(vol) => updateBlock(block.id, { audioVolume: vol })} />
                               </div>
                             </SortableBlock>
                           );
@@ -2203,6 +2535,77 @@ function CenterCanvas() {
                                 onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); setContextMenu({ x: e.clientX, y: e.clientY, blockId: block.id }); }}>
                                 <CarouselSlideshow images={block.images} properties={block.properties}
                                   onImagesChange={(urls) => updateBlock(block.id, { images: urls })} />
+                              </div>
+                            </SortableBlock>
+                          );
+                        }
+                        if (block.type === 'button') {
+                          const isSel    = activeBlockId === block.id;
+                          const btnLabel  = block.content || 'Click Here';
+                          const btnColor  = (block.properties?.accentColor as string) || '#10b981';
+                          const btnRadius = (block.properties?.blockBorderRadius as number) ?? 12;
+                          return (
+                            <SortableBlock key={block.id} id={block.id} isSelected={isSel} onClick={() => { setSelectedItem('button'); setActiveBlockId(block.id); setLeftPanelTab('style'); }}>
+                              <div
+                                className={`flex items-center justify-center px-5 py-5 rounded-xl transition-all cursor-pointer ${isSel ? 'ring-2 ring-emerald-500/60 bg-emerald-500/5 scale-[1.01]' : 'hover:bg-white/5'}`}
+                                onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); setContextMenu({ x: e.clientX, y: e.clientY, blockId: block.id }); }}>
+                                <button
+                                  type="button"
+                                  style={{ backgroundColor: btnColor, borderRadius: `${btnRadius}px` }}
+                                  className="px-8 py-3 text-white text-sm font-bold tracking-wide pointer-events-none shadow-lg"
+                                >
+                                  {btnLabel}
+                                </button>
+                              </div>
+                            </SortableBlock>
+                          );
+                        }
+                        if (block.type === 'video') {
+                          const isSel = activeBlockId === block.id;
+                          return (
+                            <SortableBlock key={block.id} id={block.id} isSelected={isSel} onClick={() => { setSelectedItem('video'); setActiveBlockId(block.id); setLeftPanelTab('style'); }}>
+                              <div
+                                className={`cursor-pointer rounded-xl transition-all ${isSel ? 'ring-2 ring-red-500/50 scale-[1.01]' : 'hover:bg-white/5'}`}
+                                onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); setContextMenu({ x: e.clientX, y: e.clientY, blockId: block.id }); }}>
+                                <VideoBlock
+                                  content={block.content}
+                                  onContentChange={(url) => updateBlock(block.id, { content: url })}
+                                />
+                              </div>
+                            </SortableBlock>
+                          );
+                        }
+                        if (block.type === 'scribble') {
+                          const isSel = activeBlockId === block.id;
+                          return (
+                            <SortableBlock key={block.id} id={block.id} isSelected={isSel} onClick={() => { setSelectedItem('scribble'); setActiveBlockId(block.id); setLeftPanelTab('style'); }}>
+                              <div
+                                className={`cursor-pointer rounded-xl transition-all ${isSel ? 'ring-2 ring-pink-500/50 scale-[1.01]' : 'hover:bg-white/5'}`}
+                                onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); setContextMenu({ x: e.clientX, y: e.clientY, blockId: block.id }); }}>
+                                <ScribbleBlock
+                                  paths={(block.properties?.scribblePaths as string[]) ?? []}
+                                  strokeColor={(block.properties?.scribbleColor as string) ?? '#a855f7'}
+                                  strokeWidth={(block.properties?.scribbleWidth as number) ?? 3}
+                                  onPathsChange={(paths) => updateBlock(block.id, { properties: { ...block.properties, scribblePaths: paths } })}
+                                />
+                              </div>
+                            </SortableBlock>
+                          );
+                        }
+                        if (block.type === 'arc-text') {
+                          const isSel = activeBlockId === block.id;
+                          return (
+                            <SortableBlock key={block.id} id={block.id} isSelected={isSel} onClick={() => { setSelectedItem('arc-text'); setActiveBlockId(block.id); setLeftPanelTab('style'); }}>
+                              <div
+                                className={`cursor-pointer rounded-xl transition-all ${isSel ? 'ring-2 ring-teal-500/50 scale-[1.01]' : 'hover:bg-white/5'}`}
+                                onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); setContextMenu({ x: e.clientX, y: e.clientY, blockId: block.id }); }}>
+                                <ArcTextBlock
+                                  text={(block.properties?.arcText as string) ?? undefined}
+                                  radius={(block.properties?.arcRadius as number) ?? undefined}
+                                  color={(block.properties?.arcColor as string) ?? undefined}
+                                  fontSize={(block.properties?.arcFontSize as number) ?? undefined}
+                                  startAngle={(block.properties?.arcStartAngle as number) ?? undefined}
+                                />
                               </div>
                             </SortableBlock>
                           );
@@ -3865,8 +4268,10 @@ export default function Studio({ id: propId = null }: { id?: string | null } = {
   const [selectedTone, setSelectedTone] = useState<'poetic' | 'funny' | 'romantic' | 'casual'>('romantic');
   const [imagePrompt, setImagePrompt] = useState('');
 
-  // true immediately on the client; false during SSR so the shell renders null (no hydration mismatch)
-  const [isLoaded] = useState(() => typeof window !== 'undefined');
+  // Always false on first render (server + client hydration both see false → both render null → no mismatch).
+  // Flipped to true in the effect below once the component has mounted on the client.
+  const [isLoaded, setIsLoaded] = useState(false);
+  useEffect(() => { setIsLoaded(true); }, []);
 
   // Share Modal States
   const [showShareModal, setShowShareModal] = useState(false);
@@ -4104,7 +4509,10 @@ export default function Studio({ id: propId = null }: { id?: string | null } = {
       const newBlock: Block = {
         id: `block-${now}`,
         type,
-        content: type === 'headline' ? 'Happy Anniversary!' : type === 'paragraph' ? 'Type your message here' : '',
+        content: type === 'headline' ? 'Happy Anniversary!'
+               : type === 'paragraph' ? 'Type your message here'
+               : type === 'button' ? 'RSVP Now'
+               : '',
         targetDate: type === 'countdown' ? thirtyDaysOut : undefined,
         images: type === 'gallery-stack' ? ['', '', ''] : undefined,
         filters:      (type === 'image' || type === 'gallery-stack') ? { ...DEFAULT_FILTERS } : undefined,
@@ -4114,6 +4522,7 @@ export default function Studio({ id: propId = null }: { id?: string | null } = {
         properties:
           type === 'headline'  ? { fontFamily: 'var(--font-playfair), Georgia, serif', fontSize: 48,  color: defaultTextColor } :
           type === 'paragraph' ? { fontFamily: 'var(--font-inter), system-ui, sans-serif', fontSize: 16, color: defaultTextColor } :
+          type === 'button'    ? { accentColor: '#10b981', blockBorderRadius: 12 } :
           undefined,
       };
       return prev.map(scene =>
@@ -4144,7 +4553,10 @@ export default function Studio({ id: propId = null }: { id?: string | null } = {
         type,
         x,
         y,
-        content: type === 'headline' ? 'Happy Anniversary!' : type === 'paragraph' ? 'Type your message here' : '',
+        content: type === 'headline' ? 'Happy Anniversary!'
+               : type === 'paragraph' ? 'Type your message here'
+               : type === 'button' ? 'RSVP Now'
+               : '',
         targetDate: type === 'countdown' ? thirtyDaysOut : undefined,
         images: type === 'gallery-stack' ? ['', '', ''] : undefined,
         filters: (type === 'image' || type === 'gallery-stack') ? { ...DEFAULT_FILTERS } : undefined,
@@ -4154,6 +4566,7 @@ export default function Studio({ id: propId = null }: { id?: string | null } = {
         properties:
           type === 'headline'  ? { fontFamily: 'var(--font-playfair), Georgia, serif', fontSize: 48,  color: defaultTextColor } :
           type === 'paragraph' ? { fontFamily: 'var(--font-inter), system-ui, sans-serif', fontSize: 16, color: defaultTextColor } :
+          type === 'button'    ? { accentColor: '#10b981', blockBorderRadius: 12 } :
           undefined,
       };
       return prev.map(scene =>
@@ -4945,6 +5358,10 @@ export default function Studio({ id: propId = null }: { id?: string | null } = {
   const isAudioSelected     = selectedItem === 'audio';
   const isMapSelected       = selectedItem === 'map';
   const isIconSelected      = selectedItem === 'icon';
+  const isLottieSelected    = selectedItem === 'lottie';
+  const isVectorSelected    = selectedItem === 'vector';
+  const isScribbleSelected  = selectedItem === 'scribble';
+  const isArcTextSelected   = selectedItem === 'arc-text';
   const isNoneSelected      = selectedItem === 'none';
 
   // Shadow styles for image blocks
@@ -4982,7 +5399,7 @@ export default function Studio({ id: propId = null }: { id?: string | null } = {
   if (!isLoaded) return null;
 
   const webglActive = ambientEffect === 'particles' || ambientEffect === 'ember'
-                   || ambientEffect === 'starfield'  || ambientEffect === 'waves';
+                    || ambientEffect === 'starfield'  || ambientEffect === 'waves';
 
   // ── Assemble context value from all studio state ────────────────────────────
   const ctxValue = {
@@ -4998,7 +5415,7 @@ export default function Studio({ id: propId = null }: { id?: string | null } = {
     webglColor, setWebglColor, webglActive,
     canvasBackground, setCanvasBackground,
     headlineEditor, paragraphEditor, activeEditor,
-    isTextSelected, isImageSelected, isCountdownSelected, isGallerySelected, isAudioSelected, isMapSelected, isIconSelected, isNoneSelected,
+    isTextSelected, isImageSelected, isCountdownSelected, isGallerySelected, isAudioSelected, isMapSelected, isIconSelected, isLottieSelected, isVectorSelected, isScribbleSelected, isArcTextSelected, isNoneSelected,
     hapticsEnabled, setHapticsEnabled, contextMenu, setContextMenu,
     environment, setEnvironment,
     particlePreset, activeSoundscape, soundscapePlaying, applyParticlePreset, toggleSoundscape,
