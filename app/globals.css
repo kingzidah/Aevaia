@@ -207,3 +207,9 @@ html.dark {
   0%   { transform: translateX(-100%); }
   100% { transform: translateX(100%); }
 }
+
+/* Gemini-style AI thinking wave — used by ThinkingShimmer in the studio AI panel */
+@keyframes ai-wave {
+  0%   { transform: translateX(-150%); }
+  100% { transform: translateX(250%); }
+}

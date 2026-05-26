@@ -349,6 +349,45 @@ function Spinner() {
   );
 }
 
+// Gemini-style thinking shimmer — three skeleton lines with a travelling wave
+function ThinkingShimmer({ accent = 'purple' }: { accent?: 'purple' | 'blue' | 'emerald' }) {
+  const via = accent === 'blue' ? 'via-blue-500/25' : accent === 'emerald' ? 'via-emerald-500/25' : 'via-purple-500/25';
+  return (
+    <div className="space-y-2.5 py-0.5 w-full min-w-[120px]">
+      {([82, 96, 61] as const).map((w, i) => (
+        <div key={i} className="relative h-2 rounded-full bg-neutral-700/60 overflow-hidden"
+          style={{ width: `${w}%` }}>
+          <div
+            className={`absolute inset-0 bg-gradient-to-r from-transparent ${via} to-transparent`}
+            style={{ animation: `ai-wave 1.7s ease-in-out ${i * 180}ms infinite` }}
+          />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Collapsed General-AI badge — shown inside specialist panels (Dual-AI system)
+function GeneralAICompactBadge({ onExpand, lastAIMessage }: { onExpand: () => void; lastAIMessage: string }) {
+  return (
+    <button type="button" onClick={onExpand}
+      className="flex items-center gap-2 w-full px-3 py-2 rounded-xl bg-neutral-900/50 border border-neutral-800/70 hover:border-purple-500/30 hover:bg-purple-500/5 transition-all group mb-2 shrink-0">
+      <div className="w-5 h-5 rounded-full bg-purple-600/80 border border-purple-500/40 shrink-0 flex items-center justify-center">
+        <span className="text-[9px] text-white select-none">✦</span>
+      </div>
+      <div className="flex-1 min-w-0 text-left">
+        <p className="text-[9px] font-semibold text-neutral-500 uppercase tracking-wide">General AI</p>
+        <p className="text-[10px] text-neutral-400 group-hover:text-neutral-300 transition-colors truncate leading-tight mt-0.5">
+          {lastAIMessage || 'Ask anything…'}
+        </p>
+      </div>
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3 h-3 text-neutral-600 group-hover:text-purple-400 shrink-0 transition-colors">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+      </svg>
+    </button>
+  );
+}
+
 // ─── Left Sidebar ─────────────────────────────────────────────────────────────
 
 function LeftSidebar() {
@@ -2841,6 +2880,7 @@ function RightSidebar() {
     addBlock, setScenes, activeSceneId,
     setImageUrl, setSelectedItem,
     activeFeature, setActiveFeature, activeAIPrompt, setActiveAIPrompt,
+    isFocusMode, setIsFocusMode,
   } = useS();
 
   const { deductCredits } = useCredits();
@@ -3214,21 +3254,53 @@ function RightSidebar() {
           STATIC HEADER — always visible, mirrors left sidebar
           header height (p-5 + title row + mb-5 + mode row)
           ══════════════════════════════════════════════════════ */}
-      <div className="shrink-0 p-5 border-b border-zinc-200 dark:border-zinc-800">
-        {/* Row 1: title + status */}
+      <div className={`shrink-0 p-5 border-b transition-colors duration-300 ${isFocusMode ? 'border-purple-500/25 dark:border-purple-500/20' : 'border-zinc-200 dark:border-zinc-800'}`}>
+        {/* Row 1: title + focus toggle + status */}
         <div className="flex items-center gap-2 mb-5">
-          <LucideIcons.Sparkles className="w-4 h-4 text-purple-400" />
-          <p className="text-xs font-bold text-zinc-900 dark:text-white tracking-tight">Aevaia AI</p>
-          <div className="ml-auto flex items-center gap-1.5">
-            <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-            <span className="text-[9px] font-medium text-green-400/70 uppercase tracking-wider">Online</span>
+          {isFocusMode ? (
+            <button type="button" onClick={() => setIsFocusMode(false)}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-purple-500/15 border border-purple-500/30 text-purple-300 text-[10px] font-bold hover:bg-purple-500/25 transition-all">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3 h-3">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+              </svg>
+              Exit Focus
+            </button>
+          ) : (
+            <>
+              <LucideIcons.Sparkles className="w-4 h-4 text-purple-400" />
+              <p className="text-xs font-bold text-zinc-900 dark:text-white tracking-tight">Aevaia AI</p>
+            </>
+          )}
+          <div className="ml-auto flex items-center gap-2">
+            {!isFocusMode && (
+              <button type="button" onClick={() => setIsFocusMode(true)} title="Focus Mode — hides side panels"
+                className="w-5 h-5 rounded-md flex items-center justify-center text-neutral-600 hover:text-purple-400 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3.5 h-3.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
+                </svg>
+              </button>
+            )}
+            <div className="flex items-center gap-1.5">
+              <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${isWorking ? 'bg-purple-400' : 'bg-green-400'}`} />
+              <span className={`text-[9px] font-medium uppercase tracking-wider ${isWorking ? 'text-purple-400/70' : 'text-green-400/70'}`}>
+                {isWorking ? 'Working' : 'Online'}
+              </span>
+            </div>
           </div>
         </div>
-        {/* Row 2: context mode pill — always visible */}
+        {/* Row 2: context mode pill + working dots */}
         <div className={`flex items-center gap-2 py-2 px-3 rounded-lg border transition-colors duration-200 ${modePillCls}`}>
           {modeIcon}
           <span className="text-xs font-semibold truncate">{modeLabel}</span>
-          {!isNoneSelected && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-current animate-pulse opacity-70 shrink-0" />}
+          {isWorking ? (
+            <div className="ml-auto flex items-center gap-0.5 shrink-0">
+              {[0, 150, 300].map(delay => (
+                <div key={delay} className="w-1 h-1 rounded-full bg-current animate-pulse" style={{ animationDelay: `${delay}ms` }} />
+              ))}
+            </div>
+          ) : (
+            !isNoneSelected && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-current animate-pulse opacity-70 shrink-0" />
+          )}
         </div>
       </div>
 
@@ -3282,11 +3354,10 @@ function RightSidebar() {
                 {activeFeature === 'text' && (
                   <motion.div key="feat-text" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.15 }}
                     className="p-4 space-y-4">
-                    <button type="button" onClick={() => setActiveFeature('general')}
-                      className="flex items-center gap-1 text-[10px] text-neutral-500 hover:text-purple-400 transition-colors mb-1">
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3 h-3"><path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" /></svg>
-                      Back to Aevaia AI
-                    </button>
+                    <GeneralAICompactBadge
+                      onExpand={() => setActiveFeature('general')}
+                      lastAIMessage={chatHistory.filter(m => m.role === 'ai' && m.text !== '…').at(-1)?.text ?? ''}
+                    />
                     <div className="flex items-center gap-2.5">
                       <div className="w-8 h-8 rounded-xl bg-violet-500/15 border border-violet-500/30 flex items-center justify-center"><LucideIcons.PenTool className="w-4 h-4 text-violet-400" /></div>
                       <div><p className="text-xs font-bold text-white">Copywriter AI</p><p className="text-[10px] text-neutral-500">Headlines, paragraphs & story arcs</p></div>
@@ -3307,11 +3378,10 @@ function RightSidebar() {
                 {activeFeature === 'media' && (
                   <motion.div key="feat-media" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.15 }}
                     className="p-4 space-y-4">
-                    <button type="button" onClick={() => setActiveFeature('general')}
-                      className="flex items-center gap-1 text-[10px] text-neutral-500 hover:text-purple-400 transition-colors mb-1">
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3 h-3"><path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" /></svg>
-                      Back to Aevaia AI
-                    </button>
+                    <GeneralAICompactBadge
+                      onExpand={() => setActiveFeature('general')}
+                      lastAIMessage={chatHistory.filter(m => m.role === 'ai' && m.text !== '…').at(-1)?.text ?? ''}
+                    />
                     <div className="flex items-center gap-2.5">
                       <div className="w-8 h-8 rounded-xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center"><LucideIcons.Palette className="w-4 h-4 text-blue-400" /></div>
                       <div><p className="text-xs font-bold text-white">Image Studio AI</p><p className="text-[10px] text-neutral-500">Generate cinematic visuals on demand</p></div>
@@ -3370,11 +3440,10 @@ function RightSidebar() {
                 {activeFeature === 'audio' && (
                   <motion.div key="feat-audio" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.15 }}
                     className="p-4 space-y-4">
-                    <button type="button" onClick={() => setActiveFeature('general')}
-                      className="flex items-center gap-1 text-[10px] text-neutral-500 hover:text-purple-400 transition-colors mb-1">
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3 h-3"><path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" /></svg>
-                      Back to Aevaia AI
-                    </button>
+                    <GeneralAICompactBadge
+                      onExpand={() => setActiveFeature('general')}
+                      lastAIMessage={chatHistory.filter(m => m.role === 'ai' && m.text !== '…').at(-1)?.text ?? ''}
+                    />
                     <div className="flex items-center gap-2.5">
                       <div className="w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center"><LucideIcons.Music className="w-4 h-4 text-emerald-400" /></div>
                       <div><p className="text-xs font-bold text-white">Audio Engineer AI</p><p className="text-[10px] text-neutral-500">Custom tracks & ambient soundscapes</p></div>
@@ -3418,11 +3487,10 @@ function RightSidebar() {
                 {activeFeature === 'icons' && (
                   <motion.div key="feat-icons" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.15 }}
                     className="p-4 space-y-4">
-                    <button type="button" onClick={() => setActiveFeature('general')}
-                      className="flex items-center gap-1 text-[10px] text-neutral-500 hover:text-purple-400 transition-colors mb-1">
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3 h-3"><path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" /></svg>
-                      Back to Aevaia AI
-                    </button>
+                    <GeneralAICompactBadge
+                      onExpand={() => setActiveFeature('general')}
+                      lastAIMessage={chatHistory.filter(m => m.role === 'ai' && m.text !== '…').at(-1)?.text ?? ''}
+                    />
                     <div className="flex items-center gap-2.5">
                       <div className="w-8 h-8 rounded-xl bg-fuchsia-500/15 border border-fuchsia-500/30 flex items-center justify-center"><LucideIcons.Gem className="w-4 h-4 text-fuchsia-400" /></div>
                       <div><p className="text-xs font-bold text-white">AI Icon Station</p><p className="text-[10px] text-neutral-500">Prompt → 5 matching Lucide icons</p></div>
@@ -3452,11 +3520,10 @@ function RightSidebar() {
                 {activeFeature === 'button' && (
                   <motion.div key="feat-button" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.15 }}
                     className="p-4 space-y-4">
-                    <button type="button" onClick={() => setActiveFeature('general')}
-                      className="flex items-center gap-1 text-[10px] text-neutral-500 hover:text-purple-400 transition-colors mb-1">
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3 h-3"><path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" /></svg>
-                      Back to Aevaia AI
-                    </button>
+                    <GeneralAICompactBadge
+                      onExpand={() => setActiveFeature('general')}
+                      lastAIMessage={chatHistory.filter(m => m.role === 'ai' && m.text !== '…').at(-1)?.text ?? ''}
+                    />
                     <div className="flex items-center gap-2.5">
                       <div className="w-8 h-8 rounded-xl bg-slate-500/15 border border-slate-500/30 flex items-center justify-center"><LucideIcons.MousePointerClick className="w-4 h-4 text-slate-400" /></div>
                       <div><p className="text-xs font-bold text-white">Button Block AI</p><p className="text-[10px] text-neutral-500">Design your call-to-action copy & style</p></div>
@@ -3488,11 +3555,10 @@ function RightSidebar() {
                 {activeFeature === 'video' && (
                   <motion.div key="feat-video" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.15 }}
                     className="p-4 space-y-4">
-                    <button type="button" onClick={() => setActiveFeature('general')}
-                      className="flex items-center gap-1 text-[10px] text-neutral-500 hover:text-purple-400 transition-colors mb-1">
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3 h-3"><path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" /></svg>
-                      Back to Aevaia AI
-                    </button>
+                    <GeneralAICompactBadge
+                      onExpand={() => setActiveFeature('general')}
+                      lastAIMessage={chatHistory.filter(m => m.role === 'ai' && m.text !== '…').at(-1)?.text ?? ''}
+                    />
                     <div className="flex items-center gap-2.5">
                       <div className="w-8 h-8 rounded-xl bg-red-500/15 border border-red-500/30 flex items-center justify-center"><LucideIcons.Video className="w-4 h-4 text-red-400" /></div>
                       <div><p className="text-xs font-bold text-white">Video Block AI</p><p className="text-[10px] text-neutral-500">Script a cinematic moment for your gift</p></div>
@@ -3524,11 +3590,10 @@ function RightSidebar() {
                 {activeFeature === 'webgl' && (
                   <motion.div key="feat-webgl" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.15 }}
                     className="p-4 space-y-4">
-                    <button type="button" onClick={() => setActiveFeature('general')}
-                      className="flex items-center gap-1 text-[10px] text-neutral-500 hover:text-purple-400 transition-colors mb-1">
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3 h-3"><path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" /></svg>
-                      Back to Aevaia AI
-                    </button>
+                    <GeneralAICompactBadge
+                      onExpand={() => setActiveFeature('general')}
+                      lastAIMessage={chatHistory.filter(m => m.role === 'ai' && m.text !== '…').at(-1)?.text ?? ''}
+                    />
                     <div className="flex items-center gap-2.5">
                       <div className="w-8 h-8 rounded-xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-base select-none">✦</div>
                       <div><p className="text-xs font-bold text-white">Particle Engine AI</p><p className="text-[10px] text-neutral-500">Sculpt a living 3D particle atmosphere</p></div>
@@ -3572,11 +3637,10 @@ function RightSidebar() {
                 {activeFeature === 'lottie' && (
                   <motion.div key="feat-lottie" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.15 }}
                     className="p-4 space-y-4">
-                    <button type="button" onClick={() => setActiveFeature('general')}
-                      className="flex items-center gap-1 text-[10px] text-neutral-500 hover:text-purple-400 transition-colors mb-1">
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3 h-3"><path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" /></svg>
-                      Back to Aevaia AI
-                    </button>
+                    <GeneralAICompactBadge
+                      onExpand={() => setActiveFeature('general')}
+                      lastAIMessage={chatHistory.filter(m => m.role === 'ai' && m.text !== '…').at(-1)?.text ?? ''}
+                    />
                     <div className="flex items-center gap-2.5">
                       <div className="w-8 h-8 rounded-xl bg-orange-500/15 border border-orange-500/30 flex items-center justify-center"><LucideIcons.Wind className="w-4 h-4 text-orange-400" /></div>
                       <div><p className="text-xs font-bold text-white">Lottie Animation AI</p><p className="text-[10px] text-neutral-500">Find the perfect looping motion graphic</p></div>
@@ -3620,11 +3684,10 @@ function RightSidebar() {
                 {activeFeature === 'svg' && (
                   <motion.div key="feat-svg" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.15 }}
                     className="p-4 space-y-4">
-                    <button type="button" onClick={() => setActiveFeature('general')}
-                      className="flex items-center gap-1 text-[10px] text-neutral-500 hover:text-purple-400 transition-colors mb-1">
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3 h-3"><path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" /></svg>
-                      Back to Aevaia AI
-                    </button>
+                    <GeneralAICompactBadge
+                      onExpand={() => setActiveFeature('general')}
+                      lastAIMessage={chatHistory.filter(m => m.role === 'ai' && m.text !== '…').at(-1)?.text ?? ''}
+                    />
                     <div className="flex items-center gap-2.5">
                       <div className="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center"><LucideIcons.Shapes className="w-4 h-4 text-amber-400" /></div>
                       <div><p className="text-xs font-bold text-white">Vector Art AI</p><p className="text-[10px] text-neutral-500">Generate scalable SVG artwork for the canvas</p></div>
@@ -3668,11 +3731,10 @@ function RightSidebar() {
                 {activeFeature === 'scribbles' && (
                   <motion.div key="feat-scribbles" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.15 }}
                     className="p-4 space-y-4">
-                    <button type="button" onClick={() => setActiveFeature('general')}
-                      className="flex items-center gap-1 text-[10px] text-neutral-500 hover:text-purple-400 transition-colors mb-1">
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3 h-3"><path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" /></svg>
-                      Back to Aevaia AI
-                    </button>
+                    <GeneralAICompactBadge
+                      onExpand={() => setActiveFeature('general')}
+                      lastAIMessage={chatHistory.filter(m => m.role === 'ai' && m.text !== '…').at(-1)?.text ?? ''}
+                    />
                     <div className="flex items-center gap-2.5">
                       <div className="w-8 h-8 rounded-xl bg-pink-500/15 border border-pink-500/30 flex items-center justify-center"><LucideIcons.Pencil className="w-4 h-4 text-pink-400" /></div>
                       <div><p className="text-xs font-bold text-white">Scribble Style AI</p><p className="text-[10px] text-neutral-500">Hand-drawn layer overlays, borders & marks</p></div>
@@ -3716,11 +3778,10 @@ function RightSidebar() {
                 {activeFeature === 'arctext' && (
                   <motion.div key="feat-arctext" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.15 }}
                     className="p-4 space-y-4">
-                    <button type="button" onClick={() => setActiveFeature('general')}
-                      className="flex items-center gap-1 text-[10px] text-neutral-500 hover:text-purple-400 transition-colors mb-1">
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3 h-3"><path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" /></svg>
-                      Back to Aevaia AI
-                    </button>
+                    <GeneralAICompactBadge
+                      onExpand={() => setActiveFeature('general')}
+                      lastAIMessage={chatHistory.filter(m => m.role === 'ai' && m.text !== '…').at(-1)?.text ?? ''}
+                    />
                     <div className="flex items-center gap-2.5">
                       <div className="w-8 h-8 rounded-xl bg-teal-500/15 border border-teal-500/30 flex items-center justify-center"><LucideIcons.RefreshCw className="w-4 h-4 text-teal-400" /></div>
                       <div><p className="text-xs font-bold text-white">Arc Text AI</p><p className="text-[10px] text-neutral-500">Curved typographic phrases for your gift</p></div>
@@ -3807,7 +3868,9 @@ function RightSidebar() {
                               ? 'bg-purple-600 text-white rounded-br-sm'
                               : 'bg-neutral-800/80 text-neutral-200 rounded-bl-sm border border-neutral-700/50'
                           }`}>
-                            {msg.text}
+                            {(msg.role === 'ai' && msg.text === '…')
+                              ? <ThinkingShimmer accent="purple" />
+                              : msg.text}
                           </div>
                         </div>
                       ))}
@@ -4366,8 +4429,10 @@ export default function Studio({ id: propId = null }: { id?: string | null } = {
   const [paymentToast, setPaymentToast] = useState<'success' | 'canceled' | null>(null);
 
   // Sidebar collapse state (hardware-accelerated via CSS transition-all)
-  const [isLeftOpen,  setIsLeftOpen]  = useState(true);
-  const [isRightOpen, setIsRightOpen] = useState(true);
+  const [isLeftOpen,   setIsLeftOpen]   = useState(true);
+  const [isRightOpen,  setIsRightOpen]  = useState(true);
+  // Focus Mode — collapses left sidebar and locks the AI panel to distraction-free view
+  const [isFocusMode,  setIsFocusMode]  = useState(false);
 
   // Scene drawer (bottom of center canvas)
   const [sceneDrawerOpen, setSceneDrawerOpen] = useState(false);
@@ -5441,6 +5506,7 @@ export default function Studio({ id: propId = null }: { id?: string | null } = {
     editingBlockId, setEditingBlockId,
     sceneDrawerOpen, setSceneDrawerOpen,
     isLeftOpen, setIsLeftOpen, isRightOpen, setIsRightOpen,
+    isFocusMode, setIsFocusMode,
     projectId, saveStatus, isSavingGift, isPublishing, handlePublish, handlePublishLive,
     activeTool, setActiveTool,
     comments, addComment, removeComment,
@@ -5459,8 +5525,8 @@ export default function Studio({ id: propId = null }: { id?: string | null } = {
       {/* ══════════ EXACT THREE-COLUMN LAYOUT ══════════ */}
       <div className={`fixed inset-0 flex flex-row overflow-hidden bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-white${isPanningWorkspace ? ' select-none' : ''}`}>
 
-        {/* 1. LEFT SIDEBAR — collapses to w-0 */}
-        <div className={`flex-shrink-0 bg-white dark:bg-zinc-950 overflow-y-auto overflow-x-hidden no-scrollbar transition-all duration-300 ease-in-out ${isLeftOpen ? 'w-80 border-r border-zinc-200 dark:border-zinc-800' : 'w-0 border-r-0'}`}>
+        {/* 1. LEFT SIDEBAR — collapses to w-0 (also hidden in Focus Mode) */}
+        <div className={`flex-shrink-0 bg-white dark:bg-zinc-950 overflow-y-auto overflow-x-hidden no-scrollbar transition-all duration-300 ease-in-out ${(!isFocusMode && isLeftOpen) ? 'w-80 border-r border-zinc-200 dark:border-zinc-800' : 'w-0 border-r-0'}`}>
           <LeftSidebar />
         </div>
 
