@@ -752,7 +752,7 @@ function LeftSidebar() {
                             e.dataTransfer.effectAllowed = 'copy';
                           } : undefined}
                           onClick={() => {
-                            if (item.blockType)                  { addBlock(item.blockType); setLeftPanelTab('style'); flashInsert(item.label); }
+                            if (item.blockType)                  { addBlock(item.blockType); flashInsert(item.label); }
                             if (item.feature)                    { setActiveFeature(item.feature as any); }
                             if (item.action === 'upload-photo')  { uploadRef.current?.click(); }
                             if (item.animType !== undefined) {
@@ -2186,10 +2186,20 @@ function CenterCanvas() {
     const x = (e.clientX - rect.left) / canvasZoom;
     const y = (e.clientY - rect.top)  / canvasZoom;
     addBlockAtPosition(blockType, Math.round(x), Math.round(y));
-    // Select the new block immediately so the right sidebar morphs
-    setLeftPanelTab('style');
   };
 
+  // Group consecutive icon blocks into a single flex-row for horizontal layout
+  const flowEntries = (() => {
+    const all = (activeScene as Scene).blocks.filter((b: Block) => b.x === undefined);
+    const entries: (Block | Block[])[] = [];
+    let batch: Block[] = [];
+    for (const b of all) {
+      if (b.type === 'icon') { batch.push(b); }
+      else { if (batch.length) { entries.push([...batch]); batch = []; } entries.push(b); }
+    }
+    if (batch.length) entries.push([...batch]);
+    return entries;
+  })();
 
   return (
     <div className="flex-1 relative h-full flex flex-col">
@@ -2234,7 +2244,7 @@ function CenterCanvas() {
         className={`flex-1 relative overflow-hidden ${
           isPanningWorkspace
             ? 'cursor-grabbing'
-            : spacebarHeld
+            : (spacebarHeld || activeTool === 'pan')
             ? 'cursor-grab'
             : activeTool === 'comment'
             ? 'cursor-crosshair'
@@ -2270,6 +2280,19 @@ function CenterCanvas() {
 
         {/* ── Spacebar-pan capture layer — sits above blocks, intercepts pointer ── */}
         {spacebarHeld && (
+          <div
+            className={`absolute inset-0 z-50 ${isPanningWorkspace ? 'cursor-grabbing' : 'cursor-grab'}`}
+            onMouseDown={(e) => {
+              if (e.button !== 0) return;
+              e.preventDefault();
+              setIsPanningWorkspace(true);
+              panStartRef.current = { x: e.clientX, y: e.clientY, px: canvasPanX, py: canvasPanY };
+            }}
+          />
+        )}
+
+        {/* ── Hand-tool capture layer — activated via toolbar Pan button ── */}
+        {activeTool === 'pan' && (
           <div
             className={`absolute inset-0 z-50 ${isPanningWorkspace ? 'cursor-grabbing' : 'cursor-grab'}`}
             onMouseDown={(e) => {
@@ -2320,7 +2343,46 @@ function CenterCanvas() {
                     strategy={verticalListSortingStrategy}
                   >
                     <div className="p-8 flex flex-col gap-6" onClick={(e) => { if (e.target === e.currentTarget) { setSelectedItem('none'); setActiveBlockId(null); } }}>
-                      {(activeScene as Scene).blocks.filter((b: Block) => b.x === undefined).map((block: Block) => {
+                      {flowEntries.map((entry, gi) => {
+                        // ── Icon group → horizontal wrapping row ──────────────
+                        if (Array.isArray(entry)) {
+                          return (
+                            <div key={`icon-row-${gi}`} className="flex flex-row flex-wrap gap-4 items-center justify-center">
+                              {entry.map(block => {
+                                const isSel    = activeBlockId === block.id;
+                                const iconName = block.content || 'Heart';
+                                const iconSize = (block.properties?.iconSize as number)        || 64;
+                                const iconStr  = (block.properties?.iconStrokeWidth as number) || 2;
+                                const iconCol  = (block.properties?.iconColor as string)       || '#ec4899';
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                const IconComp = (LucideIcons as any)[iconName] ?? LucideIcons.HelpCircle;
+                                return (
+                                  <SortableBlock key={block.id} id={block.id} isSelected={isSel}
+                                    onClick={() => { setSelectedItem('icon'); setActiveBlockId(block.id); setLeftPanelTab('style'); }}>
+                                    <div
+                                      className={`flex items-center justify-center p-4 rounded-xl transition-all cursor-pointer ${isSel ? 'ring-2 ring-fuchsia-500/70 bg-fuchsia-500/5 shadow-[0_0_20px_rgba(217,70,239,0.15)]' : 'hover:bg-white/5'}`}
+                                      style={{
+                                        opacity: ((block.properties?.blockOpacity as number) ?? 100) / 100,
+                                        backdropFilter: (block.properties?.backdropBlur as number) ? `blur(${block.properties?.backdropBlur}px)` : undefined,
+                                        borderRadius: (block.properties?.blockBorderRadius as number) ? `${block.properties?.blockBorderRadius}px` : undefined,
+                                        filter: block.properties?.dropShadow === 'neon-glow'
+                                          ? 'drop-shadow(0 0 10px rgba(168,85,247,0.9)) drop-shadow(0 0 24px rgba(168,85,247,0.5))'
+                                          : block.properties?.dropShadow === 'drop-shadow'
+                                          ? 'drop-shadow(0 4px 16px rgba(0,0,0,0.9))'
+                                          : undefined,
+                                        mixBlendMode: block.properties?.blendMode ? (block.properties.blendMode as React.CSSProperties['mixBlendMode']) : undefined,
+                                        border: (block.properties?.borderWidth as number) ? `${block.properties?.borderWidth}px ${(block.properties?.borderStyle as string) || 'solid'} ${(block.properties?.borderColor as string) || '#ffffff'}` : undefined,
+                                      }}
+                                      onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); setContextMenu({ x: e.clientX, y: e.clientY, blockId: block.id }); }}>
+                                      {React.createElement(IconComp, { size: iconSize, strokeWidth: iconStr, color: iconCol })}
+                                    </div>
+                                  </SortableBlock>
+                                );
+                              })}
+                            </div>
+                          );
+                        }
+                        const block = entry as Block;
                         if (block.type === 'image') {
                           return (
                             <SortableBlock key={block.id} id={block.id} isSelected={activeBlockId === block.id} onClick={() => { setSelectedItem('image'); setActiveBlockId(block.id); setLeftPanelTab('style'); }}>
@@ -2449,37 +2511,6 @@ function CenterCanvas() {
                                     <span className="text-[8px] font-bold text-blue-400 uppercase tracking-wide">Blur</span>
                                   </div>
                                 )}
-                              </div>
-                            </SortableBlock>
-                          );
-                        }
-                        if (block.type === 'icon') {
-                          const isSel    = activeBlockId === block.id;
-                          const iconName = block.content || 'Heart';
-                          const iconSize = (block.properties?.iconSize as number)        || 64;
-                          const iconStr  = (block.properties?.iconStrokeWidth as number) || 2;
-                          const iconCol  = (block.properties?.iconColor as string)       || '#ec4899';
-                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                          const IconComp = (LucideIcons as any)[iconName] ?? LucideIcons.HelpCircle;
-                          return (
-                            <SortableBlock key={block.id} id={block.id} isSelected={isSel}
-                              onClick={() => { setSelectedItem('icon'); setActiveBlockId(block.id); setLeftPanelTab('style'); }}>
-                              <div
-                                className={`flex items-center justify-center p-5 rounded-xl transition-all cursor-pointer ${isSel ? 'ring-2 ring-fuchsia-500/70 bg-fuchsia-500/5 shadow-[0_0_20px_rgba(217,70,239,0.15)]' : 'hover:bg-white/5'}`}
-                                style={{
-                                  opacity: ((block.properties?.blockOpacity as number) ?? 100) / 100,
-                                  backdropFilter: (block.properties?.backdropBlur as number) ? `blur(${block.properties?.backdropBlur}px)` : undefined,
-                                  borderRadius: (block.properties?.blockBorderRadius as number) ? `${block.properties?.blockBorderRadius}px` : undefined,
-                                  filter: block.properties?.dropShadow === 'neon-glow'
-                                    ? 'drop-shadow(0 0 10px rgba(168,85,247,0.9)) drop-shadow(0 0 24px rgba(168,85,247,0.5))'
-                                    : block.properties?.dropShadow === 'drop-shadow'
-                                    ? 'drop-shadow(0 4px 16px rgba(0,0,0,0.9))'
-                                    : undefined,
-                                  mixBlendMode: block.properties?.blendMode ? (block.properties.blendMode as React.CSSProperties['mixBlendMode']) : undefined,
-                                  border: (block.properties?.borderWidth as number) ? `${block.properties?.borderWidth}px ${(block.properties?.borderStyle as string) || 'solid'} ${(block.properties?.borderColor as string) || '#ffffff'}` : undefined,
-                                }}
-                                onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); setContextMenu({ x: e.clientX, y: e.clientY, blockId: block.id }); }}>
-                                {React.createElement(IconComp, { size: iconSize, strokeWidth: iconStr, color: iconCol })}
                               </div>
                             </SortableBlock>
                           );
@@ -2772,7 +2803,15 @@ function CenterCanvas() {
           setActiveTool={setActiveTool as (t: CanvasTool) => void}
           zoom={canvasZoom}
           setZoom={setCanvasZoom}
-          onFitView={() => { setCanvasZoom(1); setCanvasPanX(0); setCanvasPanY(0); }}
+          onFitView={() => {
+            const rect = workspaceRef.current?.getBoundingClientRect();
+            const fitZoom = rect
+              ? parseFloat(Math.max(0.25, Math.min(1, (rect.width * 0.88) / 720, (rect.height * 0.88) / 560)).toFixed(2))
+              : 1;
+            setCanvasZoom(fitZoom);
+            setCanvasPanX(0);
+            setCanvasPanY(0);
+          }}
           onUndo={undo}
           onRedo={redo}
           canUndo={canUndo}

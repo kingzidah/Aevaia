@@ -10,9 +10,11 @@ interface Props {
 }
 
 export default function AudioBlock({ audioUrl, audioVolume = 80, onVolumeChange }: Props) {
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [playing,  setPlaying]  = useState(false);
-  const [localVol, setLocalVol] = useState(audioVolume);
+  const audioRef    = useRef<HTMLAudioElement | null>(null);
+  const [playing,   setPlaying]   = useState(false);
+  const [localVol,  setLocalVol]  = useState(audioVolume);
+  const [progress,  setProgress]  = useState(0);   // 0–1
+  const [duration,  setDuration]  = useState(0);   // seconds
 
   useEffect(() => { setLocalVol(audioVolume); }, [audioVolume]);
 
@@ -25,6 +27,26 @@ export default function AudioBlock({ audioUrl, audioVolume = 80, onVolumeChange 
   useEffect(() => {
     // Pause when the URL changes (new source loaded)
     setPlaying(false);
+    setProgress(0);
+    setDuration(0);
+  }, [audioUrl]);
+
+  // Track playback position
+  useEffect(() => {
+    const el = audioRef.current;
+    if (!el) return;
+    const onTime = () => {
+      if (el.duration > 0) setProgress(el.currentTime / el.duration);
+    };
+    const onLoaded = () => setDuration(el.duration);
+    el.addEventListener('timeupdate',       onTime);
+    el.addEventListener('loadedmetadata',   onLoaded);
+    el.addEventListener('durationchange',   onLoaded);
+    return () => {
+      el.removeEventListener('timeupdate',     onTime);
+      el.removeEventListener('loadedmetadata', onLoaded);
+      el.removeEventListener('durationchange', onLoaded);
+    };
   }, [audioUrl]);
 
   const togglePlay = (e: React.MouseEvent) => {
@@ -42,6 +64,8 @@ export default function AudioBlock({ audioUrl, audioVolume = 80, onVolumeChange 
     if (audioRef.current) audioRef.current.volume = v / 100;
     onVolumeChange?.(v);
   };
+
+  const fmt = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 
   if (!audioUrl) {
     return (
@@ -74,12 +98,48 @@ export default function AudioBlock({ audioUrl, audioVolume = 80, onVolumeChange 
         }
       </button>
 
-      {/* Label + volume */}
-      <div className="flex-1 min-w-0 space-y-1.5">
-        <p className="text-xs font-medium text-white/60 truncate flex items-center gap-1.5">
-          <Music2 className="w-3 h-3 shrink-0" />
-          Ambient Audio
-        </p>
+      {/* Timeline + volume */}
+      <div className="flex-1 min-w-0 space-y-2">
+        {/* Progress track — click/drag to seek */}
+        <div className="relative h-2 rounded-full bg-white/10 group">
+          {/* Visual fill (pointer-events:none so the input above handles clicks) */}
+          {/* eslint-disable-next-line react/forbid-dom-props */}
+          <div className="absolute inset-y-0 left-0 rounded-full bg-white/50 group-hover:bg-white/70 transition-colors pointer-events-none" style={{ width: `${progress * 100}%` }} />
+          {/* Native range input — transparent overlay, fully accessible */}
+          <input
+            type="range"
+            min={0}
+            max={1}
+            step={0.001}
+            value={progress}
+            onChange={(e) => {
+              e.stopPropagation();
+              const ratio = Number(e.target.value);
+              const el = audioRef.current;
+              if (!el || !duration) return;
+              el.currentTime = ratio * duration;
+              setProgress(ratio);
+            }}
+            onClick={(e) => e.stopPropagation()}
+            aria-label="Seek audio"
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+          />
+        </div>
+
+        {/* Time + label row */}
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-[10px] text-white/40 truncate flex items-center gap-1">
+            <Music2 className="w-3 h-3 shrink-0" />
+            Ambient Audio
+          </p>
+          {duration > 0 && (
+            <span className="text-[9px] text-white/30 tabular-nums shrink-0">
+              {fmt(progress * duration)} / {fmt(duration)}
+            </span>
+          )}
+        </div>
+
+        {/* Volume */}
         <input
           type="range"
           min={0}
@@ -91,8 +151,6 @@ export default function AudioBlock({ audioUrl, audioVolume = 80, onVolumeChange 
           className="w-full h-1 accent-white/60 cursor-pointer"
         />
       </div>
-
-      <span className="text-[10px] text-white/30 tabular-nums shrink-0">{localVol}%</span>
     </div>
   );
 }
