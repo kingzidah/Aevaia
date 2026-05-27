@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useReducer, useRef, useMemo, createContext, useContext } from "react";
+import React, { useState, useEffect, useCallback, useReducer, useRef, useMemo, createContext, useContext, startTransition } from "react";
 import type { Editor } from "@tiptap/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTiptapEditor } from "@/hooks/useTiptapEditor";
@@ -367,21 +367,22 @@ function ThinkingShimmer({ accent = 'purple' }: { accent?: 'purple' | 'blue' | '
   );
 }
 
-// Collapsed General-AI badge — shown inside specialist panels (Dual-AI system)
+// Collapsed General-AI badge — matches specialist-card design tokens (same icon-box + text anatomy)
 function GeneralAICompactBadge({ onExpand, lastAIMessage }: { onExpand: () => void; lastAIMessage: string }) {
   return (
     <button type="button" onClick={onExpand}
-      className="flex items-center gap-2 w-full px-3 py-2 rounded-xl bg-neutral-900/50 border border-neutral-800/70 hover:border-purple-500/30 hover:bg-purple-500/5 transition-all group mb-2 shrink-0">
-      <div className="w-5 h-5 rounded-full bg-purple-600/80 border border-purple-500/40 shrink-0 flex items-center justify-center">
-        <span className="text-[9px] text-white select-none">✦</span>
+      className="flex items-center gap-2.5 w-full py-1 group mb-1 shrink-0">
+      <div className="w-8 h-8 rounded-xl bg-purple-500/15 border border-purple-500/20 flex items-center justify-center shrink-0 group-hover:border-purple-500/40 transition-colors">
+        <span className="text-sm text-purple-400 select-none leading-none">✦</span>
       </div>
       <div className="flex-1 min-w-0 text-left">
-        <p className="text-[9px] font-semibold text-neutral-500 uppercase tracking-wide">General AI</p>
+        <p className="text-[9px] font-semibold text-neutral-500 uppercase tracking-wide">Aevaia AI</p>
         <p className="text-[10px] text-neutral-400 group-hover:text-neutral-300 transition-colors truncate leading-tight mt-0.5">
-          {lastAIMessage || 'Ask anything…'}
+          {lastAIMessage || 'Back to main AI'}
         </p>
       </div>
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3 h-3 text-neutral-600 group-hover:text-purple-400 shrink-0 transition-colors">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor"
+        className="w-3.5 h-3.5 text-neutral-600 group-hover:text-purple-400 shrink-0 transition-colors">
         <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
       </svg>
     </button>
@@ -483,7 +484,7 @@ function LeftSidebar() {
       arctext:   'art',
     };
     const catId = featureToCategoryId[activeFeature];
-    if (catId) setActiveCategory(catId);
+    if (catId) startTransition(() => setActiveCategory(catId));
   }, [activeFeature]);
 
   return (
@@ -2977,8 +2978,15 @@ function RightSidebar() {
     const text = (overrideText ?? chatInput).trim();
     if (!text || isSending) return;
     setIsSending(true);
-    setChatHistory(prev => [...prev, { role: 'user', text }]);
+    // Add user bubble + optimistic thinking placeholder immediately so the UI never freezes
+    setChatHistory(prev => [...prev, { role: 'user', text }, { role: 'ai', text: '…' }]);
     if (!overrideText) setChatInput('');
+
+    // Replace the last "…" placeholder with the final message
+    const resolve = (reply: string) =>
+      setChatHistory(prev =>
+        prev.at(-1)?.text === '…' ? [...prev.slice(0, -1), { role: 'ai', text: reply }] : prev
+      );
 
     try {
       const res = await fetch('/api/orchestrator', {
@@ -3000,9 +3008,9 @@ function RightSidebar() {
       const reply = payload.action === 'navigate'
         ? `Opening ${label}…`
         : `Luxury prompt crafted for ${label}. Opening now ✦`;
-      setChatHistory(prev => [...prev, { role: 'ai', text: reply }]);
+      resolve(reply);
     } catch {
-      setChatHistory(prev => [...prev, { role: 'ai', text: 'Something went wrong. Please try again.' }]);
+      resolve('Something went wrong. Please try again.');
     } finally {
       setIsSending(false);
     }
@@ -4835,12 +4843,16 @@ export default function Studio({ id: propId = null }: { id?: string | null } = {
     if (!prompt.trim() || isOrchestrating) return;
     setIsOrchestrating(true);
     setOrchestrateResult('');
+    const abort = new AbortController();
+    const timeoutId = setTimeout(() => abort.abort(), 15_000);
     try {
       const res = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ taskType: 'generate_theme', prompt }),
+        signal: abort.signal,
       });
+      clearTimeout(timeoutId);
       if (!res.ok) throw new Error(`API ${res.status}`);
       const data = await res.json() as {
         message?: string;
@@ -4901,8 +4913,10 @@ export default function Studio({ id: propId = null }: { id?: string | null } = {
       }
 
       setOrchestrateResult(data.message ?? data.suggestion ?? 'Atmosphere updated.');
-    } catch {
-      setOrchestrateResult('Unable to reach Aevaia AI. Try again.');
+    } catch (err) {
+      clearTimeout(timeoutId);
+      const isTimeout = err instanceof DOMException && err.name === 'AbortError';
+      setOrchestrateResult(isTimeout ? 'Request timed out. Please try again.' : 'Unable to reach Aevaia AI. Try again.');
     } finally {
       setIsOrchestrating(false);
     }
