@@ -8,6 +8,7 @@ import TextEditorPanel from "@/components/text-editor/TextEditorPanel";
 import AmbientEffects from "@/components/canvas/AmbientEffects";
 import AtmosphereRenderer from "@/components/studio/atmosphere-renderer";
 import IconStation from "@/components/studio/IconStation";
+import AIEnginePanel from "@/components/studio/AIEnginePanel";
 import { useCredits } from "@/context/CreditContext";
 import * as LucideIcons from "lucide-react";
 import { ICON_LIBRARY } from "@/utils/icon-library";
@@ -3353,9 +3354,9 @@ function RightSidebar() {
           </div>
         </div>
 
-        {/* Ambient glow wave strip */}
+        {/* Ambient glow wave strip — strict #A855F7 purple brand */}
         <div className="h-px relative overflow-hidden">
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, transparent 0%, rgba(99,102,241,0.55) 25%, rgba(139,92,246,0.75) 50%, rgba(168,85,247,0.55) 75%, transparent 100%)', animation: 'shimmer-slide 2.8s ease-in-out infinite' }} />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, transparent 0%, rgba(168,85,247,0.4) 25%, rgba(168,85,247,0.85) 50%, rgba(168,85,247,0.4) 75%, transparent 100%)', animation: 'shimmer-slide 2.8s ease-in-out infinite' }} />
         </div>
 
       </div>
@@ -3378,496 +3379,485 @@ function RightSidebar() {
 
                 {/* ── Copywriter AI ── */}
                 {activeFeature === 'text' && (
-                  <motion.div key="feat-text" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.15 }}
-                    className="p-4 space-y-4">
-                    <GeneralAICompactBadge
-                      onExpand={() => setActiveFeature('general')}
-                      lastAIMessage={chatHistory.filter(m => m.role === 'ai' && m.text !== '…').at(-1)?.text ?? ''}
-                    />
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-xl bg-violet-500/15 border border-violet-500/30 flex items-center justify-center"><LucideIcons.PenTool className="w-4 h-4 text-violet-400" /></div>
-                      <div><p className="text-xs font-bold text-white">Copywriter AI</p><p className="text-[10px] text-neutral-500">Headlines, paragraphs & story arcs</p></div>
-                    </div>
-                    <textarea value={textPrompt} onChange={e => setTextPrompt(e.target.value)}
-                      placeholder="What should this say? Describe the tone, emotion, or message…" rows={4}
-                      className="w-full bg-neutral-900 border border-neutral-700 text-neutral-200 rounded-xl px-3.5 py-2.5 text-xs resize-none focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500/40 transition-all placeholder:text-neutral-600" />
-                    <button type="button" onClick={() => deductCredits(5)}
-                      className="w-full py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-[0_0_16px_rgba(139,92,246,0.25)]">
-                      ✦ Generate Story
-                      <span className="ml-auto px-2 py-0.5 rounded-full bg-white/10 text-[10px] font-semibold inline-flex items-center gap-0.5">5 <LucideIcons.Sparkles className="w-2.5 h-2.5" /></span>
-                    </button>
-                    <p className="text-[10px] text-neutral-600 text-center">Select a text block on the canvas first to apply directly.</p>
-                  </motion.div>
+                  <AIEnginePanel key="feat-text"
+                    accent="violet"
+                    iconEl={<LucideIcons.PenTool className="w-4 h-4 text-violet-400" />}
+                    title="Copywriter AI"
+                    subtitle="Headlines, paragraphs & story arcs"
+                    compactBadge={<GeneralAICompactBadge onExpand={() => setActiveFeature('general')} lastAIMessage={chatHistory.filter(m => m.role === 'ai' && m.text !== '…').at(-1)?.text ?? ''} />}
+                  >
+                    {(a) => (<>
+                      <textarea value={textPrompt} onChange={e => setTextPrompt(e.target.value)}
+                        placeholder="What should this say? Describe the tone, emotion, or message…" rows={4}
+                        className={`w-full bg-neutral-900 border border-neutral-700 text-neutral-200 rounded-xl px-3.5 py-2.5 text-xs resize-none focus:outline-none ${a.focus} transition-all placeholder:text-neutral-600`} />
+                      <button type="button" onClick={() => deductCredits(5)}
+                        className={`w-full py-2.5 rounded-xl ${a.btn} text-white text-xs font-bold transition-all flex items-center justify-center gap-2 ${a.shadow}`}>
+                        ✦ Generate Story
+                        <span className="ml-auto px-2 py-0.5 rounded-full bg-white/10 text-[10px] font-semibold inline-flex items-center gap-0.5">5 <LucideIcons.Sparkles className="w-2.5 h-2.5" /></span>
+                      </button>
+                      <p className="text-[10px] text-neutral-600 text-center">Select a text block on the canvas first to apply directly.</p>
+                    </>)}
+                  </AIEnginePanel>
                 )}
 
                 {/* ── Image Studio AI ── */}
                 {activeFeature === 'media' && (
-                  <motion.div key="feat-media" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.15 }}
-                    className="p-4 space-y-4">
-                    <GeneralAICompactBadge
-                      onExpand={() => setActiveFeature('general')}
-                      lastAIMessage={chatHistory.filter(m => m.role === 'ai' && m.text !== '…').at(-1)?.text ?? ''}
-                    />
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center"><LucideIcons.Palette className="w-4 h-4 text-blue-400" /></div>
-                      <div><p className="text-xs font-bold text-white">Image Studio AI</p><p className="text-[10px] text-neutral-500">Generate cinematic visuals on demand</p></div>
-                    </div>
-                    <textarea
-                      value={mediaPrompt}
-                      onChange={e => setMediaPrompt(e.target.value)}
-                      onKeyDown={e => { if (e.key === 'Enter' && e.metaKey) handleGenerateImage(); }}
-                      placeholder="Describe the photo — mood, lighting, subject, style…"
-                      rows={4}
-                      disabled={isGenerating}
-                      className="w-full bg-neutral-900 border border-neutral-700 text-neutral-200 rounded-xl px-3.5 py-2.5 text-xs resize-none focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/40 transition-all placeholder:text-neutral-600 disabled:opacity-50" />
-                    <div className="grid grid-cols-2 gap-2 text-[10px] text-neutral-500">
-                      {['Cinematic', 'Minimalist', 'Romantic', 'Editorial'].map(style => (
-                        <button key={style} type="button" disabled={isGenerating}
-                          onClick={() => setMediaPrompt(p => p ? `${p}, ${style.toLowerCase()} style` : `${style.toLowerCase()} style`)}
-                          className="py-1.5 rounded-lg bg-neutral-800 hover:bg-blue-500/10 hover:text-blue-300 hover:border-blue-500/30 border border-neutral-700 transition-all font-medium disabled:opacity-40">
-                          {style}
-                        </button>
-                      ))}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleGenerateImage}
-                      disabled={isGenerating || !mediaPrompt.trim()}
-                      className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-[0_0_16px_rgba(59,130,246,0.25)]">
-                      {isGenerating ? (
-                        <>
-                          <span className="w-3.5 h-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin shrink-0" />
-                          Creating Magic…
-                        </>
-                      ) : (
-                        <>
-                          ✦ Generate Image
-                          <span className="ml-auto px-2 py-0.5 rounded-full bg-white/10 text-[10px] font-semibold inline-flex items-center gap-0.5">20 <LucideIcons.Sparkles className="w-2.5 h-2.5" /></span>
-                        </>
-                      )}
-                    </button>
-                    {generateError && (
-                      <p className="text-xs text-red-400 text-center leading-relaxed px-1">{generateError}</p>
-                    )}
-                    {generatedImageUrl && (
-                      <div className="space-y-2">
-                        <img
-                          src={generatedImageUrl}
-                          alt="AI generated"
-                          className="w-full rounded-xl border border-blue-500/30 object-cover aspect-square"
-                        />
-                        <p className="text-[10px] text-neutral-500 text-center">Canvas drop-in coming soon ✦</p>
+                  <AIEnginePanel key="feat-media"
+                    accent="blue"
+                    iconEl={<LucideIcons.Palette className="w-4 h-4 text-blue-400" />}
+                    title="Image Studio AI"
+                    subtitle="Generate cinematic visuals on demand"
+                    compactBadge={<GeneralAICompactBadge onExpand={() => setActiveFeature('general')} lastAIMessage={chatHistory.filter(m => m.role === 'ai' && m.text !== '…').at(-1)?.text ?? ''} />}
+                  >
+                    {(a) => (<>
+                      <textarea
+                        value={mediaPrompt}
+                        onChange={e => setMediaPrompt(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter' && e.metaKey) handleGenerateImage(); }}
+                        placeholder="Describe the photo — mood, lighting, subject, style…"
+                        rows={4}
+                        disabled={isGenerating}
+                        className={`w-full bg-neutral-900 border border-neutral-700 text-neutral-200 rounded-xl px-3.5 py-2.5 text-xs resize-none focus:outline-none ${a.focus} transition-all placeholder:text-neutral-600 disabled:opacity-50`} />
+                      <div className="grid grid-cols-2 gap-2 text-[10px] text-neutral-500">
+                        {['Cinematic', 'Minimalist', 'Romantic', 'Editorial'].map(style => (
+                          <button key={style} type="button" disabled={isGenerating}
+                            onClick={() => setMediaPrompt(p => p ? `${p}, ${style.toLowerCase()} style` : `${style.toLowerCase()} style`)}
+                            className={`py-1.5 rounded-lg bg-neutral-800 ${a.chip} border border-neutral-700 transition-all font-medium disabled:opacity-40`}>
+                            {style}
+                          </button>
+                        ))}
                       </div>
-                    )}
-                  </motion.div>
+                      <button
+                        type="button"
+                        onClick={handleGenerateImage}
+                        disabled={isGenerating || !mediaPrompt.trim()}
+                        className={`w-full py-2.5 rounded-xl ${a.btn} disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold transition-all flex items-center justify-center gap-2 ${a.shadow}`}>
+                        {isGenerating ? (
+                          <>
+                            <span className="w-3.5 h-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin shrink-0" />
+                            Creating Magic…
+                          </>
+                        ) : (
+                          <>
+                            ✦ Generate Image
+                            <span className="ml-auto px-2 py-0.5 rounded-full bg-white/10 text-[10px] font-semibold inline-flex items-center gap-0.5">20 <LucideIcons.Sparkles className="w-2.5 h-2.5" /></span>
+                          </>
+                        )}
+                      </button>
+                      {generateError && (
+                        <p className="text-xs text-red-400 text-center leading-relaxed px-1">{generateError}</p>
+                      )}
+                      {generatedImageUrl && (
+                        <div className="space-y-2">
+                          <img
+                            src={generatedImageUrl}
+                            alt="AI generated"
+                            className="w-full rounded-xl border border-blue-500/30 object-cover aspect-square"
+                          />
+                          <p className="text-[10px] text-neutral-500 text-center">Canvas drop-in coming soon ✦</p>
+                        </div>
+                      )}
+                    </>)}
+                  </AIEnginePanel>
                 )}
 
                 {/* ── Audio Engineer AI ── */}
                 {activeFeature === 'audio' && (
-                  <motion.div key="feat-audio" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.15 }}
-                    className="p-4 space-y-4">
-                    <GeneralAICompactBadge
-                      onExpand={() => setActiveFeature('general')}
-                      lastAIMessage={chatHistory.filter(m => m.role === 'ai' && m.text !== '…').at(-1)?.text ?? ''}
-                    />
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center"><LucideIcons.Music className="w-4 h-4 text-emerald-400" /></div>
-                      <div><p className="text-xs font-bold text-white">Audio Engineer AI</p><p className="text-[10px] text-neutral-500">Custom tracks & ambient soundscapes</p></div>
-                    </div>
-                    <textarea value={audioPrompt} onChange={e => setAudioPrompt(e.target.value)}
-                      placeholder="Describe the vibe — genre, tempo, emotional arc, key instruments…" rows={3}
-                      className="w-full bg-neutral-900 border border-neutral-700 text-neutral-200 rounded-xl px-3.5 py-2.5 text-xs resize-none focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/40 transition-all placeholder:text-neutral-600" />
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 h-px bg-neutral-800/60" />
-                      <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-emerald-500/70">✦ ATMOSPHERE</p>
-                      <div className="flex-1 h-px bg-neutral-800/60" />
-                    </div>
-                    <div className="grid grid-cols-3 gap-1.5 text-[10px]">
-                      {['Orchestral', 'Lo-Fi', 'Jazz', 'Ambient', 'Acoustic', 'Cinematic'].map(s => (
-                        <button key={s} type="button"
-                          onClick={() => setAudioPrompt(p => p ? `${p}, ${s.toLowerCase()} style` : `${s.toLowerCase()} track`)}
-                          className="py-1.5 rounded-lg bg-neutral-800/80 hover:bg-emerald-500/10 hover:text-emerald-300 hover:border-emerald-500/30 border border-neutral-700/80 transition-all font-medium text-neutral-400">{s}</button>
-                      ))}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 h-px bg-neutral-800/60" />
-                      <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-emerald-500/70">✦ TEMPO</p>
-                      <div className="flex-1 h-px bg-neutral-800/60" />
-                    </div>
-                    <div className="grid grid-cols-3 gap-1.5 text-[10px]">
-                      {['Slow & Dreamy', 'Mid Tempo', 'Upbeat', 'Pulse', 'Floating', 'Driving'].map(s => (
-                        <button key={s} type="button"
-                          onClick={() => setAudioPrompt(p => p ? `${p}, ${s.toLowerCase()} tempo` : `${s.toLowerCase()} tempo`)}
-                          className="py-1.5 rounded-lg bg-neutral-800/80 hover:bg-emerald-500/10 hover:text-emerald-300 hover:border-emerald-500/30 border border-neutral-700/80 transition-all font-medium text-neutral-400">{s}</button>
-                      ))}
-                    </div>
-                    <button type="button" onClick={() => deductCredits(50)}
-                      className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-[0_0_16px_rgba(16,185,129,0.25)]">
-                      ✦ Generate Track
-                      <span className="ml-auto px-2 py-0.5 rounded-full bg-white/10 text-[10px] font-semibold inline-flex items-center gap-0.5">50 <LucideIcons.Sparkles className="w-2.5 h-2.5" /></span>
-                    </button>
-                  </motion.div>
+                  <AIEnginePanel key="feat-audio"
+                    accent="emerald"
+                    iconEl={<LucideIcons.Music className="w-4 h-4 text-emerald-400" />}
+                    title="Audio Engineer AI"
+                    subtitle="Custom tracks & ambient soundscapes"
+                    compactBadge={<GeneralAICompactBadge onExpand={() => setActiveFeature('general')} lastAIMessage={chatHistory.filter(m => m.role === 'ai' && m.text !== '…').at(-1)?.text ?? ''} />}
+                  >
+                    {(a) => (<>
+                      <textarea value={audioPrompt} onChange={e => setAudioPrompt(e.target.value)}
+                        placeholder="Describe the vibe — genre, tempo, emotional arc, key instruments…" rows={3}
+                        className={`w-full bg-neutral-900 border border-neutral-700 text-neutral-200 rounded-xl px-3.5 py-2.5 text-xs resize-none focus:outline-none ${a.focus} transition-all placeholder:text-neutral-600`} />
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-px bg-neutral-800/60" />
+                        <p className={`text-[9px] font-bold uppercase tracking-[0.15em] ${a.divider}`}>✦ ATMOSPHERE</p>
+                        <div className="flex-1 h-px bg-neutral-800/60" />
+                      </div>
+                      <div className="grid grid-cols-3 gap-1.5 text-[10px]">
+                        {['Orchestral', 'Lo-Fi', 'Jazz', 'Ambient', 'Acoustic', 'Cinematic'].map(s => (
+                          <button key={s} type="button"
+                            onClick={() => setAudioPrompt(p => p ? `${p}, ${s.toLowerCase()} style` : `${s.toLowerCase()} track`)}
+                            className={`py-1.5 rounded-lg bg-neutral-800/80 ${a.chip} border border-neutral-700/80 transition-all font-medium text-neutral-400`}>{s}</button>
+                        ))}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-px bg-neutral-800/60" />
+                        <p className={`text-[9px] font-bold uppercase tracking-[0.15em] ${a.divider}`}>✦ TEMPO</p>
+                        <div className="flex-1 h-px bg-neutral-800/60" />
+                      </div>
+                      <div className="grid grid-cols-3 gap-1.5 text-[10px]">
+                        {['Slow & Dreamy', 'Mid Tempo', 'Upbeat', 'Pulse', 'Floating', 'Driving'].map(s => (
+                          <button key={s} type="button"
+                            onClick={() => setAudioPrompt(p => p ? `${p}, ${s.toLowerCase()} tempo` : `${s.toLowerCase()} tempo`)}
+                            className={`py-1.5 rounded-lg bg-neutral-800/80 ${a.chip} border border-neutral-700/80 transition-all font-medium text-neutral-400`}>{s}</button>
+                        ))}
+                      </div>
+                      <button type="button" onClick={() => deductCredits(50)}
+                        className={`w-full py-2.5 rounded-xl ${a.btn} text-white text-xs font-bold transition-all flex items-center justify-center gap-2 ${a.shadow}`}>
+                        ✦ Generate Track
+                        <span className="ml-auto px-2 py-0.5 rounded-full bg-white/10 text-[10px] font-semibold inline-flex items-center gap-0.5">50 <LucideIcons.Sparkles className="w-2.5 h-2.5" /></span>
+                      </button>
+                    </>)}
+                  </AIEnginePanel>
                 )}
 
                 {/* ── AI Icon Station ── */}
                 {activeFeature === 'icons' && (
-                  <motion.div key="feat-icons" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.15 }}
-                    className="p-4 space-y-4">
-                    <GeneralAICompactBadge
-                      onExpand={() => setActiveFeature('general')}
-                      lastAIMessage={chatHistory.filter(m => m.role === 'ai' && m.text !== '…').at(-1)?.text ?? ''}
-                    />
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-xl bg-fuchsia-500/15 border border-fuchsia-500/30 flex items-center justify-center"><LucideIcons.Gem className="w-4 h-4 text-fuchsia-400" /></div>
-                      <div><p className="text-xs font-bold text-white">AI Icon Station</p><p className="text-[10px] text-neutral-500">Prompt → 5 matching Lucide icons</p></div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 h-px bg-neutral-800/60" />
-                      <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-fuchsia-500/70">✦ THEME</p>
-                      <div className="flex-1 h-px bg-neutral-800/60" />
-                    </div>
-                    <div className="grid grid-cols-3 gap-1.5 text-[10px]">
-                      {['Love & Romance', 'Nature', 'Celebration', 'Tech', 'Music', 'Travel'].map(s => (
-                        <button key={s} type="button"
-                          onClick={() => setGlobalBarInput(p => p ? `${p}, ${s.toLowerCase()}` : `${s.toLowerCase()} icon`)}
-                          className="py-1.5 rounded-lg bg-neutral-800/80 hover:bg-fuchsia-500/10 hover:text-fuchsia-300 hover:border-fuchsia-500/30 border border-neutral-700/80 transition-all font-medium text-neutral-400">{s}</button>
-                      ))}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 h-px bg-neutral-800/60" />
-                      <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-fuchsia-500/70">✦ STYLE</p>
-                      <div className="flex-1 h-px bg-neutral-800/60" />
-                    </div>
-                    <div className="grid grid-cols-3 gap-1.5 text-[10px]">
-                      {['Outline', 'Filled', 'Minimal', 'Bold', 'Delicate', 'Playful'].map(s => (
-                        <button key={s} type="button"
-                          onClick={() => setGlobalBarInput(p => p ? `${p}, ${s.toLowerCase()} style` : `${s.toLowerCase()} style icon`)}
-                          className="py-1.5 rounded-lg bg-neutral-800/80 hover:bg-fuchsia-500/10 hover:text-fuchsia-300 hover:border-fuchsia-500/30 border border-neutral-700/80 transition-all font-medium text-neutral-400">{s}</button>
-                      ))}
-                    </div>
-                    <IconStation
-                      onSelect={(name) => {
-                        addBlock('icon');
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        setScenes((prev: any[]) => prev.map((scene: any) =>
-                          scene.id === activeSceneId
-                            ? {
-                                ...scene,
-                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                blocks: scene.blocks.map((b: any, i: number) =>
-                                  i === scene.blocks.length - 1 ? { ...b, content: name } : b
-                                ),
-                              }
-                            : scene
-                        ));
-                      }}
-                    />
-                  </motion.div>
+                  <AIEnginePanel key="feat-icons"
+                    accent="fuchsia"
+                    iconEl={<LucideIcons.Gem className="w-4 h-4 text-fuchsia-400" />}
+                    title="AI Icon Station"
+                    subtitle="Prompt → 5 matching Lucide icons"
+                    compactBadge={<GeneralAICompactBadge onExpand={() => setActiveFeature('general')} lastAIMessage={chatHistory.filter(m => m.role === 'ai' && m.text !== '…').at(-1)?.text ?? ''} />}
+                  >
+                    {(a) => (<>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-px bg-neutral-800/60" />
+                        <p className={`text-[9px] font-bold uppercase tracking-[0.15em] ${a.divider}`}>✦ THEME</p>
+                        <div className="flex-1 h-px bg-neutral-800/60" />
+                      </div>
+                      <div className="grid grid-cols-3 gap-1.5 text-[10px]">
+                        {['Love & Romance', 'Nature', 'Celebration', 'Tech', 'Music', 'Travel'].map(s => (
+                          <button key={s} type="button"
+                            onClick={() => setGlobalBarInput(p => p ? `${p}, ${s.toLowerCase()}` : `${s.toLowerCase()} icon`)}
+                            className={`py-1.5 rounded-lg bg-neutral-800/80 ${a.chip} border border-neutral-700/80 transition-all font-medium text-neutral-400`}>{s}</button>
+                        ))}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-px bg-neutral-800/60" />
+                        <p className={`text-[9px] font-bold uppercase tracking-[0.15em] ${a.divider}`}>✦ STYLE</p>
+                        <div className="flex-1 h-px bg-neutral-800/60" />
+                      </div>
+                      <div className="grid grid-cols-3 gap-1.5 text-[10px]">
+                        {['Outline', 'Filled', 'Minimal', 'Bold', 'Delicate', 'Playful'].map(s => (
+                          <button key={s} type="button"
+                            onClick={() => setGlobalBarInput(p => p ? `${p}, ${s.toLowerCase()} style` : `${s.toLowerCase()} style icon`)}
+                            className={`py-1.5 rounded-lg bg-neutral-800/80 ${a.chip} border border-neutral-700/80 transition-all font-medium text-neutral-400`}>{s}</button>
+                        ))}
+                      </div>
+                      <IconStation
+                        onSelect={(name) => {
+                          addBlock('icon');
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                          setScenes((prev: any[]) => prev.map((scene: any) =>
+                            scene.id === activeSceneId
+                              ? {
+                                  ...scene,
+                                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                  blocks: scene.blocks.map((b: any, i: number) =>
+                                    i === scene.blocks.length - 1 ? { ...b, content: name } : b
+                                  ),
+                                }
+                              : scene
+                          ));
+                        }}
+                      />
+                    </>)}
+                  </AIEnginePanel>
                 )}
 
                 {/* ── Button Block AI ── */}
                 {activeFeature === 'button' && (
-                  <motion.div key="feat-button" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.15 }}
-                    className="p-4 space-y-4">
-                    <GeneralAICompactBadge
-                      onExpand={() => setActiveFeature('general')}
-                      lastAIMessage={chatHistory.filter(m => m.role === 'ai' && m.text !== '…').at(-1)?.text ?? ''}
-                    />
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-xl bg-slate-500/15 border border-slate-500/30 flex items-center justify-center"><LucideIcons.MousePointerClick className="w-4 h-4 text-slate-400" /></div>
-                      <div><p className="text-xs font-bold text-white">Button Block AI</p><p className="text-[10px] text-neutral-500">Design your call-to-action copy & style</p></div>
-                    </div>
-                    <textarea value={textPrompt} onChange={e => setTextPrompt(e.target.value)}
-                      placeholder="Describe your CTA — action, urgency, tone…" rows={3}
-                      className="w-full bg-neutral-900 border border-neutral-700 text-neutral-200 rounded-xl px-3.5 py-2.5 text-xs resize-none focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400/30 transition-all placeholder:text-neutral-600" />
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 h-px bg-neutral-800/60" />
-                      <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-slate-500/80">✦ CTA STYLE</p>
-                      <div className="flex-1 h-px bg-neutral-800/60" />
-                    </div>
-                    <div className="grid grid-cols-3 gap-1.5 text-[10px]">
-                      {['RSVP Now', 'Book Seat', 'Learn More', 'Shop Now', 'Donate', 'Join Us'].map(s => (
-                        <button key={s} type="button"
-                          onClick={() => setTextPrompt(p => p ? `${p}, ${s}` : s)}
-                          className="py-1.5 rounded-lg bg-neutral-800/80 hover:bg-slate-500/10 hover:text-slate-300 hover:border-slate-500/30 border border-neutral-700/80 transition-all font-medium text-neutral-400">{s}</button>
-                      ))}
-                    </div>
-                    <button type="button" onClick={() => deductCredits(3)}
-                      className="w-full py-2.5 rounded-xl bg-slate-600 hover:bg-slate-500 text-white text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-[0_0_14px_rgba(100,116,139,0.3)]">
-                      ✦ Generate Button Copy
-                      <span className="ml-auto px-2 py-0.5 rounded-full bg-white/10 text-[10px] font-semibold inline-flex items-center gap-0.5">3 <LucideIcons.Sparkles className="w-2.5 h-2.5" /></span>
-                    </button>
-                  </motion.div>
+                  <AIEnginePanel key="feat-button"
+                    accent="slate"
+                    iconEl={<LucideIcons.MousePointerClick className="w-4 h-4 text-slate-400" />}
+                    title="Button Block AI"
+                    subtitle="Design your call-to-action copy & style"
+                    compactBadge={<GeneralAICompactBadge onExpand={() => setActiveFeature('general')} lastAIMessage={chatHistory.filter(m => m.role === 'ai' && m.text !== '…').at(-1)?.text ?? ''} />}
+                  >
+                    {(a) => (<>
+                      <textarea value={textPrompt} onChange={e => setTextPrompt(e.target.value)}
+                        placeholder="Describe your CTA — action, urgency, tone…" rows={3}
+                        className={`w-full bg-neutral-900 border border-neutral-700 text-neutral-200 rounded-xl px-3.5 py-2.5 text-xs resize-none focus:outline-none ${a.focus} transition-all placeholder:text-neutral-600`} />
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-px bg-neutral-800/60" />
+                        <p className={`text-[9px] font-bold uppercase tracking-[0.15em] ${a.divider}`}>✦ CTA STYLE</p>
+                        <div className="flex-1 h-px bg-neutral-800/60" />
+                      </div>
+                      <div className="grid grid-cols-3 gap-1.5 text-[10px]">
+                        {['RSVP Now', 'Book Seat', 'Learn More', 'Shop Now', 'Donate', 'Join Us'].map(s => (
+                          <button key={s} type="button"
+                            onClick={() => setTextPrompt(p => p ? `${p}, ${s}` : s)}
+                            className={`py-1.5 rounded-lg bg-neutral-800/80 ${a.chip} border border-neutral-700/80 transition-all font-medium text-neutral-400`}>{s}</button>
+                        ))}
+                      </div>
+                      <button type="button" onClick={() => deductCredits(3)}
+                        className={`w-full py-2.5 rounded-xl ${a.btn} text-white text-xs font-bold transition-all flex items-center justify-center gap-2 ${a.shadow}`}>
+                        ✦ Generate Button Copy
+                        <span className="ml-auto px-2 py-0.5 rounded-full bg-white/10 text-[10px] font-semibold inline-flex items-center gap-0.5">3 <LucideIcons.Sparkles className="w-2.5 h-2.5" /></span>
+                      </button>
+                    </>)}
+                  </AIEnginePanel>
                 )}
 
                 {/* ── Video Block AI ── */}
                 {activeFeature === 'video' && (
-                  <motion.div key="feat-video" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.15 }}
-                    className="p-4 space-y-4">
-                    <GeneralAICompactBadge
-                      onExpand={() => setActiveFeature('general')}
-                      lastAIMessage={chatHistory.filter(m => m.role === 'ai' && m.text !== '…').at(-1)?.text ?? ''}
-                    />
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-xl bg-red-500/15 border border-red-500/30 flex items-center justify-center"><LucideIcons.Video className="w-4 h-4 text-red-400" /></div>
-                      <div><p className="text-xs font-bold text-white">Video Block AI</p><p className="text-[10px] text-neutral-500">Script a cinematic moment for your gift</p></div>
-                    </div>
-                    <textarea value={mediaPrompt} onChange={e => setMediaPrompt(e.target.value)}
-                      placeholder="e.g. Slow-motion walk down the aisle, golden hour backlit, soft focus…" rows={3}
-                      className="w-full bg-neutral-900 border border-neutral-700 text-neutral-200 rounded-xl px-3.5 py-2.5 text-xs resize-none focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500/40 transition-all placeholder:text-neutral-600" />
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 h-px bg-neutral-800/60" />
-                      <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-red-500/70">✦ MOTION PRESETS</p>
-                      <div className="flex-1 h-px bg-neutral-800/60" />
-                    </div>
-                    <div className="grid grid-cols-3 gap-1.5 text-[10px]">
-                      {['Slow Motion', 'Glitch', 'Fade In', 'Drone Shot', 'Timelapse', 'Whip Pan'].map(s => (
-                        <button key={s} type="button"
-                          onClick={() => setMediaPrompt(p => p ? `${p}, ${s.toLowerCase()} effect` : `${s.toLowerCase()} effect`)}
-                          className="py-1.5 rounded-lg bg-neutral-800/80 hover:bg-red-500/10 hover:text-red-300 hover:border-red-500/30 border border-neutral-700/80 transition-all font-medium text-neutral-400">{s}</button>
-                      ))}
-                    </div>
-                    <button type="button" onClick={() => deductCredits(25)}
-                      className="w-full py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-[0_0_16px_rgba(239,68,68,0.25)]">
-                      ✦ Generate Video Concept
-                      <span className="ml-auto px-2 py-0.5 rounded-full bg-white/10 text-[10px] font-semibold inline-flex items-center gap-0.5">25 <LucideIcons.Sparkles className="w-2.5 h-2.5" /></span>
-                    </button>
-                  </motion.div>
+                  <AIEnginePanel key="feat-video"
+                    accent="red"
+                    iconEl={<LucideIcons.Video className="w-4 h-4 text-red-400" />}
+                    title="Video Block AI"
+                    subtitle="Script a cinematic moment for your gift"
+                    compactBadge={<GeneralAICompactBadge onExpand={() => setActiveFeature('general')} lastAIMessage={chatHistory.filter(m => m.role === 'ai' && m.text !== '…').at(-1)?.text ?? ''} />}
+                  >
+                    {(a) => (<>
+                      <textarea value={mediaPrompt} onChange={e => setMediaPrompt(e.target.value)}
+                        placeholder="e.g. Slow-motion walk down the aisle, golden hour backlit, soft focus…" rows={3}
+                        className={`w-full bg-neutral-900 border border-neutral-700 text-neutral-200 rounded-xl px-3.5 py-2.5 text-xs resize-none focus:outline-none ${a.focus} transition-all placeholder:text-neutral-600`} />
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-px bg-neutral-800/60" />
+                        <p className={`text-[9px] font-bold uppercase tracking-[0.15em] ${a.divider}`}>✦ MOTION PRESETS</p>
+                        <div className="flex-1 h-px bg-neutral-800/60" />
+                      </div>
+                      <div className="grid grid-cols-3 gap-1.5 text-[10px]">
+                        {['Slow Motion', 'Glitch', 'Fade In', 'Drone Shot', 'Timelapse', 'Whip Pan'].map(s => (
+                          <button key={s} type="button"
+                            onClick={() => setMediaPrompt(p => p ? `${p}, ${s.toLowerCase()} effect` : `${s.toLowerCase()} effect`)}
+                            className={`py-1.5 rounded-lg bg-neutral-800/80 ${a.chip} border border-neutral-700/80 transition-all font-medium text-neutral-400`}>{s}</button>
+                        ))}
+                      </div>
+                      <button type="button" onClick={() => deductCredits(25)}
+                        className={`w-full py-2.5 rounded-xl ${a.btn} text-white text-xs font-bold transition-all flex items-center justify-center gap-2 ${a.shadow}`}>
+                        ✦ Generate Video Concept
+                        <span className="ml-auto px-2 py-0.5 rounded-full bg-white/10 text-[10px] font-semibold inline-flex items-center gap-0.5">25 <LucideIcons.Sparkles className="w-2.5 h-2.5" /></span>
+                      </button>
+                    </>)}
+                  </AIEnginePanel>
                 )}
 
                 {/* ── WebGL Particles AI ── */}
                 {activeFeature === 'webgl' && (
-                  <motion.div key="feat-webgl" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.15 }}
-                    className="p-4 space-y-4">
-                    <GeneralAICompactBadge
-                      onExpand={() => setActiveFeature('general')}
-                      lastAIMessage={chatHistory.filter(m => m.role === 'ai' && m.text !== '…').at(-1)?.text ?? ''}
-                    />
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-base select-none">✦</div>
-                      <div><p className="text-xs font-bold text-white">Particle Engine AI</p><p className="text-[10px] text-neutral-500">Sculpt a living 3D particle atmosphere</p></div>
-                    </div>
-                    <textarea value={webglPrompt} onChange={e => setWebglPrompt(e.target.value)}
-                      placeholder="e.g. Drifting gold dust rising through deep blue darkness…" rows={3}
-                      className="w-full bg-neutral-900 border border-neutral-700 text-neutral-200 rounded-xl px-3.5 py-2.5 text-xs resize-none focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/40 transition-all placeholder:text-neutral-600" />
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 h-px bg-neutral-800/60" />
-                      <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-cyan-500/70">✦ PARTICLE PHYSICS</p>
-                      <div className="flex-1 h-px bg-neutral-800/60" />
-                    </div>
-                    <div className="grid grid-cols-3 gap-1.5 text-[10px]">
-                      {['Sparkle', 'Snowfall', 'Galaxy', 'Fireflies', 'Embers', 'Starfield'].map(s => (
-                        <button key={s} type="button"
-                          onClick={() => setWebglPrompt(p => p ? `${p}, ${s.toLowerCase()} particles` : `${s.toLowerCase()} particles`)}
-                          className="py-1.5 rounded-lg bg-neutral-800/80 hover:bg-cyan-500/10 hover:text-cyan-300 hover:border-cyan-500/30 border border-neutral-700/80 transition-all font-medium text-neutral-400">{s}</button>
-                      ))}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 h-px bg-neutral-800/60" />
-                      <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-cyan-500/70">✦ PALETTE</p>
-                      <div className="flex-1 h-px bg-neutral-800/60" />
-                    </div>
-                    <div className="grid grid-cols-3 gap-1.5 text-[10px]">
-                      {['Gold', 'Silver', 'Rose', 'Neon Blue', 'Pastel', 'Iridescent'].map(s => (
-                        <button key={s} type="button"
-                          onClick={() => setWebglPrompt(p => p ? `${p}, ${s.toLowerCase()} tones` : `${s.toLowerCase()} tones`)}
-                          className="py-1.5 rounded-lg bg-neutral-800/80 hover:bg-cyan-500/10 hover:text-cyan-300 hover:border-cyan-500/30 border border-neutral-700/80 transition-all font-medium text-neutral-400">{s}</button>
-                      ))}
-                    </div>
-                    <button type="button" onClick={() => deductCredits(30)}
-                      className="w-full py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-[0_0_16px_rgba(6,182,212,0.25)]">
-                      ✦ Generate Particles
-                      <span className="ml-auto px-2 py-0.5 rounded-full bg-white/10 text-[10px] font-semibold inline-flex items-center gap-0.5">30 <LucideIcons.Sparkles className="w-2.5 h-2.5" /></span>
-                    </button>
-                  </motion.div>
+                  <AIEnginePanel key="feat-webgl"
+                    accent="cyan"
+                    iconEl={<span className="text-base select-none text-cyan-400">✦</span>}
+                    title="Particle Engine AI"
+                    subtitle="Sculpt a living 3D particle atmosphere"
+                    compactBadge={<GeneralAICompactBadge onExpand={() => setActiveFeature('general')} lastAIMessage={chatHistory.filter(m => m.role === 'ai' && m.text !== '…').at(-1)?.text ?? ''} />}
+                  >
+                    {(a) => (<>
+                      <textarea value={webglPrompt} onChange={e => setWebglPrompt(e.target.value)}
+                        placeholder="e.g. Drifting gold dust rising through deep blue darkness…" rows={3}
+                        className={`w-full bg-neutral-900 border border-neutral-700 text-neutral-200 rounded-xl px-3.5 py-2.5 text-xs resize-none focus:outline-none ${a.focus} transition-all placeholder:text-neutral-600`} />
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-px bg-neutral-800/60" />
+                        <p className={`text-[9px] font-bold uppercase tracking-[0.15em] ${a.divider}`}>✦ PARTICLE PHYSICS</p>
+                        <div className="flex-1 h-px bg-neutral-800/60" />
+                      </div>
+                      <div className="grid grid-cols-3 gap-1.5 text-[10px]">
+                        {['Sparkle', 'Snowfall', 'Galaxy', 'Fireflies', 'Embers', 'Starfield'].map(s => (
+                          <button key={s} type="button"
+                            onClick={() => setWebglPrompt(p => p ? `${p}, ${s.toLowerCase()} particles` : `${s.toLowerCase()} particles`)}
+                            className={`py-1.5 rounded-lg bg-neutral-800/80 ${a.chip} border border-neutral-700/80 transition-all font-medium text-neutral-400`}>{s}</button>
+                        ))}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-px bg-neutral-800/60" />
+                        <p className={`text-[9px] font-bold uppercase tracking-[0.15em] ${a.divider}`}>✦ PALETTE</p>
+                        <div className="flex-1 h-px bg-neutral-800/60" />
+                      </div>
+                      <div className="grid grid-cols-3 gap-1.5 text-[10px]">
+                        {['Gold', 'Silver', 'Rose', 'Neon Blue', 'Pastel', 'Iridescent'].map(s => (
+                          <button key={s} type="button"
+                            onClick={() => setWebglPrompt(p => p ? `${p}, ${s.toLowerCase()} tones` : `${s.toLowerCase()} tones`)}
+                            className={`py-1.5 rounded-lg bg-neutral-800/80 ${a.chip} border border-neutral-700/80 transition-all font-medium text-neutral-400`}>{s}</button>
+                        ))}
+                      </div>
+                      <button type="button" onClick={() => deductCredits(30)}
+                        className={`w-full py-2.5 rounded-xl ${a.btn} text-white text-xs font-bold transition-all flex items-center justify-center gap-2 ${a.shadow}`}>
+                        ✦ Generate Particles
+                        <span className="ml-auto px-2 py-0.5 rounded-full bg-white/10 text-[10px] font-semibold inline-flex items-center gap-0.5">30 <LucideIcons.Sparkles className="w-2.5 h-2.5" /></span>
+                      </button>
+                    </>)}
+                  </AIEnginePanel>
                 )}
 
                 {/* ── Lottie Animation AI ── */}
                 {activeFeature === 'lottie' && (
-                  <motion.div key="feat-lottie" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.15 }}
-                    className="p-4 space-y-4">
-                    <GeneralAICompactBadge
-                      onExpand={() => setActiveFeature('general')}
-                      lastAIMessage={chatHistory.filter(m => m.role === 'ai' && m.text !== '…').at(-1)?.text ?? ''}
-                    />
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-xl bg-orange-500/15 border border-orange-500/30 flex items-center justify-center"><LucideIcons.Wind className="w-4 h-4 text-orange-400" /></div>
-                      <div><p className="text-xs font-bold text-white">Lottie Animation AI</p><p className="text-[10px] text-neutral-500">Find the perfect looping motion graphic</p></div>
-                    </div>
-                    <textarea value={lottiePrompt} onChange={e => setLottiePrompt(e.target.value)}
-                      placeholder="e.g. Looping confetti burst in soft pastel colours, gentle and joyful…" rows={3}
-                      className="w-full bg-neutral-900 border border-neutral-700 text-neutral-200 rounded-xl px-3.5 py-2.5 text-xs resize-none focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/40 transition-all placeholder:text-neutral-600" />
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 h-px bg-neutral-800/60" />
-                      <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-orange-500/70">✦ ANIMATION TYPE</p>
-                      <div className="flex-1 h-px bg-neutral-800/60" />
-                    </div>
-                    <div className="grid grid-cols-3 gap-1.5 text-[10px]">
-                      {['Confetti', 'Hearts', 'Stars', 'Sparkles', 'Rings', 'Ripple'].map(s => (
-                        <button key={s} type="button"
-                          onClick={() => setLottiePrompt(p => p ? `${p}, ${s.toLowerCase()}` : `looping ${s.toLowerCase()} animation`)}
-                          className="py-1.5 rounded-lg bg-neutral-800/80 hover:bg-orange-500/10 hover:text-orange-300 hover:border-orange-500/30 border border-neutral-700/80 transition-all font-medium text-neutral-400">{s}</button>
-                      ))}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 h-px bg-neutral-800/60" />
-                      <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-orange-500/70">✦ MOOD</p>
-                      <div className="flex-1 h-px bg-neutral-800/60" />
-                    </div>
-                    <div className="grid grid-cols-3 gap-1.5 text-[10px]">
-                      {['Joyful', 'Elegant', 'Playful', 'Dramatic', 'Delicate', 'Bold'].map(s => (
-                        <button key={s} type="button"
-                          onClick={() => setLottiePrompt(p => p ? `${p}, ${s.toLowerCase()} mood` : `${s.toLowerCase()} mood`)}
-                          className="py-1.5 rounded-lg bg-neutral-800/80 hover:bg-orange-500/10 hover:text-orange-300 hover:border-orange-500/30 border border-neutral-700/80 transition-all font-medium text-neutral-400">{s}</button>
-                      ))}
-                    </div>
-                    <button type="button" onClick={() => deductCredits(10)}
-                      className="w-full py-2.5 rounded-xl bg-orange-600 hover:bg-orange-500 text-white text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-[0_0_16px_rgba(234,88,12,0.25)]">
-                      ✦ Find Animation
-                      <span className="ml-auto px-2 py-0.5 rounded-full bg-white/10 text-[10px] font-semibold inline-flex items-center gap-0.5">10 <LucideIcons.Sparkles className="w-2.5 h-2.5" /></span>
-                    </button>
-                  </motion.div>
+                  <AIEnginePanel key="feat-lottie"
+                    accent="orange"
+                    iconEl={<LucideIcons.Wind className="w-4 h-4 text-orange-400" />}
+                    title="Lottie Animation AI"
+                    subtitle="Find the perfect looping motion graphic"
+                    compactBadge={<GeneralAICompactBadge onExpand={() => setActiveFeature('general')} lastAIMessage={chatHistory.filter(m => m.role === 'ai' && m.text !== '…').at(-1)?.text ?? ''} />}
+                  >
+                    {(a) => (<>
+                      <textarea value={lottiePrompt} onChange={e => setLottiePrompt(e.target.value)}
+                        placeholder="e.g. Looping confetti burst in soft pastel colours, gentle and joyful…" rows={3}
+                        className={`w-full bg-neutral-900 border border-neutral-700 text-neutral-200 rounded-xl px-3.5 py-2.5 text-xs resize-none focus:outline-none ${a.focus} transition-all placeholder:text-neutral-600`} />
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-px bg-neutral-800/60" />
+                        <p className={`text-[9px] font-bold uppercase tracking-[0.15em] ${a.divider}`}>✦ ANIMATION TYPE</p>
+                        <div className="flex-1 h-px bg-neutral-800/60" />
+                      </div>
+                      <div className="grid grid-cols-3 gap-1.5 text-[10px]">
+                        {['Confetti', 'Hearts', 'Stars', 'Sparkles', 'Rings', 'Ripple'].map(s => (
+                          <button key={s} type="button"
+                            onClick={() => setLottiePrompt(p => p ? `${p}, ${s.toLowerCase()}` : `looping ${s.toLowerCase()} animation`)}
+                            className={`py-1.5 rounded-lg bg-neutral-800/80 ${a.chip} border border-neutral-700/80 transition-all font-medium text-neutral-400`}>{s}</button>
+                        ))}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-px bg-neutral-800/60" />
+                        <p className={`text-[9px] font-bold uppercase tracking-[0.15em] ${a.divider}`}>✦ MOOD</p>
+                        <div className="flex-1 h-px bg-neutral-800/60" />
+                      </div>
+                      <div className="grid grid-cols-3 gap-1.5 text-[10px]">
+                        {['Joyful', 'Elegant', 'Playful', 'Dramatic', 'Delicate', 'Bold'].map(s => (
+                          <button key={s} type="button"
+                            onClick={() => setLottiePrompt(p => p ? `${p}, ${s.toLowerCase()} mood` : `${s.toLowerCase()} mood`)}
+                            className={`py-1.5 rounded-lg bg-neutral-800/80 ${a.chip} border border-neutral-700/80 transition-all font-medium text-neutral-400`}>{s}</button>
+                        ))}
+                      </div>
+                      <button type="button" onClick={() => deductCredits(10)}
+                        className={`w-full py-2.5 rounded-xl ${a.btn} text-white text-xs font-bold transition-all flex items-center justify-center gap-2 ${a.shadow}`}>
+                        ✦ Find Animation
+                        <span className="ml-auto px-2 py-0.5 rounded-full bg-white/10 text-[10px] font-semibold inline-flex items-center gap-0.5">10 <LucideIcons.Sparkles className="w-2.5 h-2.5" /></span>
+                      </button>
+                    </>)}
+                  </AIEnginePanel>
                 )}
 
                 {/* ── Custom SVG AI ── */}
                 {activeFeature === 'svg' && (
-                  <motion.div key="feat-svg" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.15 }}
-                    className="p-4 space-y-4">
-                    <GeneralAICompactBadge
-                      onExpand={() => setActiveFeature('general')}
-                      lastAIMessage={chatHistory.filter(m => m.role === 'ai' && m.text !== '…').at(-1)?.text ?? ''}
-                    />
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center"><LucideIcons.Shapes className="w-4 h-4 text-amber-400" /></div>
-                      <div><p className="text-xs font-bold text-white">Vector Art AI</p><p className="text-[10px] text-neutral-500">Generate scalable SVG artwork for the canvas</p></div>
-                    </div>
-                    <textarea value={svgPrompt} onChange={e => setSvgPrompt(e.target.value)}
-                      placeholder="e.g. Minimalist floral wreath, monogram initials J+M, geometric mandala…" rows={3}
-                      className="w-full bg-neutral-900 border border-neutral-700 text-neutral-200 rounded-xl px-3.5 py-2.5 text-xs resize-none focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/40 transition-all placeholder:text-neutral-600" />
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 h-px bg-neutral-800/60" />
-                      <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-amber-500/70">✦ ART STYLE</p>
-                      <div className="flex-1 h-px bg-neutral-800/60" />
-                    </div>
-                    <div className="grid grid-cols-3 gap-1.5 text-[10px]">
-                      {['Minimalist', 'Hand-drawn', 'Geometric', 'Neon', 'Botanical', 'Abstract'].map(s => (
-                        <button key={s} type="button"
-                          onClick={() => setSvgPrompt(p => p ? `${p}, ${s.toLowerCase()} style` : `${s.toLowerCase()} style`)}
-                          className="py-1.5 rounded-lg bg-neutral-800/80 hover:bg-amber-500/10 hover:text-amber-300 hover:border-amber-500/30 border border-neutral-700/80 transition-all font-medium text-neutral-400">{s}</button>
-                      ))}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 h-px bg-neutral-800/60" />
-                      <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-amber-500/70">✦ ELEMENTS</p>
-                      <div className="flex-1 h-px bg-neutral-800/60" />
-                    </div>
-                    <div className="grid grid-cols-3 gap-1.5 text-[10px]">
-                      {['Floral', 'Monogram', 'Border', 'Mandala', 'Crest', 'Pattern'].map(s => (
-                        <button key={s} type="button"
-                          onClick={() => setSvgPrompt(p => p ? `${p}, ${s.toLowerCase()}` : `${s.toLowerCase()} vector`)}
-                          className="py-1.5 rounded-lg bg-neutral-800/80 hover:bg-amber-500/10 hover:text-amber-300 hover:border-amber-500/30 border border-neutral-700/80 transition-all font-medium text-neutral-400">{s}</button>
-                      ))}
-                    </div>
-                    <button type="button" onClick={() => deductCredits(15)}
-                      className="w-full py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-[0_0_16px_rgba(217,119,6,0.3)]">
-                      ✦ Generate SVG Art
-                      <span className="ml-auto px-2 py-0.5 rounded-full bg-white/10 text-[10px] font-semibold inline-flex items-center gap-0.5">15 <LucideIcons.Sparkles className="w-2.5 h-2.5" /></span>
-                    </button>
-                  </motion.div>
+                  <AIEnginePanel key="feat-svg"
+                    accent="amber"
+                    iconEl={<LucideIcons.Shapes className="w-4 h-4 text-amber-400" />}
+                    title="Vector Art AI"
+                    subtitle="Generate scalable SVG artwork for the canvas"
+                    compactBadge={<GeneralAICompactBadge onExpand={() => setActiveFeature('general')} lastAIMessage={chatHistory.filter(m => m.role === 'ai' && m.text !== '…').at(-1)?.text ?? ''} />}
+                  >
+                    {(a) => (<>
+                      <textarea value={svgPrompt} onChange={e => setSvgPrompt(e.target.value)}
+                        placeholder="e.g. Minimalist floral wreath, monogram initials J+M, geometric mandala…" rows={3}
+                        className={`w-full bg-neutral-900 border border-neutral-700 text-neutral-200 rounded-xl px-3.5 py-2.5 text-xs resize-none focus:outline-none ${a.focus} transition-all placeholder:text-neutral-600`} />
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-px bg-neutral-800/60" />
+                        <p className={`text-[9px] font-bold uppercase tracking-[0.15em] ${a.divider}`}>✦ ART STYLE</p>
+                        <div className="flex-1 h-px bg-neutral-800/60" />
+                      </div>
+                      <div className="grid grid-cols-3 gap-1.5 text-[10px]">
+                        {['Minimalist', 'Hand-drawn', 'Geometric', 'Neon', 'Botanical', 'Abstract'].map(s => (
+                          <button key={s} type="button"
+                            onClick={() => setSvgPrompt(p => p ? `${p}, ${s.toLowerCase()} style` : `${s.toLowerCase()} style`)}
+                            className={`py-1.5 rounded-lg bg-neutral-800/80 ${a.chip} border border-neutral-700/80 transition-all font-medium text-neutral-400`}>{s}</button>
+                        ))}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-px bg-neutral-800/60" />
+                        <p className={`text-[9px] font-bold uppercase tracking-[0.15em] ${a.divider}`}>✦ ELEMENTS</p>
+                        <div className="flex-1 h-px bg-neutral-800/60" />
+                      </div>
+                      <div className="grid grid-cols-3 gap-1.5 text-[10px]">
+                        {['Floral', 'Monogram', 'Border', 'Mandala', 'Crest', 'Pattern'].map(s => (
+                          <button key={s} type="button"
+                            onClick={() => setSvgPrompt(p => p ? `${p}, ${s.toLowerCase()}` : `${s.toLowerCase()} vector`)}
+                            className={`py-1.5 rounded-lg bg-neutral-800/80 ${a.chip} border border-neutral-700/80 transition-all font-medium text-neutral-400`}>{s}</button>
+                        ))}
+                      </div>
+                      <button type="button" onClick={() => deductCredits(15)}
+                        className={`w-full py-2.5 rounded-xl ${a.btn} text-white text-xs font-bold transition-all flex items-center justify-center gap-2 ${a.shadow}`}>
+                        ✦ Generate SVG Art
+                        <span className="ml-auto px-2 py-0.5 rounded-full bg-white/10 text-[10px] font-semibold inline-flex items-center gap-0.5">15 <LucideIcons.Sparkles className="w-2.5 h-2.5" /></span>
+                      </button>
+                    </>)}
+                  </AIEnginePanel>
                 )}
 
                 {/* ── Scribbles AI ── */}
                 {activeFeature === 'scribbles' && (
-                  <motion.div key="feat-scribbles" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.15 }}
-                    className="p-4 space-y-4">
-                    <GeneralAICompactBadge
-                      onExpand={() => setActiveFeature('general')}
-                      lastAIMessage={chatHistory.filter(m => m.role === 'ai' && m.text !== '…').at(-1)?.text ?? ''}
-                    />
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-xl bg-pink-500/15 border border-pink-500/30 flex items-center justify-center"><LucideIcons.Pencil className="w-4 h-4 text-pink-400" /></div>
-                      <div><p className="text-xs font-bold text-white">Scribble Style AI</p><p className="text-[10px] text-neutral-500">Hand-drawn layer overlays, borders & marks</p></div>
-                    </div>
-                    <textarea value={scribblePrompt} onChange={e => setScribblePrompt(e.target.value)}
-                      placeholder="e.g. Thin gold underline, loose ink border, soft watercolour wash…" rows={3}
-                      className="w-full bg-neutral-900 border border-neutral-700 text-neutral-200 rounded-xl px-3.5 py-2.5 text-xs resize-none focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500/40 transition-all placeholder:text-neutral-600" />
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 h-px bg-neutral-800/60" />
-                      <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-pink-500/70">✦ MEDIUM</p>
-                      <div className="flex-1 h-px bg-neutral-800/60" />
-                    </div>
-                    <div className="grid grid-cols-3 gap-1.5 text-[10px]">
-                      {['Ink', 'Watercolour', 'Crayon', 'Charcoal', 'Pencil', 'Marker'].map(s => (
-                        <button key={s} type="button"
-                          onClick={() => setScribblePrompt(p => p ? `${p}, ${s.toLowerCase()} medium` : `${s.toLowerCase()} scribble overlay`)}
-                          className="py-1.5 rounded-lg bg-neutral-800/80 hover:bg-pink-500/10 hover:text-pink-300 hover:border-pink-500/30 border border-neutral-700/80 transition-all font-medium text-neutral-400">{s}</button>
-                      ))}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 h-px bg-neutral-800/60" />
-                      <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-pink-500/70">✦ MARK WEIGHT</p>
-                      <div className="flex-1 h-px bg-neutral-800/60" />
-                    </div>
-                    <div className="grid grid-cols-3 gap-1.5 text-[10px]">
-                      {['Hair-thin', 'Delicate', 'Natural', 'Bold', 'Brushy', 'Expressive'].map(s => (
-                        <button key={s} type="button"
-                          onClick={() => setScribblePrompt(p => p ? `${p}, ${s.toLowerCase()} weight` : `${s.toLowerCase()} weight lines`)}
-                          className="py-1.5 rounded-lg bg-neutral-800/80 hover:bg-pink-500/10 hover:text-pink-300 hover:border-pink-500/30 border border-neutral-700/80 transition-all font-medium text-neutral-400">{s}</button>
-                      ))}
-                    </div>
-                    <button type="button" onClick={() => deductCredits(8)}
-                      className="w-full py-2.5 rounded-xl bg-pink-600 hover:bg-pink-500 text-white text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-[0_0_16px_rgba(236,72,153,0.25)]">
-                      ✦ Generate Scribble Style
-                      <span className="ml-auto px-2 py-0.5 rounded-full bg-white/10 text-[10px] font-semibold inline-flex items-center gap-0.5">8 <LucideIcons.Sparkles className="w-2.5 h-2.5" /></span>
-                    </button>
-                  </motion.div>
+                  <AIEnginePanel key="feat-scribbles"
+                    accent="pink"
+                    iconEl={<LucideIcons.Pencil className="w-4 h-4 text-pink-400" />}
+                    title="Scribble Style AI"
+                    subtitle="Hand-drawn layer overlays, borders & marks"
+                    compactBadge={<GeneralAICompactBadge onExpand={() => setActiveFeature('general')} lastAIMessage={chatHistory.filter(m => m.role === 'ai' && m.text !== '…').at(-1)?.text ?? ''} />}
+                  >
+                    {(a) => (<>
+                      <textarea value={scribblePrompt} onChange={e => setScribblePrompt(e.target.value)}
+                        placeholder="e.g. Thin gold underline, loose ink border, soft watercolour wash…" rows={3}
+                        className={`w-full bg-neutral-900 border border-neutral-700 text-neutral-200 rounded-xl px-3.5 py-2.5 text-xs resize-none focus:outline-none ${a.focus} transition-all placeholder:text-neutral-600`} />
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-px bg-neutral-800/60" />
+                        <p className={`text-[9px] font-bold uppercase tracking-[0.15em] ${a.divider}`}>✦ MEDIUM</p>
+                        <div className="flex-1 h-px bg-neutral-800/60" />
+                      </div>
+                      <div className="grid grid-cols-3 gap-1.5 text-[10px]">
+                        {['Ink', 'Watercolour', 'Crayon', 'Charcoal', 'Pencil', 'Marker'].map(s => (
+                          <button key={s} type="button"
+                            onClick={() => setScribblePrompt(p => p ? `${p}, ${s.toLowerCase()} medium` : `${s.toLowerCase()} scribble overlay`)}
+                            className={`py-1.5 rounded-lg bg-neutral-800/80 ${a.chip} border border-neutral-700/80 transition-all font-medium text-neutral-400`}>{s}</button>
+                        ))}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-px bg-neutral-800/60" />
+                        <p className={`text-[9px] font-bold uppercase tracking-[0.15em] ${a.divider}`}>✦ MARK WEIGHT</p>
+                        <div className="flex-1 h-px bg-neutral-800/60" />
+                      </div>
+                      <div className="grid grid-cols-3 gap-1.5 text-[10px]">
+                        {['Hair-thin', 'Delicate', 'Natural', 'Bold', 'Brushy', 'Expressive'].map(s => (
+                          <button key={s} type="button"
+                            onClick={() => setScribblePrompt(p => p ? `${p}, ${s.toLowerCase()} weight` : `${s.toLowerCase()} weight lines`)}
+                            className={`py-1.5 rounded-lg bg-neutral-800/80 ${a.chip} border border-neutral-700/80 transition-all font-medium text-neutral-400`}>{s}</button>
+                        ))}
+                      </div>
+                      <button type="button" onClick={() => deductCredits(8)}
+                        className={`w-full py-2.5 rounded-xl ${a.btn} text-white text-xs font-bold transition-all flex items-center justify-center gap-2 ${a.shadow}`}>
+                        ✦ Generate Scribble Style
+                        <span className="ml-auto px-2 py-0.5 rounded-full bg-white/10 text-[10px] font-semibold inline-flex items-center gap-0.5">8 <LucideIcons.Sparkles className="w-2.5 h-2.5" /></span>
+                      </button>
+                    </>)}
+                  </AIEnginePanel>
                 )}
 
                 {/* ── Arc Text AI ── */}
                 {activeFeature === 'arctext' && (
-                  <motion.div key="feat-arctext" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.15 }}
-                    className="p-4 space-y-4">
-                    <GeneralAICompactBadge
-                      onExpand={() => setActiveFeature('general')}
-                      lastAIMessage={chatHistory.filter(m => m.role === 'ai' && m.text !== '…').at(-1)?.text ?? ''}
-                    />
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-xl bg-teal-500/15 border border-teal-500/30 flex items-center justify-center"><LucideIcons.RefreshCw className="w-4 h-4 text-teal-400" /></div>
-                      <div><p className="text-xs font-bold text-white">Arc Text AI</p><p className="text-[10px] text-neutral-500">Curved typographic phrases for your gift</p></div>
-                    </div>
-                    <textarea value={textPrompt} onChange={e => setTextPrompt(e.target.value)}
-                      placeholder="e.g. Forever & Always · Est. 2024 · Together We Rise…" rows={3}
-                      className="w-full bg-neutral-900 border border-neutral-700 text-neutral-200 rounded-xl px-3.5 py-2.5 text-xs resize-none focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500/40 transition-all placeholder:text-neutral-600" />
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 h-px bg-neutral-800/60" />
-                      <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-teal-500/70">✦ OCCASION</p>
-                      <div className="flex-1 h-px bg-neutral-800/60" />
-                    </div>
-                    <div className="grid grid-cols-3 gap-1.5 text-[10px]">
-                      {['Anniversary', 'Wedding', 'Birthday', 'Graduation', 'Milestone', 'Memorial'].map(s => (
-                        <button key={s} type="button"
-                          onClick={() => setTextPrompt(p => p ? `${p}, ${s.toLowerCase()} theme` : `${s.toLowerCase()} arc text phrase`)}
-                          className="py-1.5 rounded-lg bg-neutral-800/80 hover:bg-teal-500/10 hover:text-teal-300 hover:border-teal-500/30 border border-neutral-700/80 transition-all font-medium text-neutral-400">{s}</button>
-                      ))}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 h-px bg-neutral-800/60" />
-                      <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-teal-500/70">✦ CURVE STYLE</p>
-                      <div className="flex-1 h-px bg-neutral-800/60" />
-                    </div>
-                    <div className="grid grid-cols-3 gap-1.5 text-[10px]">
-                      {['Full Circle', 'Top Arc', 'Banner', 'Wave', 'Rising', 'Spiral'].map(s => (
-                        <button key={s} type="button"
-                          onClick={() => setTextPrompt(p => p ? `${p}, ${s.toLowerCase()} curve` : `${s.toLowerCase()} curve style`)}
-                          className="py-1.5 rounded-lg bg-neutral-800/80 hover:bg-teal-500/10 hover:text-teal-300 hover:border-teal-500/30 border border-neutral-700/80 transition-all font-medium text-neutral-400">{s}</button>
-                      ))}
-                    </div>
-                    <button type="button" onClick={() => deductCredits(5)}
-                      className="w-full py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-[0_0_16px_rgba(20,184,166,0.25)]">
-                      ✦ Generate Arc Text
-                      <span className="ml-auto px-2 py-0.5 rounded-full bg-white/10 text-[10px] font-semibold inline-flex items-center gap-0.5">5 <LucideIcons.Sparkles className="w-2.5 h-2.5" /></span>
-                    </button>
-                  </motion.div>
+                  <AIEnginePanel key="feat-arctext"
+                    accent="teal"
+                    iconEl={<LucideIcons.RefreshCw className="w-4 h-4 text-teal-400" />}
+                    title="Arc Text AI"
+                    subtitle="Curved typographic phrases for your gift"
+                    compactBadge={<GeneralAICompactBadge onExpand={() => setActiveFeature('general')} lastAIMessage={chatHistory.filter(m => m.role === 'ai' && m.text !== '…').at(-1)?.text ?? ''} />}
+                  >
+                    {(a) => (<>
+                      <textarea value={textPrompt} onChange={e => setTextPrompt(e.target.value)}
+                        placeholder="e.g. Forever & Always · Est. 2024 · Together We Rise…" rows={3}
+                        className={`w-full bg-neutral-900 border border-neutral-700 text-neutral-200 rounded-xl px-3.5 py-2.5 text-xs resize-none focus:outline-none ${a.focus} transition-all placeholder:text-neutral-600`} />
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-px bg-neutral-800/60" />
+                        <p className={`text-[9px] font-bold uppercase tracking-[0.15em] ${a.divider}`}>✦ OCCASION</p>
+                        <div className="flex-1 h-px bg-neutral-800/60" />
+                      </div>
+                      <div className="grid grid-cols-3 gap-1.5 text-[10px]">
+                        {['Anniversary', 'Wedding', 'Birthday', 'Graduation', 'Milestone', 'Memorial'].map(s => (
+                          <button key={s} type="button"
+                            onClick={() => setTextPrompt(p => p ? `${p}, ${s.toLowerCase()} theme` : `${s.toLowerCase()} arc text phrase`)}
+                            className={`py-1.5 rounded-lg bg-neutral-800/80 ${a.chip} border border-neutral-700/80 transition-all font-medium text-neutral-400`}>{s}</button>
+                        ))}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-px bg-neutral-800/60" />
+                        <p className={`text-[9px] font-bold uppercase tracking-[0.15em] ${a.divider}`}>✦ CURVE STYLE</p>
+                        <div className="flex-1 h-px bg-neutral-800/60" />
+                      </div>
+                      <div className="grid grid-cols-3 gap-1.5 text-[10px]">
+                        {['Full Circle', 'Top Arc', 'Banner', 'Wave', 'Rising', 'Spiral'].map(s => (
+                          <button key={s} type="button"
+                            onClick={() => setTextPrompt(p => p ? `${p}, ${s.toLowerCase()} curve` : `${s.toLowerCase()} curve style`)}
+                            className={`py-1.5 rounded-lg bg-neutral-800/80 ${a.chip} border border-neutral-700/80 transition-all font-medium text-neutral-400`}>{s}</button>
+                        ))}
+                      </div>
+                      <button type="button" onClick={() => deductCredits(5)}
+                        className={`w-full py-2.5 rounded-xl ${a.btn} text-white text-xs font-bold transition-all flex items-center justify-center gap-2 ${a.shadow}`}>
+                        ✦ Generate Arc Text
+                        <span className="ml-auto px-2 py-0.5 rounded-full bg-white/10 text-[10px] font-semibold inline-flex items-center gap-0.5">5 <LucideIcons.Sparkles className="w-2.5 h-2.5" /></span>
+                      </button>
+                    </>)}
+                  </AIEnginePanel>
                 )}
 
                 {/* ── Aevaia AI — unified navigation + generation ── */}

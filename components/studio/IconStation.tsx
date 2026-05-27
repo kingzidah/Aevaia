@@ -4,6 +4,7 @@ import React, { useState, useTransition } from "react";
 import * as Icons from "lucide-react";
 import { getAIIcons } from "@/app/actions/aiIcons";
 import { useCredits } from "@/context/CreditContext";
+import { PANEL_ACCENTS } from "@/components/studio/AIEnginePanel";
 
 function DynamicIcon({ name, className }: { name: string; className?: string }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -21,6 +22,8 @@ export default function IconStation({ onSelect }: IconStationProps) {
   const [error,     setError]     = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const { deductCredits } = useCredits();
+
+  const a = PANEL_ACCENTS.fuchsia;
 
   function handleGenerate() {
     if (!prompt.trim()) return;
@@ -48,13 +51,13 @@ export default function IconStation({ onSelect }: IconStationProps) {
           onKeyDown={(e) => { if (e.key === "Enter") handleGenerate(); }}
           placeholder="Describe the icon vibe…"
           disabled={isPending}
-          className="flex-1 min-w-0 h-8 bg-neutral-900 border border-neutral-700/80 text-neutral-200 rounded-lg px-3 text-xs outline-none focus:border-fuchsia-500/60 placeholder:text-neutral-600 disabled:opacity-50 transition-all"
+          className={`flex-1 min-w-0 h-8 bg-neutral-900 border border-neutral-700/80 text-neutral-200 rounded-lg px-3 text-xs outline-none ${a.focus} placeholder:text-neutral-600 disabled:opacity-50 transition-all`}
         />
         <button
           type="button"
           onClick={handleGenerate}
           disabled={isPending || !prompt.trim()}
-          className="h-8 px-3 rounded-lg bg-fuchsia-600 hover:bg-fuchsia-500 text-white text-xs font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed shrink-0 flex items-center gap-1.5 shadow-[0_0_12px_rgba(192,38,211,0.2)]"
+          className={`h-8 px-3 rounded-lg ${a.btn} text-white text-xs font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed shrink-0 flex items-center gap-1.5 ${a.shadow}`}
         >
           {isPending ? (
             <>
@@ -77,7 +80,7 @@ export default function IconStation({ onSelect }: IconStationProps) {
         <>
           <div className="flex items-center gap-2">
             <div className="flex-1 h-px bg-neutral-800/60" />
-            <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-fuchsia-500/70">✦ SELECT AN ICON</p>
+            <p className={`text-[9px] font-bold uppercase tracking-[0.15em] ${a.divider}`}>✦ SELECT AN ICON</p>
             <div className="flex-1 h-px bg-neutral-800/60" />
           </div>
           <div className="grid grid-cols-5 gap-1.5">
@@ -87,7 +90,7 @@ export default function IconStation({ onSelect }: IconStationProps) {
                 type="button"
                 onClick={() => onSelect(name)}
                 title={name}
-                className="group flex flex-col items-center gap-1.5 py-2.5 px-1 rounded-xl border border-neutral-700/80 bg-neutral-800/60 hover:border-fuchsia-500/50 hover:bg-fuchsia-500/8 transition-all"
+                className={`group flex flex-col items-center gap-1.5 py-2.5 px-1 rounded-xl border border-neutral-700/80 bg-neutral-800/60 ${a.chip} transition-all`}
               >
                 <DynamicIcon
                   name={name}
