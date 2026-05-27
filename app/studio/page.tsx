@@ -7,8 +7,8 @@ import { useTiptapEditor } from "@/hooks/useTiptapEditor";
 import TextEditorPanel from "@/components/text-editor/TextEditorPanel";
 import AmbientEffects from "@/components/canvas/AmbientEffects";
 import AtmosphereRenderer from "@/components/studio/atmosphere-renderer";
-import IconStation from "@/components/studio/IconStation";
-import AIEnginePanel from "@/components/studio/AIEnginePanel";
+import AIEnginePanel, { PanelDivider, PanelPill, PanelActionBtn, PanelQuickRow } from "@/components/studio/AIEnginePanel";
+import IconStationPanel from "@/components/studio/IconStationPanel";
 import { useCredits } from "@/context/CreditContext";
 import * as LucideIcons from "lucide-react";
 import { ICON_LIBRARY } from "@/utils/icon-library";
@@ -3387,15 +3387,54 @@ function RightSidebar() {
                     compactBadge={<GeneralAICompactBadge onExpand={() => setActiveFeature('general')} lastAIMessage={chatHistory.filter(m => m.role === 'ai' && m.text !== '…').at(-1)?.text ?? ''} />}
                   >
                     {(a) => (<>
+                      {/* Row 3 — Local instruction textarea */}
                       <textarea value={textPrompt} onChange={e => setTextPrompt(e.target.value)}
-                        placeholder="What should this say? Describe the tone, emotion, or message…" rows={4}
+                        placeholder="What story or message should this tell? Describe tone, emotion, and occasion…" rows={3}
                         className={`w-full bg-neutral-900 border border-neutral-700 text-neutral-200 rounded-xl px-3.5 py-2.5 text-xs resize-none focus:outline-none ${a.focus} transition-all placeholder:text-neutral-600`} />
-                      <button type="button" onClick={() => deductCredits(5)}
-                        className={`w-full py-2.5 rounded-xl ${a.btn} text-white text-xs font-bold transition-all flex items-center justify-center gap-2 ${a.shadow}`}>
+
+                      {/* Row 4 — Inline suggestion badge pills */}
+                      <div className="flex flex-wrap gap-1.5">
+                        {['Make it poetic', 'Toast speech style', 'Keep it punchy', 'Add more warmth'].map(label => (
+                          <PanelPill key={label} label={label} accent="violet"
+                            onClick={() => setTextPrompt(p => p ? `${p} — ${label.toLowerCase()}` : label)} />
+                        ))}
+                      </div>
+
+                      {/* Row 5 — EMOTIONAL TONE toggle grid */}
+                      <div className="space-y-2">
+                        <PanelDivider label="EMOTIONAL TONE" accent="violet" />
+                        <div className="grid grid-cols-2 gap-1.5">
+                          {([
+                            { id: 'romantic' as const, label: 'Romantic', Icon: LucideIcons.Heart },
+                            { id: 'poetic'   as const, label: 'Poetic',   Icon: LucideIcons.Moon  },
+                            { id: 'funny'    as const, label: 'Funny',    Icon: LucideIcons.Smile  },
+                            { id: 'casual'   as const, label: 'Casual',   Icon: LucideIcons.Hand   },
+                          ]).map(({ id, label, Icon }) => (
+                            <button key={id} type="button" onClick={() => setSelectedTone(id)}
+                              className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border text-xs font-medium transition-all ${selectedTone === id ? a.toneActive : 'border-neutral-800 text-neutral-500 hover:border-neutral-600 hover:text-neutral-300'}`}>
+                              <Icon className="w-3.5 h-3.5 shrink-0" />{label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Row 6 — Primary action button */}
+                      <PanelActionBtn accent="violet" credits={5} onClick={() => deductCredits(5)}>
                         ✦ Generate Story
-                        <span className="ml-auto px-2 py-0.5 rounded-full bg-white/10 text-[10px] font-semibold inline-flex items-center gap-0.5">5 <LucideIcons.Sparkles className="w-2.5 h-2.5" /></span>
-                      </button>
-                      <p className="text-[10px] text-neutral-600 text-center">Select a text block on the canvas first to apply directly.</p>
+                      </PanelActionBtn>
+
+                      {/* Row 7 — Quick story starters */}
+                      <div className="space-y-1.5">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">Quick Story Starters</p>
+                        {[
+                          'A romantic anniversary invitation — heartfelt and deeply personal',
+                          'Playful birthday message — warm, funny, and celebratory',
+                          'Formal ceremony opening — sophisticated and timeless',
+                          'Short & punchy event headline — bold and direct',
+                        ].map(label => (
+                          <PanelQuickRow key={label} label={label} accent="violet" onClick={() => setTextPrompt(label)} />
+                        ))}
+                      </div>
                     </>)}
                   </AIEnginePanel>
                 )}
@@ -3410,51 +3449,72 @@ function RightSidebar() {
                     compactBadge={<GeneralAICompactBadge onExpand={() => setActiveFeature('general')} lastAIMessage={chatHistory.filter(m => m.role === 'ai' && m.text !== '…').at(-1)?.text ?? ''} />}
                   >
                     {(a) => (<>
+                      {/* Row 3 — Local instruction textarea */}
                       <textarea
                         value={mediaPrompt}
                         onChange={e => setMediaPrompt(e.target.value)}
                         onKeyDown={e => { if (e.key === 'Enter' && e.metaKey) handleGenerateImage(); }}
                         placeholder="Describe the photo — mood, lighting, subject, style…"
-                        rows={4}
+                        rows={3}
                         disabled={isGenerating}
                         className={`w-full bg-neutral-900 border border-neutral-700 text-neutral-200 rounded-xl px-3.5 py-2.5 text-xs resize-none focus:outline-none ${a.focus} transition-all placeholder:text-neutral-600 disabled:opacity-50`} />
-                      <div className="grid grid-cols-2 gap-2 text-[10px] text-neutral-500">
-                        {['Cinematic', 'Minimalist', 'Romantic', 'Editorial'].map(style => (
-                          <button key={style} type="button" disabled={isGenerating}
-                            onClick={() => setMediaPrompt(p => p ? `${p}, ${style.toLowerCase()} style` : `${style.toLowerCase()} style`)}
-                            className={`py-1.5 rounded-lg bg-neutral-800 ${a.chip} border border-neutral-700 transition-all font-medium disabled:opacity-40`}>
-                            {style}
-                          </button>
+
+                      {/* Row 4 — Inline suggestion badge pills */}
+                      <div className="flex flex-wrap gap-1.5">
+                        {['Midnight luxury glow', 'Pastel floral canvas', 'Cinematic portrait', 'Minimal editorial'].map(label => (
+                          <PanelPill key={label} label={label} accent="blue" disabled={isGenerating}
+                            onClick={() => setMediaPrompt(p => p ? `${p}, ${label.toLowerCase()} style` : label)} />
                         ))}
                       </div>
+
+                      {/* Row 5 — IMAGE STYLE toggle grid */}
+                      <div className="space-y-2">
+                        <PanelDivider label="IMAGE STYLE" accent="blue" />
+                        <div className="grid grid-cols-2 gap-1.5 text-[10px]">
+                          {['Cinematic', 'Minimalist', 'Romantic', 'Editorial'].map(style => (
+                            <button key={style} type="button" disabled={isGenerating}
+                              onClick={() => setMediaPrompt(p => p ? `${p}, ${style.toLowerCase()} style` : `${style.toLowerCase()} style`)}
+                              className={`py-1.5 rounded-lg bg-neutral-800/80 ${a.chip} border border-neutral-700/80 transition-all font-medium text-neutral-400 disabled:opacity-40`}>
+                              {style}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Row 6 — Primary action button */}
                       <button
                         type="button"
                         onClick={handleGenerateImage}
                         disabled={isGenerating || !mediaPrompt.trim()}
                         className={`w-full py-2.5 rounded-xl ${a.btn} disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold transition-all flex items-center justify-center gap-2 ${a.shadow}`}>
                         {isGenerating ? (
-                          <>
-                            <span className="w-3.5 h-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin shrink-0" />
-                            Creating Magic…
-                          </>
+                          <><span className="w-3.5 h-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin shrink-0" />Creating Magic…</>
                         ) : (
-                          <>
-                            ✦ Generate Image
-                            <span className="ml-auto px-2 py-0.5 rounded-full bg-white/10 text-[10px] font-semibold inline-flex items-center gap-0.5">20 <LucideIcons.Sparkles className="w-2.5 h-2.5" /></span>
-                          </>
+                          <>✦ Generate Image<span className="ml-auto px-2 py-0.5 rounded-full bg-white/10 text-[10px] font-semibold inline-flex items-center gap-0.5">20 <LucideIcons.Sparkles className="w-2.5 h-2.5" /></span></>
                         )}
                       </button>
+
                       {generateError && (
                         <p className="text-xs text-red-400 text-center leading-relaxed px-1">{generateError}</p>
                       )}
                       {generatedImageUrl && (
                         <div className="space-y-2">
-                          <img
-                            src={generatedImageUrl}
-                            alt="AI generated"
-                            className="w-full rounded-xl border border-blue-500/30 object-cover aspect-square"
-                          />
+                          <img src={generatedImageUrl} alt="AI generated" className="w-full rounded-xl border border-blue-500/30 object-cover aspect-square" />
                           <p className="text-[10px] text-neutral-500 text-center">Canvas drop-in coming soon ✦</p>
+                        </div>
+                      )}
+
+                      {/* Row 7 — Quick scene starters (only shown before image is generated) */}
+                      {!generatedImageUrl && (
+                        <div className="space-y-1.5">
+                          <p className="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">Quick Scenes</p>
+                          {[
+                            'Soft candlelight and rose petals on dark marble',
+                            'Golden hour garden portraits with warm soft bokeh',
+                            'White marble flat lay — luxury goods, editorial clean',
+                          ].map(label => (
+                            <PanelQuickRow key={label} label={label} accent="blue" disabled={isGenerating} onClick={() => setMediaPrompt(label)} />
+                          ))}
                         </div>
                       )}
                     </>)}
@@ -3471,38 +3531,59 @@ function RightSidebar() {
                     compactBadge={<GeneralAICompactBadge onExpand={() => setActiveFeature('general')} lastAIMessage={chatHistory.filter(m => m.role === 'ai' && m.text !== '…').at(-1)?.text ?? ''} />}
                   >
                     {(a) => (<>
+                      {/* Row 3 — Local instruction textarea */}
                       <textarea value={audioPrompt} onChange={e => setAudioPrompt(e.target.value)}
                         placeholder="Describe the vibe — genre, tempo, emotional arc, key instruments…" rows={3}
                         className={`w-full bg-neutral-900 border border-neutral-700 text-neutral-200 rounded-xl px-3.5 py-2.5 text-xs resize-none focus:outline-none ${a.focus} transition-all placeholder:text-neutral-600`} />
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 h-px bg-neutral-800/60" />
-                        <p className={`text-[9px] font-bold uppercase tracking-[0.15em] ${a.divider}`}>✦ ATMOSPHERE</p>
-                        <div className="flex-1 h-px bg-neutral-800/60" />
-                      </div>
-                      <div className="grid grid-cols-3 gap-1.5 text-[10px]">
-                        {['Orchestral', 'Lo-Fi', 'Jazz', 'Ambient', 'Acoustic', 'Cinematic'].map(s => (
-                          <button key={s} type="button"
-                            onClick={() => setAudioPrompt(p => p ? `${p}, ${s.toLowerCase()} style` : `${s.toLowerCase()} track`)}
-                            className={`py-1.5 rounded-lg bg-neutral-800/80 ${a.chip} border border-neutral-700/80 transition-all font-medium text-neutral-400`}>{s}</button>
+
+                      {/* Row 4 — Inline suggestion badge pills */}
+                      <div className="flex flex-wrap gap-1.5">
+                        {['Romantic piano suite', 'Epic orchestral build', 'Soft acoustic folk', 'Dreamy ambient pads'].map(label => (
+                          <PanelPill key={label} label={label} accent="emerald"
+                            onClick={() => setAudioPrompt(p => p ? `${p}, ${label.toLowerCase()}` : label)} />
                         ))}
                       </div>
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 h-px bg-neutral-800/60" />
-                        <p className={`text-[9px] font-bold uppercase tracking-[0.15em] ${a.divider}`}>✦ TEMPO</p>
-                        <div className="flex-1 h-px bg-neutral-800/60" />
+
+                      {/* Row 5 — ATMOSPHERE chip grid */}
+                      <div className="space-y-2">
+                        <PanelDivider label="ATMOSPHERE" accent="emerald" />
+                        <div className="grid grid-cols-3 gap-1.5 text-[10px]">
+                          {['Orchestral', 'Lo-Fi', 'Jazz', 'Ambient', 'Acoustic', 'Cinematic'].map(s => (
+                            <button key={s} type="button"
+                              onClick={() => setAudioPrompt(p => p ? `${p}, ${s.toLowerCase()} style` : `${s.toLowerCase()} track`)}
+                              className={`py-1.5 rounded-lg bg-neutral-800/80 ${a.chip} border border-neutral-700/80 transition-all font-medium text-neutral-400`}>{s}</button>
+                          ))}
+                        </div>
                       </div>
-                      <div className="grid grid-cols-3 gap-1.5 text-[10px]">
-                        {['Slow & Dreamy', 'Mid Tempo', 'Upbeat', 'Pulse', 'Floating', 'Driving'].map(s => (
-                          <button key={s} type="button"
-                            onClick={() => setAudioPrompt(p => p ? `${p}, ${s.toLowerCase()} tempo` : `${s.toLowerCase()} tempo`)}
-                            className={`py-1.5 rounded-lg bg-neutral-800/80 ${a.chip} border border-neutral-700/80 transition-all font-medium text-neutral-400`}>{s}</button>
-                        ))}
+
+                      {/* Row 5b — TEMPO chip grid */}
+                      <div className="space-y-2">
+                        <PanelDivider label="TEMPO" accent="emerald" />
+                        <div className="grid grid-cols-3 gap-1.5 text-[10px]">
+                          {['Slow & Dreamy', 'Mid Tempo', 'Upbeat', 'Pulse', 'Floating', 'Driving'].map(s => (
+                            <button key={s} type="button"
+                              onClick={() => setAudioPrompt(p => p ? `${p}, ${s.toLowerCase()} tempo` : `${s.toLowerCase()} tempo`)}
+                              className={`py-1.5 rounded-lg bg-neutral-800/80 ${a.chip} border border-neutral-700/80 transition-all font-medium text-neutral-400`}>{s}</button>
+                          ))}
+                        </div>
                       </div>
-                      <button type="button" onClick={() => deductCredits(50)}
-                        className={`w-full py-2.5 rounded-xl ${a.btn} text-white text-xs font-bold transition-all flex items-center justify-center gap-2 ${a.shadow}`}>
+
+                      {/* Row 6 — Primary action button */}
+                      <PanelActionBtn accent="emerald" credits={50} onClick={() => deductCredits(50)}>
                         ✦ Generate Track
-                        <span className="ml-auto px-2 py-0.5 rounded-full bg-white/10 text-[10px] font-semibold inline-flex items-center gap-0.5">50 <LucideIcons.Sparkles className="w-2.5 h-2.5" /></span>
-                      </button>
+                      </PanelActionBtn>
+
+                      {/* Row 7 — Quick track ideas */}
+                      <div className="space-y-1.5">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">Quick Track Ideas</p>
+                        {[
+                          'Gentle wedding reception background — warm and unobtrusive',
+                          'Dramatic first dance orchestral suite — sweeping and cinematic',
+                          'Late-night jazz for cocktail hour — smooth and sophisticated',
+                        ].map(label => (
+                          <PanelQuickRow key={label} label={label} accent="emerald" onClick={() => setAudioPrompt(label)} />
+                        ))}
+                      </div>
                     </>)}
                   </AIEnginePanel>
                 )}
@@ -3513,52 +3594,27 @@ function RightSidebar() {
                     accent="fuchsia"
                     iconEl={<LucideIcons.Gem className="w-4 h-4 text-fuchsia-400" />}
                     title="AI Icon Station"
-                    subtitle="Prompt → 5 matching Lucide icons"
+                    subtitle="Describe a theme — get 5 matching icons"
                     compactBadge={<GeneralAICompactBadge onExpand={() => setActiveFeature('general')} lastAIMessage={chatHistory.filter(m => m.role === 'ai' && m.text !== '…').at(-1)?.text ?? ''} />}
                   >
-                    {(a) => (<>
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 h-px bg-neutral-800/60" />
-                        <p className={`text-[9px] font-bold uppercase tracking-[0.15em] ${a.divider}`}>✦ THEME</p>
-                        <div className="flex-1 h-px bg-neutral-800/60" />
-                      </div>
-                      <div className="grid grid-cols-3 gap-1.5 text-[10px]">
-                        {['Love & Romance', 'Nature', 'Celebration', 'Tech', 'Music', 'Travel'].map(s => (
-                          <button key={s} type="button"
-                            onClick={() => setGlobalBarInput(p => p ? `${p}, ${s.toLowerCase()}` : `${s.toLowerCase()} icon`)}
-                            className={`py-1.5 rounded-lg bg-neutral-800/80 ${a.chip} border border-neutral-700/80 transition-all font-medium text-neutral-400`}>{s}</button>
-                        ))}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 h-px bg-neutral-800/60" />
-                        <p className={`text-[9px] font-bold uppercase tracking-[0.15em] ${a.divider}`}>✦ STYLE</p>
-                        <div className="flex-1 h-px bg-neutral-800/60" />
-                      </div>
-                      <div className="grid grid-cols-3 gap-1.5 text-[10px]">
-                        {['Outline', 'Filled', 'Minimal', 'Bold', 'Delicate', 'Playful'].map(s => (
-                          <button key={s} type="button"
-                            onClick={() => setGlobalBarInput(p => p ? `${p}, ${s.toLowerCase()} style` : `${s.toLowerCase()} style icon`)}
-                            className={`py-1.5 rounded-lg bg-neutral-800/80 ${a.chip} border border-neutral-700/80 transition-all font-medium text-neutral-400`}>{s}</button>
-                        ))}
-                      </div>
-                      <IconStation
-                        onSelect={(name) => {
-                          addBlock('icon');
-                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                          setScenes((prev: any[]) => prev.map((scene: any) =>
-                            scene.id === activeSceneId
-                              ? {
-                                  ...scene,
-                                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                  blocks: scene.blocks.map((b: any, i: number) =>
-                                    i === scene.blocks.length - 1 ? { ...b, content: name } : b
-                                  ),
-                                }
-                              : scene
-                          ));
-                        }}
-                      />
-                    </>)}
+                    {/* Rows 3–7 handled internally by IconStationPanel (proper React component) */}
+                    <IconStationPanel
+                      onSelect={(name) => {
+                        addBlock('icon');
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        setScenes((prev: any[]) => prev.map((scene: any) =>
+                          scene.id === activeSceneId
+                            ? {
+                                ...scene,
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                blocks: scene.blocks.map((b: any, i: number) =>
+                                  i === scene.blocks.length - 1 ? { ...b, content: name } : b
+                                ),
+                              }
+                            : scene
+                        ));
+                      }}
+                    />
                   </AIEnginePanel>
                 )}
 
@@ -3732,38 +3788,59 @@ function RightSidebar() {
                     compactBadge={<GeneralAICompactBadge onExpand={() => setActiveFeature('general')} lastAIMessage={chatHistory.filter(m => m.role === 'ai' && m.text !== '…').at(-1)?.text ?? ''} />}
                   >
                     {(a) => (<>
+                      {/* Row 3 — Local instruction textarea */}
                       <textarea value={svgPrompt} onChange={e => setSvgPrompt(e.target.value)}
                         placeholder="e.g. Minimalist floral wreath, monogram initials J+M, geometric mandala…" rows={3}
                         className={`w-full bg-neutral-900 border border-neutral-700 text-neutral-200 rounded-xl px-3.5 py-2.5 text-xs resize-none focus:outline-none ${a.focus} transition-all placeholder:text-neutral-600`} />
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 h-px bg-neutral-800/60" />
-                        <p className={`text-[9px] font-bold uppercase tracking-[0.15em] ${a.divider}`}>✦ ART STYLE</p>
-                        <div className="flex-1 h-px bg-neutral-800/60" />
-                      </div>
-                      <div className="grid grid-cols-3 gap-1.5 text-[10px]">
-                        {['Minimalist', 'Hand-drawn', 'Geometric', 'Neon', 'Botanical', 'Abstract'].map(s => (
-                          <button key={s} type="button"
-                            onClick={() => setSvgPrompt(p => p ? `${p}, ${s.toLowerCase()} style` : `${s.toLowerCase()} style`)}
-                            className={`py-1.5 rounded-lg bg-neutral-800/80 ${a.chip} border border-neutral-700/80 transition-all font-medium text-neutral-400`}>{s}</button>
+
+                      {/* Row 4 — Inline suggestion badge pills */}
+                      <div className="flex flex-wrap gap-1.5">
+                        {['Minimal monogram crest', 'Botanical floral wreath', 'Geometric border', 'Decorative divider'].map(label => (
+                          <PanelPill key={label} label={label} accent="amber"
+                            onClick={() => setSvgPrompt(p => p ? `${p}, ${label.toLowerCase()}` : label)} />
                         ))}
                       </div>
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 h-px bg-neutral-800/60" />
-                        <p className={`text-[9px] font-bold uppercase tracking-[0.15em] ${a.divider}`}>✦ ELEMENTS</p>
-                        <div className="flex-1 h-px bg-neutral-800/60" />
+
+                      {/* Row 5 — ART STYLE chip grid */}
+                      <div className="space-y-2">
+                        <PanelDivider label="ART STYLE" accent="amber" />
+                        <div className="grid grid-cols-3 gap-1.5 text-[10px]">
+                          {['Minimalist', 'Hand-drawn', 'Geometric', 'Neon', 'Botanical', 'Abstract'].map(s => (
+                            <button key={s} type="button"
+                              onClick={() => setSvgPrompt(p => p ? `${p}, ${s.toLowerCase()} style` : `${s.toLowerCase()} style`)}
+                              className={`py-1.5 rounded-lg bg-neutral-800/80 ${a.chip} border border-neutral-700/80 transition-all font-medium text-neutral-400`}>{s}</button>
+                          ))}
+                        </div>
                       </div>
-                      <div className="grid grid-cols-3 gap-1.5 text-[10px]">
-                        {['Floral', 'Monogram', 'Border', 'Mandala', 'Crest', 'Pattern'].map(s => (
-                          <button key={s} type="button"
-                            onClick={() => setSvgPrompt(p => p ? `${p}, ${s.toLowerCase()}` : `${s.toLowerCase()} vector`)}
-                            className={`py-1.5 rounded-lg bg-neutral-800/80 ${a.chip} border border-neutral-700/80 transition-all font-medium text-neutral-400`}>{s}</button>
-                        ))}
+
+                      {/* Row 5b — ELEMENTS chip grid */}
+                      <div className="space-y-2">
+                        <PanelDivider label="ELEMENTS" accent="amber" />
+                        <div className="grid grid-cols-3 gap-1.5 text-[10px]">
+                          {['Floral', 'Monogram', 'Border', 'Mandala', 'Crest', 'Pattern'].map(s => (
+                            <button key={s} type="button"
+                              onClick={() => setSvgPrompt(p => p ? `${p}, ${s.toLowerCase()}` : `${s.toLowerCase()} vector`)}
+                              className={`py-1.5 rounded-lg bg-neutral-800/80 ${a.chip} border border-neutral-700/80 transition-all font-medium text-neutral-400`}>{s}</button>
+                          ))}
+                        </div>
                       </div>
-                      <button type="button" onClick={() => deductCredits(15)}
-                        className={`w-full py-2.5 rounded-xl ${a.btn} text-white text-xs font-bold transition-all flex items-center justify-center gap-2 ${a.shadow}`}>
+
+                      {/* Row 6 — Primary action button */}
+                      <PanelActionBtn accent="amber" credits={15} onClick={() => deductCredits(15)}>
                         ✦ Generate SVG Art
-                        <span className="ml-auto px-2 py-0.5 rounded-full bg-white/10 text-[10px] font-semibold inline-flex items-center gap-0.5">15 <LucideIcons.Sparkles className="w-2.5 h-2.5" /></span>
-                      </button>
+                      </PanelActionBtn>
+
+                      {/* Row 7 — Quick art starters */}
+                      <div className="space-y-1.5">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">Quick Art Starters</p>
+                        {[
+                          'Initials monogram with delicate floral frame around it',
+                          'Thin gold geometric corner borders for an invitation',
+                          'Elegant botanical wreath with roses and leaves',
+                        ].map(label => (
+                          <PanelQuickRow key={label} label={label} accent="amber" onClick={() => setSvgPrompt(label)} />
+                        ))}
+                      </div>
                     </>)}
                   </AIEnginePanel>
                 )}
