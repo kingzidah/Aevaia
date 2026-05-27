@@ -2795,12 +2795,13 @@ function CenterCanvas() {
       </AnimatePresence>
 
       {/* ── Unified Utility Dock — bottom-center HUD ── */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 pointer-events-auto">
+      {/* z-[60]: must sit above the z-50 pan/spacebar capture overlays */}
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[60] pointer-events-auto">
         <UtilityDock
           theme={theme as string}
           setTheme={setTheme as (t: string) => void}
           activeTool={activeTool as CanvasTool}
-          setActiveTool={setActiveTool as (t: CanvasTool) => void}
+          setActiveTool={(t: CanvasTool) => { setActiveTool(t); if (t !== 'pan') setIsPanningWorkspace(false); }}
           zoom={canvasZoom}
           setZoom={setCanvasZoom}
           onFitView={() => {

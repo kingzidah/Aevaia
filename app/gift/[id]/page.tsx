@@ -6,6 +6,80 @@ import GiftGate   from "@/components/gift/GiftGate";
 import type { GiftPayload } from "@/components/gift/GiftViewer";
 import type { GlobalState }  from "@/types/studio";
 
+// ── Demo preview payload ──────────────────────────────────────────────────────
+// Visiting /gift/demo shows a fully-populated showcase with no DB call needed.
+
+const DEMO_PAYLOAD: GiftPayload = {
+  id: "demo",
+  global: {
+    theme:             "dark-romance",
+    bgMusicUrl:        "",
+    bgMusicVolume:     80,
+    bgMusicSpeed:      1,
+    ambientEffect:     "floating-orbs",
+    imageUrl:          "",
+    imageBorderRadius: 16,
+    imageShadow:       "soft",
+    headlineHtml:      "",
+    paragraphHtml:     "",
+    environment: {
+      theme:        "dark",
+      particles:    "NONE",
+      ambientAudio: "NONE",
+    },
+  } satisfies GlobalState,
+  scenes: [
+    {
+      id:   "demo-scene-1",
+      name: "Invitation",
+      blocks: [
+        {
+          id:      "demo-h1",
+          type:    "headline",
+          content: "An Evening to Remember ✦",
+          properties: { fontSize: 38, color: "#fda4af" },
+        },
+        {
+          id:      "demo-p1",
+          type:    "paragraph",
+          content: "You have been personally invited to join us for a magical night of celebration, gratitude, and connection. This is an experience crafted just for you.",
+          properties: { fontSize: 15, color: "#fecdd3" },
+        },
+        {
+          id:      "demo-icon-sparkles",
+          type:    "icon",
+          content: "Sparkles",
+          properties: { iconSize: 64, iconColor: "#e879f9", iconStrokeWidth: 1.5 },
+        },
+        {
+          id:         "demo-countdown",
+          type:       "countdown",
+          content:    "Until the Celebration",
+          targetDate: "2026-12-31T20:00:00",
+        },
+        {
+          id:      "demo-p2",
+          type:    "paragraph",
+          content: "<strong>Saturday, 31 December 2026 · 8 PM</strong><br/>The Grand Ballroom, Heartcraft House",
+          properties: { fontSize: 14, color: "#fda4af" },
+        },
+        {
+          id:      "demo-btn",
+          type:    "button",
+          content: "Reserve Your Spot →",
+          properties: { accentColor: "#be185d", blockBorderRadius: 999 },
+        },
+        {
+          id:      "demo-footer",
+          type:    "paragraph",
+          content: "Built with <strong>Aevaia</strong> — magic design experiences.",
+          properties: { fontSize: 11, color: "#4b5563" },
+        },
+      ],
+    },
+  ],
+};
+
 // ── Shared error screens ──────────────────────────────────────────────────────
 
 function NotFound() {
@@ -45,6 +119,9 @@ export default async function GiftPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+
+  // ── Demo shortcut — no DB required ───────────────────────────────────────
+  if (id === "demo") return <GiftViewer payload={DEMO_PAYLOAD} />;
 
   // ── Path 1: Prisma-backed gift (existing paid system) ──────────────────────
   let project: {
