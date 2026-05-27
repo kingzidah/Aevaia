@@ -69,50 +69,7 @@ export default function IconStationPanel({ onSelect }: IconStationPanelProps) {
         className={`w-full bg-neutral-900 border border-neutral-700 text-neutral-200 rounded-xl px-3.5 py-2.5 text-xs resize-none focus:outline-none ${a.focus} transition-all placeholder:text-neutral-600 disabled:opacity-50`}
       />
 
-      {/* Row 4: Inline suggestion badge pills */}
-      <div className="flex flex-wrap gap-1.5">
-        {THEME_PILLS.map(label => (
-          <button
-            key={label}
-            type="button"
-            disabled={isPending}
-            onClick={() => appendToPrompt(`${label.toLowerCase()} icons`)}
-            className={`flex items-center gap-1 px-2.5 py-1 rounded-full border text-[10px] font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed ${a.pill}`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {/* Row 5: THEME chip grid */}
-      <div className="space-y-2">
-        <PanelDivider label="THEME" accent="fuchsia" />
-        <div className="grid grid-cols-3 gap-1.5 text-[10px]">
-          {THEME_CHIPS.map(s => (
-            <button key={s} type="button" disabled={isPending}
-              onClick={() => appendToPrompt(`${s.toLowerCase()} theme`)}
-              className={`py-1.5 rounded-lg bg-neutral-800/80 ${a.chip} border border-neutral-700/80 transition-all font-medium text-neutral-400 disabled:opacity-40`}>
-              {s}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Row 5b: STYLE chip grid */}
-      <div className="space-y-2">
-        <PanelDivider label="STYLE" accent="fuchsia" />
-        <div className="grid grid-cols-3 gap-1.5 text-[10px]">
-          {STYLE_CHIPS.map(s => (
-            <button key={s} type="button" disabled={isPending}
-              onClick={() => appendToPrompt(`${s.toLowerCase()} style`)}
-              className={`py-1.5 rounded-lg bg-neutral-800/80 ${a.chip} border border-neutral-700/80 transition-all font-medium text-neutral-400 disabled:opacity-40`}>
-              {s}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Row 6: Primary generate button */}
+      {/* Row 4: Primary generate button (hoisted) */}
       <button
         type="button"
         onClick={handleGenerate}
@@ -139,7 +96,50 @@ export default function IconStationPanel({ onSelect }: IconStationPanelProps) {
         <p className="text-[11px] text-red-400 leading-relaxed">{error}</p>
       )}
 
-      {/* Row 7: Results grid OR quick theme list */}
+      {/* Row 5: Inline suggestion badge pills */}
+      <div className="flex flex-wrap gap-1.5">
+        {THEME_PILLS.map(label => (
+          <button
+            key={label}
+            type="button"
+            disabled={isPending}
+            onClick={() => appendToPrompt(`${label.toLowerCase()} icons`)}
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-full border text-[10px] font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed ${a.pill}`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* Row 5b: THEME chip grid */}
+      <div className="space-y-2">
+        <PanelDivider label="THEME" accent="fuchsia" />
+        <div className="grid grid-cols-3 gap-1.5 text-[10px]">
+          {THEME_CHIPS.map(s => (
+            <button key={s} type="button" disabled={isPending}
+              onClick={() => appendToPrompt(`${s.toLowerCase()} theme`)}
+              className={`py-1.5 rounded-lg bg-neutral-800/80 ${a.chip} border border-neutral-700/80 transition-all font-medium text-neutral-400 disabled:opacity-40`}>
+              {s}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Row 5c: STYLE chip grid */}
+      <div className="space-y-2">
+        <PanelDivider label="STYLE" accent="fuchsia" />
+        <div className="grid grid-cols-3 gap-1.5 text-[10px]">
+          {STYLE_CHIPS.map(s => (
+            <button key={s} type="button" disabled={isPending}
+              onClick={() => appendToPrompt(`${s.toLowerCase()} style`)}
+              className={`py-1.5 rounded-lg bg-neutral-800/80 ${a.chip} border border-neutral-700/80 transition-all font-medium text-neutral-400 disabled:opacity-40`}>
+              {s}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Row 6: Results grid OR quick theme list */}
       {results.length > 0 ? (
         <div className="space-y-2">
           <PanelDivider label="SELECT AN ICON" accent="fuchsia" />

@@ -3370,7 +3370,12 @@ function RightSidebar() {
                         placeholder="What story or message should this tell? Describe tone, emotion, and occasion…" rows={3}
                         className={`w-full bg-neutral-900 border border-neutral-700 text-neutral-200 rounded-xl px-3.5 py-2.5 text-xs resize-none focus:outline-none ${a.focus} transition-all placeholder:text-neutral-600`} />
 
-                      {/* Row 4 — Inline suggestion badge pills */}
+                      {/* Row 4 — Primary action button (hoisted) */}
+                      <PanelActionBtn accent="violet" credits={5} onClick={() => deductCredits(5)}>
+                        ✦ Generate Story
+                      </PanelActionBtn>
+
+                      {/* Row 5 — Inline suggestion badge pills */}
                       <div className="flex flex-wrap gap-1.5">
                         {['Make it poetic', 'Toast speech style', 'Keep it punchy', 'Add more warmth'].map(label => (
                           <PanelPill key={label} label={label} accent="violet"
@@ -3378,7 +3383,7 @@ function RightSidebar() {
                         ))}
                       </div>
 
-                      {/* Row 5 — EMOTIONAL TONE toggle grid */}
+                      {/* Row 5b — EMOTIONAL TONE toggle grid */}
                       <div className="space-y-2">
                         <PanelDivider label="EMOTIONAL TONE" accent="violet" />
                         <div className="grid grid-cols-2 gap-1.5">
@@ -3396,12 +3401,7 @@ function RightSidebar() {
                         </div>
                       </div>
 
-                      {/* Row 6 — Primary action button */}
-                      <PanelActionBtn accent="violet" credits={5} onClick={() => deductCredits(5)}>
-                        ✦ Generate Story
-                      </PanelActionBtn>
-
-                      {/* Row 7 — Quick story starters */}
+                      {/* Row 6 — Quick story starters */}
                       <div className="space-y-1.5">
                         <p className="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">Quick Story Starters</p>
                         {[
@@ -3436,29 +3436,7 @@ function RightSidebar() {
                         disabled={isGenerating}
                         className={`w-full bg-neutral-900 border border-neutral-700 text-neutral-200 rounded-xl px-3.5 py-2.5 text-xs resize-none focus:outline-none ${a.focus} transition-all placeholder:text-neutral-600 disabled:opacity-50`} />
 
-                      {/* Row 4 — Inline suggestion badge pills */}
-                      <div className="flex flex-wrap gap-1.5">
-                        {['Midnight luxury glow', 'Pastel floral canvas', 'Cinematic portrait', 'Minimal editorial'].map(label => (
-                          <PanelPill key={label} label={label} accent="blue" disabled={isGenerating}
-                            onClick={() => setMediaPrompt(p => p ? `${p}, ${label.toLowerCase()} style` : label)} />
-                        ))}
-                      </div>
-
-                      {/* Row 5 — IMAGE STYLE toggle grid */}
-                      <div className="space-y-2">
-                        <PanelDivider label="IMAGE STYLE" accent="blue" />
-                        <div className="grid grid-cols-2 gap-1.5 text-[10px]">
-                          {['Cinematic', 'Minimalist', 'Romantic', 'Editorial'].map(style => (
-                            <button key={style} type="button" disabled={isGenerating}
-                              onClick={() => setMediaPrompt(p => p ? `${p}, ${style.toLowerCase()} style` : `${style.toLowerCase()} style`)}
-                              className={`py-1.5 rounded-lg bg-neutral-800/80 ${a.chip} border border-neutral-700/80 transition-all font-medium text-neutral-400 disabled:opacity-40`}>
-                              {style}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Row 6 — Primary action button */}
+                      {/* Row 4 — Primary action button (hoisted) */}
                       <button
                         type="button"
                         onClick={handleGenerateImage}
@@ -3481,7 +3459,29 @@ function RightSidebar() {
                         </div>
                       )}
 
-                      {/* Row 7 — Quick scene starters (only shown before image is generated) */}
+                      {/* Row 5 — Inline suggestion badge pills */}
+                      <div className="flex flex-wrap gap-1.5">
+                        {['Midnight luxury glow', 'Pastel floral canvas', 'Cinematic portrait', 'Minimal editorial'].map(label => (
+                          <PanelPill key={label} label={label} accent="blue" disabled={isGenerating}
+                            onClick={() => setMediaPrompt(p => p ? `${p}, ${label.toLowerCase()} style` : label)} />
+                        ))}
+                      </div>
+
+                      {/* Row 5b — IMAGE STYLE toggle grid */}
+                      <div className="space-y-2">
+                        <PanelDivider label="IMAGE STYLE" accent="blue" />
+                        <div className="grid grid-cols-2 gap-1.5 text-[10px]">
+                          {['Cinematic', 'Minimalist', 'Romantic', 'Editorial'].map(style => (
+                            <button key={style} type="button" disabled={isGenerating}
+                              onClick={() => setMediaPrompt(p => p ? `${p}, ${style.toLowerCase()} style` : `${style.toLowerCase()} style`)}
+                              className={`py-1.5 rounded-lg bg-neutral-800/80 ${a.chip} border border-neutral-700/80 transition-all font-medium text-neutral-400 disabled:opacity-40`}>
+                              {style}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Row 6 — Quick scene starters (only shown before image is generated) */}
                       {!generatedImageUrl && (
                         <div className="space-y-1.5">
                           <p className="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">Quick Scenes</p>
@@ -3512,7 +3512,12 @@ function RightSidebar() {
                         placeholder="Describe the vibe — genre, tempo, emotional arc, key instruments…" rows={3}
                         className={`w-full bg-neutral-900 border border-neutral-700 text-neutral-200 rounded-xl px-3.5 py-2.5 text-xs resize-none focus:outline-none ${a.focus} transition-all placeholder:text-neutral-600`} />
 
-                      {/* Row 4 — Inline suggestion badge pills */}
+                      {/* Row 4 — Primary action button (hoisted) */}
+                      <PanelActionBtn accent="emerald" credits={50} onClick={() => deductCredits(50)}>
+                        ✦ Generate Track
+                      </PanelActionBtn>
+
+                      {/* Row 5 — Inline suggestion badge pills */}
                       <div className="flex flex-wrap gap-1.5">
                         {['Romantic piano suite', 'Epic orchestral build', 'Soft acoustic folk', 'Dreamy ambient pads'].map(label => (
                           <PanelPill key={label} label={label} accent="emerald"
@@ -3520,7 +3525,7 @@ function RightSidebar() {
                         ))}
                       </div>
 
-                      {/* Row 5 — ATMOSPHERE chip grid */}
+                      {/* Row 5b — ATMOSPHERE chip grid */}
                       <div className="space-y-2">
                         <PanelDivider label="ATMOSPHERE" accent="emerald" />
                         <div className="grid grid-cols-3 gap-1.5 text-[10px]">
@@ -3532,7 +3537,7 @@ function RightSidebar() {
                         </div>
                       </div>
 
-                      {/* Row 5b — TEMPO chip grid */}
+                      {/* Row 5c — TEMPO chip grid */}
                       <div className="space-y-2">
                         <PanelDivider label="TEMPO" accent="emerald" />
                         <div className="grid grid-cols-3 gap-1.5 text-[10px]">
@@ -3544,12 +3549,7 @@ function RightSidebar() {
                         </div>
                       </div>
 
-                      {/* Row 6 — Primary action button */}
-                      <PanelActionBtn accent="emerald" credits={50} onClick={() => deductCredits(50)}>
-                        ✦ Generate Track
-                      </PanelActionBtn>
-
-                      {/* Row 7 — Quick track ideas */}
+                      {/* Row 6 — Quick track ideas */}
                       <div className="space-y-1.5">
                         <p className="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">Quick Track Ideas</p>
                         {[
@@ -3763,7 +3763,12 @@ function RightSidebar() {
                         placeholder="e.g. Minimalist floral wreath, monogram initials J+M, geometric mandala…" rows={3}
                         className={`w-full bg-neutral-900 border border-neutral-700 text-neutral-200 rounded-xl px-3.5 py-2.5 text-xs resize-none focus:outline-none ${a.focus} transition-all placeholder:text-neutral-600`} />
 
-                      {/* Row 4 — Inline suggestion badge pills */}
+                      {/* Row 4 — Primary action button (hoisted) */}
+                      <PanelActionBtn accent="amber" credits={15} onClick={() => deductCredits(15)}>
+                        ✦ Generate SVG Art
+                      </PanelActionBtn>
+
+                      {/* Row 5 — Inline suggestion badge pills */}
                       <div className="flex flex-wrap gap-1.5">
                         {['Minimal monogram crest', 'Botanical floral wreath', 'Geometric border', 'Decorative divider'].map(label => (
                           <PanelPill key={label} label={label} accent="amber"
@@ -3771,7 +3776,7 @@ function RightSidebar() {
                         ))}
                       </div>
 
-                      {/* Row 5 — ART STYLE chip grid */}
+                      {/* Row 5b — ART STYLE chip grid */}
                       <div className="space-y-2">
                         <PanelDivider label="ART STYLE" accent="amber" />
                         <div className="grid grid-cols-3 gap-1.5 text-[10px]">
@@ -3783,7 +3788,7 @@ function RightSidebar() {
                         </div>
                       </div>
 
-                      {/* Row 5b — ELEMENTS chip grid */}
+                      {/* Row 5c — ELEMENTS chip grid */}
                       <div className="space-y-2">
                         <PanelDivider label="ELEMENTS" accent="amber" />
                         <div className="grid grid-cols-3 gap-1.5 text-[10px]">
@@ -3795,12 +3800,7 @@ function RightSidebar() {
                         </div>
                       </div>
 
-                      {/* Row 6 — Primary action button */}
-                      <PanelActionBtn accent="amber" credits={15} onClick={() => deductCredits(15)}>
-                        ✦ Generate SVG Art
-                      </PanelActionBtn>
-
-                      {/* Row 7 — Quick art starters */}
+                      {/* Row 6 — Quick art starters */}
                       <div className="space-y-1.5">
                         <p className="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">Quick Art Starters</p>
                         {[
