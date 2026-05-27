@@ -282,12 +282,11 @@ interface AIEnginePanelProps {
   iconEl:        ReactNode;
   title:         string;
   subtitle:      string;
-  compactBadge?: ReactNode;
   children:      ReactNode | ((tokens: AccentTokens) => ReactNode);
 }
 
 export default function AIEnginePanel({
-  accent, iconEl, title, subtitle, compactBadge, children,
+  accent, iconEl, title, subtitle, children,
 }: AIEnginePanelProps) {
   const a = PANEL_ACCENTS[accent];
   return (
@@ -298,8 +297,6 @@ export default function AIEnginePanel({
       transition={{ duration: 0.15 }}
       className="p-4 space-y-4"
     >
-      {compactBadge}
-
       {/* Row 2 — Agent identity header */}
       <div className="flex items-center gap-2.5">
         <div className={`w-8 h-8 rounded-xl ${a.iconBg} border ${a.iconBorder} flex items-center justify-center shrink-0`}>

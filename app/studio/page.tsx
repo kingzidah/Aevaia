@@ -368,27 +368,6 @@ function ThinkingShimmer({ accent = 'purple' }: { accent?: 'purple' | 'blue' | '
   );
 }
 
-// Collapsed General-AI badge — matches specialist-card design tokens (same icon-box + text anatomy)
-function GeneralAICompactBadge({ onExpand, lastAIMessage }: { onExpand: () => void; lastAIMessage: string }) {
-  return (
-    <button type="button" onClick={onExpand}
-      className="flex items-center gap-2.5 w-full px-3 py-2 rounded-xl bg-neutral-900/80 border border-neutral-700/40 group mb-3 shrink-0 hover:border-purple-500/30 hover:bg-purple-500/5 transition-all">
-      <div className="w-8 h-8 rounded-xl bg-purple-500/15 border border-purple-500/20 flex items-center justify-center shrink-0 group-hover:border-purple-500/40 transition-colors">
-        <span className="text-sm text-purple-400 select-none leading-none">✦</span>
-      </div>
-      <div className="flex-1 min-w-0 text-left">
-        <p className="text-[9px] font-semibold text-neutral-500 uppercase tracking-wide">Aevaia AI</p>
-        <p className="text-[10px] text-neutral-400 group-hover:text-neutral-300 transition-colors truncate leading-tight mt-0.5">
-          {lastAIMessage || 'Back to main AI'}
-        </p>
-      </div>
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor"
-        className="w-3.5 h-3.5 text-neutral-600 group-hover:text-purple-400 shrink-0 transition-colors">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
-      </svg>
-    </button>
-  );
-}
 
 // ─── Left Sidebar ─────────────────────────────────────────────────────────────
 
@@ -3384,7 +3363,6 @@ function RightSidebar() {
                     iconEl={<LucideIcons.PenTool className="w-4 h-4 text-violet-400" />}
                     title="Copywriter AI"
                     subtitle="Headlines, paragraphs & story arcs"
-                    compactBadge={<GeneralAICompactBadge onExpand={() => setActiveFeature('general')} lastAIMessage={chatHistory.filter(m => m.role === 'ai' && m.text !== '…').at(-1)?.text ?? ''} />}
                   >
                     {(a) => (<>
                       {/* Row 3 — Local instruction textarea */}
@@ -3446,7 +3424,6 @@ function RightSidebar() {
                     iconEl={<LucideIcons.Palette className="w-4 h-4 text-blue-400" />}
                     title="Image Studio AI"
                     subtitle="Generate cinematic visuals on demand"
-                    compactBadge={<GeneralAICompactBadge onExpand={() => setActiveFeature('general')} lastAIMessage={chatHistory.filter(m => m.role === 'ai' && m.text !== '…').at(-1)?.text ?? ''} />}
                   >
                     {(a) => (<>
                       {/* Row 3 — Local instruction textarea */}
@@ -3528,7 +3505,6 @@ function RightSidebar() {
                     iconEl={<LucideIcons.Music className="w-4 h-4 text-emerald-400" />}
                     title="Audio Engineer AI"
                     subtitle="Custom tracks & ambient soundscapes"
-                    compactBadge={<GeneralAICompactBadge onExpand={() => setActiveFeature('general')} lastAIMessage={chatHistory.filter(m => m.role === 'ai' && m.text !== '…').at(-1)?.text ?? ''} />}
                   >
                     {(a) => (<>
                       {/* Row 3 — Local instruction textarea */}
@@ -3595,7 +3571,6 @@ function RightSidebar() {
                     iconEl={<LucideIcons.Gem className="w-4 h-4 text-fuchsia-400" />}
                     title="AI Icon Station"
                     subtitle="Describe a theme — get 5 matching icons"
-                    compactBadge={<GeneralAICompactBadge onExpand={() => setActiveFeature('general')} lastAIMessage={chatHistory.filter(m => m.role === 'ai' && m.text !== '…').at(-1)?.text ?? ''} />}
                   >
                     {/* Rows 3–7 handled internally by IconStationPanel (proper React component) */}
                     <IconStationPanel
@@ -3625,7 +3600,6 @@ function RightSidebar() {
                     iconEl={<LucideIcons.MousePointerClick className="w-4 h-4 text-slate-400" />}
                     title="Button Block AI"
                     subtitle="Design your call-to-action copy & style"
-                    compactBadge={<GeneralAICompactBadge onExpand={() => setActiveFeature('general')} lastAIMessage={chatHistory.filter(m => m.role === 'ai' && m.text !== '…').at(-1)?.text ?? ''} />}
                   >
                     {(a) => (<>
                       <textarea value={textPrompt} onChange={e => setTextPrompt(e.target.value)}
@@ -3659,7 +3633,6 @@ function RightSidebar() {
                     iconEl={<LucideIcons.Video className="w-4 h-4 text-red-400" />}
                     title="Video Block AI"
                     subtitle="Script a cinematic moment for your gift"
-                    compactBadge={<GeneralAICompactBadge onExpand={() => setActiveFeature('general')} lastAIMessage={chatHistory.filter(m => m.role === 'ai' && m.text !== '…').at(-1)?.text ?? ''} />}
                   >
                     {(a) => (<>
                       <textarea value={mediaPrompt} onChange={e => setMediaPrompt(e.target.value)}
@@ -3693,7 +3666,6 @@ function RightSidebar() {
                     iconEl={<span className="text-base select-none text-cyan-400">✦</span>}
                     title="Particle Engine AI"
                     subtitle="Sculpt a living 3D particle atmosphere"
-                    compactBadge={<GeneralAICompactBadge onExpand={() => setActiveFeature('general')} lastAIMessage={chatHistory.filter(m => m.role === 'ai' && m.text !== '…').at(-1)?.text ?? ''} />}
                   >
                     {(a) => (<>
                       <textarea value={webglPrompt} onChange={e => setWebglPrompt(e.target.value)}
@@ -3739,7 +3711,6 @@ function RightSidebar() {
                     iconEl={<LucideIcons.Wind className="w-4 h-4 text-orange-400" />}
                     title="Lottie Animation AI"
                     subtitle="Find the perfect looping motion graphic"
-                    compactBadge={<GeneralAICompactBadge onExpand={() => setActiveFeature('general')} lastAIMessage={chatHistory.filter(m => m.role === 'ai' && m.text !== '…').at(-1)?.text ?? ''} />}
                   >
                     {(a) => (<>
                       <textarea value={lottiePrompt} onChange={e => setLottiePrompt(e.target.value)}
@@ -3785,7 +3756,6 @@ function RightSidebar() {
                     iconEl={<LucideIcons.Shapes className="w-4 h-4 text-amber-400" />}
                     title="Vector Art AI"
                     subtitle="Generate scalable SVG artwork for the canvas"
-                    compactBadge={<GeneralAICompactBadge onExpand={() => setActiveFeature('general')} lastAIMessage={chatHistory.filter(m => m.role === 'ai' && m.text !== '…').at(-1)?.text ?? ''} />}
                   >
                     {(a) => (<>
                       {/* Row 3 — Local instruction textarea */}
@@ -3852,7 +3822,6 @@ function RightSidebar() {
                     iconEl={<LucideIcons.Pencil className="w-4 h-4 text-pink-400" />}
                     title="Scribble Style AI"
                     subtitle="Hand-drawn layer overlays, borders & marks"
-                    compactBadge={<GeneralAICompactBadge onExpand={() => setActiveFeature('general')} lastAIMessage={chatHistory.filter(m => m.role === 'ai' && m.text !== '…').at(-1)?.text ?? ''} />}
                   >
                     {(a) => (<>
                       <textarea value={scribblePrompt} onChange={e => setScribblePrompt(e.target.value)}
@@ -3898,7 +3867,6 @@ function RightSidebar() {
                     iconEl={<LucideIcons.RefreshCw className="w-4 h-4 text-teal-400" />}
                     title="Arc Text AI"
                     subtitle="Curved typographic phrases for your gift"
-                    compactBadge={<GeneralAICompactBadge onExpand={() => setActiveFeature('general')} lastAIMessage={chatHistory.filter(m => m.role === 'ai' && m.text !== '…').at(-1)?.text ?? ''} />}
                   >
                     {(a) => (<>
                       <textarea value={textPrompt} onChange={e => setTextPrompt(e.target.value)}
