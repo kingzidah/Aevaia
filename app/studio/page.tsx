@@ -3283,35 +3283,16 @@ function RightSidebar() {
     : isMapSelected       ? 'Venue Map'
     : 'Aevaia AI';
 
-  const modeIcon = isTextSelected ? <LucideIcons.PenTool className="w-3.5 h-3.5" />
-    : (isImageSelected || isGallerySelected) ? <LucideIcons.ImageIcon className="w-3.5 h-3.5" />
-    : isAudioSelected     ? <LucideIcons.Music className="w-3.5 h-3.5" />
-    : isCountdownSelected ? <LucideIcons.Timer className="w-3.5 h-3.5" />
-    : isMapSelected       ? <LucideIcons.MapPin className="w-3.5 h-3.5" />
-    : <LucideIcons.Bot className="w-3.5 h-3.5" />;
-
-  const modePillCls = isTextSelected
-    ? 'bg-purple-500/10 border-purple-500/20 text-purple-300'
-    : (isImageSelected || isGallerySelected)
-    ? 'bg-blue-500/10 border-blue-500/20 text-blue-300'
-    : isAudioSelected
-    ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300'
-    : isCountdownSelected
-    ? 'bg-amber-500/10 border-amber-500/20 text-amber-300'
-    : isMapSelected
-    ? 'bg-teal-500/10 border-teal-500/20 text-teal-300'
-    : 'bg-neutral-800/60 border-neutral-700/60 text-neutral-400';
-
   return (
     <div className="flex flex-col h-full">
 
       {/* ══════════════════════════════════════════════════════
-          STATIC HEADER — always visible, mirrors left sidebar
-          header height (p-5 + title row + mb-5 + mode row)
+          ORCHESTRATOR HEADER — always visible
           ══════════════════════════════════════════════════════ */}
-      <div className={`shrink-0 p-5 border-b transition-colors duration-300 ${isFocusMode ? 'border-purple-500/25 dark:border-purple-500/20' : 'border-zinc-200 dark:border-zinc-800'}`}>
-        {/* Row 1: title + focus toggle + status */}
-        <div className="flex items-center gap-2 mb-5">
+      <div className="shrink-0 bg-zinc-950 border-b border-zinc-800/80">
+
+        {/* Brand + action row */}
+        <div className="flex items-center gap-2 px-4 pt-3.5 pb-2.5">
           {isFocusMode ? (
             <button type="button" onClick={() => setIsFocusMode(false)}
               className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-purple-500/15 border border-purple-500/30 text-purple-300 text-[10px] font-bold hover:bg-purple-500/25 transition-all">
@@ -3322,72 +3303,62 @@ function RightSidebar() {
             </button>
           ) : (
             <>
-              <LucideIcons.Sparkles className="w-4 h-4 text-purple-400" />
-              <p className="text-xs font-bold text-zinc-900 dark:text-white tracking-tight">Aevaia AI</p>
+              <div className="w-6 h-6 rounded-lg bg-purple-500/15 border border-purple-500/25 flex items-center justify-center shrink-0">
+                <span className="text-[11px] text-purple-400 select-none leading-none">✦</span>
+              </div>
+              <span className="text-[11px] font-bold text-white tracking-tight">Aevaia AI</span>
             </>
           )}
-          <div className="ml-auto flex items-center gap-2">
-            {!isFocusMode && (
-              <button type="button" onClick={() => setIsFocusMode(true)} title="Focus Mode — hides side panels"
-                className="w-5 h-5 rounded-md flex items-center justify-center text-neutral-600 hover:text-purple-400 transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3.5 h-3.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
-                </svg>
-              </button>
-            )}
-            <div className="flex items-center gap-1.5">
+          <div className="ml-auto flex items-center gap-0.5">
+            <div className="flex items-center gap-1 mr-2">
               <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${isWorking ? 'bg-purple-400' : 'bg-green-400'}`} />
               <span className={`text-[9px] font-medium uppercase tracking-wider ${isWorking ? 'text-purple-400/70' : 'text-green-400/70'}`}>
                 {isWorking ? 'Working' : 'Online'}
               </span>
             </div>
+            <button type="button" onClick={() => setChatHistory([])} title="Clear AI memory"
+              className="w-6 h-6 rounded-lg flex items-center justify-center text-neutral-600 hover:text-red-400 hover:bg-red-500/10 transition-all">
+              <LucideIcons.Trash2 className="w-3 h-3" />
+            </button>
+            {!isFocusMode && (
+              <button type="button" onClick={() => setIsFocusMode(true)} title="Focus Mode — hides side panels"
+                className="w-6 h-6 rounded-lg flex items-center justify-center text-neutral-600 hover:text-purple-400 hover:bg-purple-500/10 transition-all">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3.5 h-3.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
+                </svg>
+              </button>
+            )}
           </div>
         </div>
-        {/* Row 2: context mode pill + working dots */}
-        <div className={`flex items-center gap-2 py-2 px-3 rounded-lg border transition-colors duration-200 ${modePillCls}`}>
-          {modeIcon}
-          <span className="text-xs font-semibold truncate">{modeLabel}</span>
-          {isWorking ? (
-            <div className="ml-auto flex items-center gap-0.5 shrink-0">
-              {[0, 150, 300].map(delay => (
-                <div key={delay} className="w-1 h-1 rounded-full bg-current animate-pulse" style={{ animationDelay: `${delay}ms` }} />
-              ))}
-            </div>
-          ) : (
-            !isNoneSelected && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-current animate-pulse opacity-70 shrink-0" />
-          )}
-        </div>
-      </div>
 
-      {/* ══════════════════════════════════════════════════════
-          COMPACT GLOBAL BAR — slides in when element selected,
-          pinned directly under the static header
-          ══════════════════════════════════════════════════════ */}
-      <AnimatePresence>
-        {!isNoneSelected && (
-          <motion.div key="global-bar"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.22, ease: [0.32, 0.72, 0, 1] }}
-            className="shrink-0 overflow-hidden border-b border-zinc-800/80 bg-zinc-950/50"
-          >
-            <div className="px-4 py-3 flex gap-1.5">
-              <input
-                value={globalBarInput}
-                onChange={e => setGlobalBarInput(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') handleGlobalBar(); }}
-                placeholder="Global instruction…"
-                className="flex-1 min-w-0 h-8 bg-neutral-900 border border-neutral-700/80 text-neutral-200 rounded-lg px-2.5 text-xs outline-none focus:border-purple-500/70 placeholder:text-neutral-600 transition-all"
-              />
-              <button type="button" onClick={handleGlobalBar} disabled={!globalBarInput.trim() || globalBarSending}
-                className="h-8 px-3 rounded-lg bg-purple-600 hover:bg-purple-500 disabled:opacity-40 text-white text-xs font-bold transition-all shrink-0 flex items-center gap-1">
-                {globalBarSending ? <Spinner /> : '✦'}
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+        {/* Global orchestrator input */}
+        <div className="px-3 pb-3">
+          <div className="flex gap-1.5">
+            <input
+              value={globalBarInput}
+              onChange={e => setGlobalBarInput(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') handleGlobalBar(); }}
+              placeholder={isNoneSelected ? 'Ask Aevaia AI anything…' : `Instruct ${modeLabel}…`}
+              className="flex-1 min-w-0 h-8 bg-neutral-900/70 border border-neutral-700/60 text-neutral-200 rounded-lg px-3 text-xs outline-none focus:border-purple-500/60 placeholder:text-neutral-600 transition-all"
+            />
+            <button type="button" onClick={handleGlobalBar}
+              disabled={!globalBarInput.trim() || globalBarSending || isSending}
+              className="h-8 w-8 rounded-lg bg-purple-600 hover:bg-purple-500 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-all shrink-0 shadow-[0_0_10px_rgba(168,85,247,0.2)]">
+              {(globalBarSending || isSending) ? <Spinner /> : (
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="white" className="w-3 h-3">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
+                </svg>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Ambient glow wave strip */}
+        <div className="h-px relative overflow-hidden">
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, transparent 0%, rgba(99,102,241,0.55) 25%, rgba(139,92,246,0.75) 50%, rgba(168,85,247,0.55) 75%, transparent 100%)', animation: 'shimmer-slide 2.8s ease-in-out infinite' }} />
+        </div>
+
+      </div>
 
       {/* ══════════════════════════════════════════════════════
           DYNAMIC CONTENT AREA — global chat OR specialist panel
@@ -3550,6 +3521,30 @@ function RightSidebar() {
                       <div className="w-8 h-8 rounded-xl bg-fuchsia-500/15 border border-fuchsia-500/30 flex items-center justify-center"><LucideIcons.Gem className="w-4 h-4 text-fuchsia-400" /></div>
                       <div><p className="text-xs font-bold text-white">AI Icon Station</p><p className="text-[10px] text-neutral-500">Prompt → 5 matching Lucide icons</p></div>
                     </div>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 h-px bg-neutral-800/60" />
+                      <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-fuchsia-500/70">✦ THEME</p>
+                      <div className="flex-1 h-px bg-neutral-800/60" />
+                    </div>
+                    <div className="grid grid-cols-3 gap-1.5 text-[10px]">
+                      {['Love & Romance', 'Nature', 'Celebration', 'Tech', 'Music', 'Travel'].map(s => (
+                        <button key={s} type="button"
+                          onClick={() => setGlobalBarInput(p => p ? `${p}, ${s.toLowerCase()}` : `${s.toLowerCase()} icon`)}
+                          className="py-1.5 rounded-lg bg-neutral-800/80 hover:bg-fuchsia-500/10 hover:text-fuchsia-300 hover:border-fuchsia-500/30 border border-neutral-700/80 transition-all font-medium text-neutral-400">{s}</button>
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 h-px bg-neutral-800/60" />
+                      <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-fuchsia-500/70">✦ STYLE</p>
+                      <div className="flex-1 h-px bg-neutral-800/60" />
+                    </div>
+                    <div className="grid grid-cols-3 gap-1.5 text-[10px]">
+                      {['Outline', 'Filled', 'Minimal', 'Bold', 'Delicate', 'Playful'].map(s => (
+                        <button key={s} type="button"
+                          onClick={() => setGlobalBarInput(p => p ? `${p}, ${s.toLowerCase()} style` : `${s.toLowerCase()} style icon`)}
+                          className="py-1.5 rounded-lg bg-neutral-800/80 hover:bg-fuchsia-500/10 hover:text-fuchsia-300 hover:border-fuchsia-500/30 border border-neutral-700/80 transition-all font-medium text-neutral-400">{s}</button>
+                      ))}
+                    </div>
                     <IconStation
                       onSelect={(name) => {
                         addBlock('icon');
@@ -3567,7 +3562,6 @@ function RightSidebar() {
                         ));
                       }}
                     />
-                    <p className="text-[9px] text-neutral-600 text-center inline-flex items-center justify-center gap-0.5 w-full">2 <LucideIcons.Sparkles className="w-2 h-2" /> per generation</p>
                   </motion.div>
                 )}
 
