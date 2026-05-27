@@ -488,10 +488,10 @@ function LeftSidebar() {
   }, [activeFeature]);
 
   return (
-    <div className="flex flex-col min-h-full p-4">
+    <div className="h-full flex flex-col p-4">
 
       {/* Back to Dashboard */}
-      <a href="/dashboard" className="flex items-center gap-1.5 text-neutral-500 hover:text-neutral-300 text-xs font-medium transition-colors mb-5 w-fit group">
+      <a href="/dashboard" className="flex items-center gap-1.5 text-neutral-500 hover:text-neutral-300 text-xs font-medium transition-colors mb-5 w-fit group shrink-0">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3 h-3 group-hover:-translate-x-0.5 transition-transform">
           <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
         </svg>
@@ -516,6 +516,9 @@ function LeftSidebar() {
           </button>
         ))}
       </div>
+
+      {/* ── Scrollable tab content — header above is pinned, only this area scrolls ── */}
+      <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
 
       {/* ── INSERT TAB ──────────────────────────────────────────────── */}
       {leftPanelTab === 'insert' && (
@@ -1788,6 +1791,8 @@ function LeftSidebar() {
 
         </div>
       )}
+
+      </div>{/* end scrollable tab content */}
 
     </div>
   );
@@ -5591,7 +5596,7 @@ export default function Studio({ id: propId = null }: { id?: string | null } = {
       <div className={`fixed inset-0 flex flex-row overflow-hidden bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-white${isPanningWorkspace ? ' select-none' : ''}`}>
 
         {/* 1. LEFT SIDEBAR — collapses to w-0 (also hidden in Focus Mode) */}
-        <div className={`flex-shrink-0 bg-white dark:bg-zinc-950 overflow-y-auto overflow-x-hidden no-scrollbar transition-all duration-300 ease-in-out ${(!isFocusMode && isLeftOpen) ? 'w-80 border-r border-zinc-200 dark:border-zinc-800' : 'w-0 border-r-0'}`}>
+        <div className={`flex-shrink-0 bg-white dark:bg-zinc-950 overflow-hidden transition-all duration-300 ease-in-out ${(!isFocusMode && isLeftOpen) ? 'w-80 border-r border-zinc-200 dark:border-zinc-800' : 'w-0 border-r-0'}`}>
           <LeftSidebar />
         </div>
 
