@@ -650,7 +650,7 @@ function LeftSidebar() {
                                             // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                             blocks: scene.blocks.map((b: any, i: number) =>
                                               i === scene.blocks.length - 1
-                                                ? { ...b, content: iconName, properties: { ...b.properties, iconSize, iconStrokeWidth, iconColor } }
+                                                ? { ...b, content: iconName, properties: { ...b.properties, iconSize, iconStrokeWidth } }
                                                 : b
                                             ),
                                           }
@@ -3944,15 +3944,22 @@ function RightSidebar() {
                     {/* Input */}
                     <div className="shrink-0 px-4 pb-4 pt-2 border-t border-zinc-800/60 space-y-2">
                       <div className="flex gap-2 items-end">
-                        <textarea
-                          value={chatInput}
-                          onChange={e => setChatInput(e.target.value)}
-                          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleCopilotSubmit(); } }}
-                          placeholder="Ask Aevaia AI…"
-                          rows={2}
-                          disabled={isSending}
-                          className="flex-1 min-w-0 bg-neutral-900 border border-neutral-700 text-neutral-200 rounded-xl px-3 py-2.5 text-xs resize-none focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 transition-all placeholder:text-neutral-600 disabled:opacity-50"
-                        />
+                        <div className="relative flex-1 min-w-0">
+                          <textarea
+                            value={chatInput}
+                            onChange={e => setChatInput(e.target.value)}
+                            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleCopilotSubmit(); } }}
+                            placeholder="Ask Aevaia AI…"
+                            rows={2}
+                            disabled={isSending}
+                            className="w-full bg-neutral-900 border border-neutral-700 text-neutral-200 rounded-xl px-3 py-2.5 text-xs resize-none focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 transition-all placeholder:text-neutral-600 disabled:opacity-50"
+                          />
+                          {isSending && (
+                            <div aria-hidden="true" className="absolute inset-0 rounded-xl overflow-hidden pointer-events-none">
+                              <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, transparent 15%, rgba(168,85,247,0.10) 50%, transparent 85%)', animation: 'shimmer-slide 1.6s ease-in-out infinite' }} />
+                            </div>
+                          )}
+                        </div>
                         <button
                           type="button"
                           onClick={() => handleCopilotSubmit()}
@@ -4389,7 +4396,22 @@ export default function Studio({ id: propId = null }: { id?: string | null } = {
   // ── Icon property customizer — shared across left grid + right sliders ───────
   const [iconSize,        setIconSize]        = useState(24);
   const [iconStrokeWidth, setIconStrokeWidth] = useState(2);
-  const [iconColor,       setIconColor]       = useState('#ffffff');
+  // Contrast-aware default: dark on light themes, white on dark/effect themes.
+  const [iconColor,       setIconColor]       = useState('#171717');
+
+  // Keep the sidebar preview color in sync with theme changes so the grid
+  // preview always shows a visible color — but only when the user hasn't
+  // manually overridden it (we check against the two auto values).
+  useEffect(() => {
+    const THEME_BG: Record<string, string> = {
+      minimalist:        '#f5f5f5',
+      'dark-romance':    '#020617',
+      'bright-birthday': '#fefce8',
+    };
+    const isEffectActive = canvasBackground !== 'none' || ambientEffect !== 'none';
+    const auto = isEffectActive ? '#ffffff' : getContrastColor(THEME_BG[theme] ?? '#0a0a0a');
+    setIconColor(prev => (prev === '#ffffff' || prev === '#171717' || prev === '#09090b') ? auto : prev);
+  }, [theme, canvasBackground, ambientEffect]);
 
   // --- AI CO-PILOT STATE ---
   const [selectedTone, setSelectedTone] = useState<'poetic' | 'funny' | 'romantic' | 'casual'>('romantic');
@@ -4652,6 +4674,7 @@ export default function Studio({ id: propId = null }: { id?: string | null } = {
           type === 'headline'  ? { fontFamily: 'var(--font-playfair), Georgia, serif', fontSize: 48,  color: defaultTextColor } :
           type === 'paragraph' ? { fontFamily: 'var(--font-inter), system-ui, sans-serif', fontSize: 16, color: defaultTextColor } :
           type === 'button'    ? { accentColor: '#10b981', blockBorderRadius: 12 } :
+          type === 'icon'      ? { iconSize, iconStrokeWidth, iconColor: defaultTextColor } :
           undefined,
       };
       return prev.map(scene =>
@@ -4661,7 +4684,7 @@ export default function Studio({ id: propId = null }: { id?: string | null } = {
       );
     });
     triggerHaptic(HapticPatterns.LIGHT, hapticsEnabled);
-  }, [activeSceneId, hapticsEnabled, canvasBackground, ambientEffect, theme]);
+  }, [activeSceneId, hapticsEnabled, canvasBackground, ambientEffect, theme, iconSize, iconStrokeWidth]);
 
   const addBlockAtPosition = useCallback((type: Block['type'], x: number, y: number) => {
     const THEME_BG: Record<string, string> = {
@@ -4696,6 +4719,7 @@ export default function Studio({ id: propId = null }: { id?: string | null } = {
           type === 'headline'  ? { fontFamily: 'var(--font-playfair), Georgia, serif', fontSize: 48,  color: defaultTextColor } :
           type === 'paragraph' ? { fontFamily: 'var(--font-inter), system-ui, sans-serif', fontSize: 16, color: defaultTextColor } :
           type === 'button'    ? { accentColor: '#10b981', blockBorderRadius: 12 } :
+          type === 'icon'      ? { iconSize, iconStrokeWidth, iconColor: defaultTextColor } :
           undefined,
       };
       return prev.map(scene =>
@@ -4705,7 +4729,7 @@ export default function Studio({ id: propId = null }: { id?: string | null } = {
       );
     });
     triggerHaptic(HapticPatterns.LIGHT, hapticsEnabled);
-  }, [activeSceneId, hapticsEnabled, canvasBackground, ambientEffect, theme]);
+  }, [activeSceneId, hapticsEnabled, canvasBackground, ambientEffect, theme, iconSize, iconStrokeWidth]);
 
   // ── Spatial comment handlers ──────────────────────────────────────────────
   const addComment = useCallback((data: Omit<CanvasComment, 'id' | 'createdAt'>) => {
