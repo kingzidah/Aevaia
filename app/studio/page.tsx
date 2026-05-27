@@ -3311,27 +3311,29 @@ function RightSidebar() {
           </div>
         </div>
 
-        {/* Global orchestrator input */}
-        <div className="px-3 pb-3">
-          <div className="flex gap-1.5">
-            <input
-              value={globalBarInput}
-              onChange={e => setGlobalBarInput(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') handleGlobalBar(); }}
-              placeholder={isNoneSelected ? 'Ask Aevaia AI anything…' : `Instruct ${modeLabel}…`}
-              className="flex-1 min-w-0 h-8 bg-neutral-900/70 border border-neutral-700/60 text-neutral-200 rounded-lg px-3 text-xs outline-none focus:border-purple-500/60 placeholder:text-neutral-600 transition-all"
-            />
-            <button type="button" onClick={handleGlobalBar}
-              disabled={!globalBarInput.trim() || globalBarSending || isSending}
-              className="h-8 w-8 rounded-lg bg-purple-600 hover:bg-purple-500 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-all shrink-0 shadow-[0_0_10px_rgba(168,85,247,0.2)]">
-              {(globalBarSending || isSending) ? <Spinner /> : (
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="white" className="w-3 h-3">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
-                </svg>
-              )}
-            </button>
+        {/* Global orchestrator input — hidden on landing (general) view to avoid double input */}
+        {activeFeature !== 'general' && (
+          <div className="px-3 pb-3">
+            <div className="flex gap-1.5">
+              <input
+                value={globalBarInput}
+                onChange={e => setGlobalBarInput(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') handleGlobalBar(); }}
+                placeholder={isNoneSelected ? 'Ask Aevaia AI anything…' : `Instruct ${modeLabel}…`}
+                className="flex-1 min-w-0 h-8 bg-neutral-900/70 border border-neutral-700/60 text-neutral-200 rounded-lg px-3 text-xs outline-none focus:border-purple-500/60 placeholder:text-neutral-600 transition-all"
+              />
+              <button type="button" onClick={handleGlobalBar}
+                disabled={!globalBarInput.trim() || globalBarSending || isSending}
+                className="h-8 w-8 rounded-lg bg-purple-600 hover:bg-purple-500 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-all shrink-0 shadow-[0_0_10px_rgba(168,85,247,0.2)]">
+                {(globalBarSending || isSending) ? <Spinner /> : (
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="white" className="w-3 h-3">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
+                  </svg>
+                )}
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Ambient glow wave strip — strict #A855F7 purple brand */}
         <div className="h-px relative overflow-hidden">
