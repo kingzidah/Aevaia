@@ -213,3 +213,10 @@ html.dark {
   0%   { transform: translateX(-150%); }
   100% { transform: translateX(250%); }
 }
+
+/* Moving-gradient shimmer for the AI response bubble container during loading.
+   Uses translateX (compositor-only) rather than background-position (paint). */
+@keyframes shimmer-slide {
+  0%   { transform: translateX(-150%); }
+  100% { transform: translateX(150%); }
+}

@@ -371,7 +371,7 @@ function ThinkingShimmer({ accent = 'purple' }: { accent?: 'purple' | 'blue' | '
 function GeneralAICompactBadge({ onExpand, lastAIMessage }: { onExpand: () => void; lastAIMessage: string }) {
   return (
     <button type="button" onClick={onExpand}
-      className="flex items-center gap-2.5 w-full py-1 group mb-1 shrink-0">
+      className="flex items-center gap-2.5 w-full px-3 py-2 rounded-xl bg-neutral-900/80 border border-neutral-700/40 group mb-3 shrink-0 hover:border-purple-500/30 hover:bg-purple-500/5 transition-all">
       <div className="w-8 h-8 rounded-xl bg-purple-500/15 border border-purple-500/20 flex items-center justify-center shrink-0 group-hover:border-purple-500/40 transition-colors">
         <span className="text-sm text-purple-400 select-none leading-none">✦</span>
       </div>
@@ -3873,15 +3873,24 @@ function RightSidebar() {
                               <span className="text-[9px] text-white select-none">✦</span>
                             </div>
                           )}
-                          <div className={`max-w-[85%] px-3 py-2 rounded-2xl text-xs leading-relaxed ${
-                            msg.role === 'user'
-                              ? 'bg-purple-600 text-white rounded-br-sm'
-                              : 'bg-neutral-800/80 text-neutral-200 rounded-bl-sm border border-neutral-700/50'
-                          }`}>
-                            {(msg.role === 'ai' && msg.text === '…')
-                              ? <ThinkingShimmer accent="purple" />
-                              : msg.text}
-                          </div>
+                          {msg.role === 'ai' && msg.text === '…' ? (
+                            <div className="max-w-[85%] px-3 py-3 rounded-2xl rounded-bl-sm bg-neutral-800/60 border border-neutral-700/40 overflow-hidden relative">
+                              <div
+                                aria-hidden="true"
+                                className="absolute inset-0 pointer-events-none"
+                                style={{ background: 'linear-gradient(90deg, transparent 20%, rgba(168,85,247,0.08) 50%, transparent 80%)', animation: 'shimmer-slide 1.9s ease-in-out infinite' }}
+                              />
+                              <ThinkingShimmer accent="purple" />
+                            </div>
+                          ) : (
+                            <div className={`max-w-[85%] px-3 py-2 rounded-2xl text-xs leading-relaxed ${
+                              msg.role === 'user'
+                                ? 'bg-purple-600 text-white rounded-br-sm'
+                                : 'bg-neutral-800/80 text-neutral-200 rounded-bl-sm border border-neutral-700/50'
+                            }`}>
+                              {msg.text}
+                            </div>
+                          )}
                         </div>
                       ))}
                       <div ref={chatEndRef} />
