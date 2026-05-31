@@ -3019,7 +3019,15 @@ function RightSidebar() {
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ userInput: text }),
       });
-      if (!res.ok) throw new Error('unavailable');
+
+      if (!res.ok) {
+        // Read the server's error body so the user sees the actual reason
+        const errBody = await res.json().catch(() => ({ error: null })) as { error?: string | null };
+        const msg = errBody.error ?? `Server error ${res.status}`;
+        console.error('[copilot] /api/orchestrator error:', res.status, msg);
+        resolve(msg);
+        return;
+      }
 
       const payload = await res.json() as {
         action: string; targetPanel: string; engineeredPrompt: string | null;
@@ -3034,8 +3042,10 @@ function RightSidebar() {
         ? `Opening ${label}…`
         : `Luxury prompt crafted for ${label}. Opening now ✦`;
       resolve(reply);
-    } catch {
-      resolve('Something went wrong. Please try again.');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Network error — could not reach Aevaia AI.';
+      console.error('[copilot] fetch failed:', err);
+      resolve(msg);
     } finally {
       setIsSending(false);
     }

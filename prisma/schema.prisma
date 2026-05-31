@@ -29,6 +29,20 @@ enum SubscriptionStatus {
   CANCELED
 }
 
+enum Theme {
+  dark
+  light
+  custom
+}
+
+enum AssetType {
+  vector
+  text
+  audio
+  voice
+  video
+}
+
 // ── Models ───────────────────────────────────────────────────────────────────
 
 // The User model is retained for Subscription and UsageTracking relations.
@@ -61,11 +75,20 @@ model Project {
   deviceCount  Int      @default(0)
   deviceCap    Int      @default(5)
 
+  // AI orchestration context fields
+  theme         Theme    @default(dark)
+  brandColors   String[] @default([])
+  fontFamily    String   @default("Inter")
+  fontWeights   Int[]    @default([400, 700])
+  fontSizeBase  String   @default("16px")
+  narrativeTone String   @default("elegant and heartfelt")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relations
-  aiGenerations AiGeneration[]
+  aiGenerations   AiGeneration[]
+  workspaceAssets WorkspaceAsset[]
 
   @@index([userId]) // fast lookup of all projects for a given Clerk user
 }
@@ -81,6 +104,8 @@ model AiGeneration {
 
   // Relations
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId]) // required for fast project-scoped generation history queries
 }
 
 model Subscription {
@@ -109,4 +134,17 @@ model SupportTicket {
   email     String
   message   String   @db.Text
   createdAt DateTime @default(now())
+}
+
+model WorkspaceAsset {
+  id        String    @id @default(uuid())
+  projectId String
+  type      AssetType
+  content   String    @db.Text
+  metadata  Json?
+  createdAt DateTime  @default(now())
+
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
 }

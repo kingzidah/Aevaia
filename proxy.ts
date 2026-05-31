@@ -24,6 +24,7 @@ const isPublicRoute = createRouteMatcher([
   "/sign-up(.*)",    // Clerk hosted sign-up
   "/api/webhook(.*)", // Stripe / Clerk webhooks (signed separately)
   "/api/gift(.*)",    // gift check-in (runs pre-auth on the viewer)
+  "/api/rsvp(.*)",   // RSVP links shared with unauthenticated guests
   "/gift/(.*)",       // legacy gift viewer
   "/privacy",
   "/terms",
@@ -31,11 +32,11 @@ const isPublicRoute = createRouteMatcher([
 ]);
 
 export const proxy = clerkMiddleware(async (auth, req) => {
-  // Auth is intentionally skipped in development so the studio is usable
-  // without Clerk keys configured locally. Production always enforces.
-  if (process.env.NODE_ENV === "development") return;
-
-  if (!isPublicRoute(req)) {
+  // In development, session processing still runs (so auth() works in route
+  // handlers) but protect() enforcement is skipped — this lets the studio be
+  // used without requiring a production sign-in flow locally.
+  // In production, all non-public routes are hard-gated.
+  if (process.env.NODE_ENV !== "development" && !isPublicRoute(req)) {
     await auth.protect();
   }
 });

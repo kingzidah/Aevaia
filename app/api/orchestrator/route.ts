@@ -15,12 +15,24 @@ interface OrchestratorPayload {
   engineeredPrompt: string | null;
 }
 
-// ── DeepSeek client (OpenAI-compatible) ───────────────────────────────────────
+// ── OpenRouter client (unified gateway — all models via OPENROUTER_API_KEY) ───
+// Lazy singleton: instantiated on the first request so env vars are guaranteed
+// to be loaded, and reused thereafter to avoid connection overhead.
 
-const deepseek = new OpenAI({
-  baseURL: "https://api.deepseek.com/v1",
-  apiKey:  process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY || "",
-});
+let _client: OpenAI | null = null;
+function getClient(): OpenAI {
+  if (!_client) {
+    _client = new OpenAI({
+      baseURL: "https://openrouter.ai/api/v1",
+      apiKey:  process.env.OPENROUTER_API_KEY ?? "",
+      defaultHeaders: {
+        "HTTP-Referer": process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
+        "X-Title":      "Aevaia Studio",
+      },
+    });
+  }
+  return _client;
+}
 
 // ── System prompt ─────────────────────────────────────────────────────────────
 
@@ -79,7 +91,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (!process.env.DEEPSEEK_API_KEY && !process.env.OPENAI_API_KEY) {
+  if (!process.env.OPENROUTER_API_KEY) {
     return NextResponse.json({ error: "AI service is not configured" }, { status: 503 });
   }
 
@@ -116,11 +128,11 @@ export async function POST(request: Request) {
     ? `---USER INPUT---\nUser request: ${userInput}\n\nCurrent UI state: ${JSON.stringify(currentState)}`
     : `---USER INPUT---\n${userInput}`;
 
-  // ── DeepSeek call ───────────────────────────────────────────────────────────
+  // ── DeepSeek call via OpenRouter ────────────────────────────────────────────
   try {
-    const completion = await deepseek.chat.completions.create(
+    const completion = await getClient().chat.completions.create(
       {
-        model:           "deepseek-chat",
+        model:           "deepseek/deepseek-chat",
         response_format: { type: "json_object" },
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
@@ -129,7 +141,7 @@ export async function POST(request: Request) {
         max_tokens:  512,
         temperature: 0.3,
       },
-      { timeout: 15_000 },
+      { timeout: 30_000 },  // 30 s — generous ceiling for peak provider load
     );
 
     const raw            = completion.choices[0]?.message?.content ?? "";

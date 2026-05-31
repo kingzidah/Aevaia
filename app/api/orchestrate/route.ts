@@ -1,8 +1,32 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/orchestrate — Entry-point for the multi-agent orchestration engine.
+//
+// SECURITY:
+//   • Cache-Control: no-store, private  → prevents proxies/CDNs caching user data
+//   • Raw user content is never logged  → GDPR principle of data minimisation
+//   • Internal error details are not forwarded to the client
+//
+// OBSERVABILITY:
+//   • Every request carries a UUID correlation ID (X-Request-Id response header)
+//   • Total request latency is logged as a structured field (totalMs)
+//   • Error codes are structural names, never raw error messages
+// ─────────────────────────────────────────────────────────────────────────────
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getOrchestratorService } from '@/services/ai/orchestrator';
+import { slog } from '@/lib/logger';
 import type { OrchestrationRequest, ProjectContext } from '@/types/orchestrator';
 
 export const runtime = 'nodejs';
+
+// ── GDPR-aligned response headers ────────────────────────────────────────────
+// Applied to every response (success AND error) to ensure no orchestration
+// payload is cached by any intermediate layer.
+
+const PRIVATE_HEADERS: Record<string, string> = {
+  'Cache-Control': 'no-store, no-cache, must-revalidate, private',
+  'Pragma':        'no-cache',
+};
 
 // ── Input guard ───────────────────────────────────────────────────────────────
 
@@ -21,31 +45,76 @@ function isValidContext(c: unknown): c is ProjectContext {
 // ── Handler ───────────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
+  // Unique ID for log correlation — surfaced in X-Request-Id so clients can
+  // include it in bug reports without us exposing internal stack data.
+  const requestId = crypto.randomUUID();
+  const t0        = Date.now();
+
+  const responseHeaders = {
+    ...PRIVATE_HEADERS,
+    'X-Request-Id': requestId,
+  };
+
+  // ── Body parsing ──────────────────────────────────────────────────────────
   let body: unknown;
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ success: false, error: 'Invalid JSON body' }, { status: 400 });
+    return NextResponse.json(
+      { success: false, error: 'Request body must be valid JSON' },
+      { status: 400, headers: responseHeaders },
+    );
   }
 
   const { rawPrompt, projectContext } = (body ?? {}) as Partial<OrchestrationRequest>;
 
   if (typeof rawPrompt !== 'string' || !rawPrompt.trim()) {
-    return NextResponse.json({ success: false, error: 'rawPrompt is required' }, { status: 400 });
-  }
-  if (!isValidContext(projectContext)) {
     return NextResponse.json(
-      { success: false, error: 'projectContext is missing or malformed' },
-      { status: 400 },
+      { success: false, error: 'rawPrompt is required and must be a non-empty string' },
+      { status: 400, headers: responseHeaders },
     );
   }
 
+  if (!isValidContext(projectContext)) {
+    return NextResponse.json(
+      { success: false, error: 'projectContext is missing required fields or contains invalid values' },
+      { status: 400, headers: responseHeaders },
+    );
+  }
+
+  // ── Orchestration ─────────────────────────────────────────────────────────
   try {
-    const payload = await getOrchestratorService().execute({ rawPrompt, projectContext });
-    return NextResponse.json(payload);
+    const payload  = await getOrchestratorService().execute({ rawPrompt, projectContext });
+    const totalMs  = Date.now() - t0;
+
+    slog('info', 'api/orchestrate', 'request.complete', {
+      requestId,
+      totalMs,
+      success:      payload.success,
+      agentCount:   payload.agent_results ? Object.keys(payload.agent_results).length : 0,
+      routedAgents: payload.target_agents,
+    });
+
+    return NextResponse.json(payload, { headers: responseHeaders });
+
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown orchestration error';
-    console.error('[/api/orchestrate] Both tiers failed:', err);
-    return NextResponse.json({ success: false, error: message }, { status: 500 });
+    const totalMs = Date.now() - t0;
+    const errCode = err instanceof Error ? err.constructor.name : 'UnknownError';
+
+    slog('error', 'api/orchestrate', 'request.failed', {
+      requestId,
+      totalMs,
+      errCode,
+    });
+
+    // Return a safe, opaque message — never forward internal error details.
+    return NextResponse.json(
+      {
+        success: false,
+        error:   'Orchestration service is temporarily unavailable. Please retry.',
+        requestId,
+      },
+      { status: 500, headers: responseHeaders },
+    );
   }
 }

@@ -1,6 +1,6 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Orchestrator — Shared type contracts for the multi-agent routing engine.
-// All three layers (API, service, client) import from here.
+// All three layers (API route, service, client) import from here.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type AgentKey = 'vector' | 'copywriter' | 'audio' | 'voice' | 'video';
@@ -13,9 +13,9 @@ export interface TypographyStyle {
 /** Snapshot of the active canvas state injected into every routing request. */
 export interface ProjectContext {
   current_theme:           'dark' | 'light' | 'custom';
-  brand_colors:            string[];               // e.g. ["#be185d","#a855f7"]
+  brand_colors:            string[];
   typography_style:        TypographyStyle;
-  existing_page_tone:      string;                 // e.g. "romantic and cinematic"
+  existing_page_tone:      string;
   current_layout_metadata: Record<string, unknown>;
 }
 
@@ -29,13 +29,51 @@ export interface OrchestrationRequest {
 export interface OrchestrationPayload {
   success:          boolean;
   target_agents:    AgentKey[];
-  enriched_prompts: Record<string, string>;  // agent key → expanded prompt
-  injected_styles:  Record<string, string>;  // token name → applied value
+  enriched_prompts: Record<string, string>;
+  injected_styles:  Record<string, string>;
+  agent_results?:   Partial<Record<AgentKey, SubAgentResult>>;
 }
 
-/** Internal structured error returned when both routing tiers fail. */
+/** Structured error returned when the routing tier fails. */
 export interface OrchestrationError {
   success: false;
   error:   string;
-  tier:    'gemini' | 'claude' | 'both';
 }
+
+// ── Sub-agent result types ────────────────────────────────────────────────────
+
+export interface VectorResult {
+  agent: 'vector';
+  svg:   string;
+}
+
+export interface CopywritingResult {
+  agent:   'copywriter';
+  content: string;
+}
+
+export interface AudioResult {
+  agent:       'audio';
+  url:         string;  // Real .mp3 URL from Replicate musicgen
+  title:       string;
+  durationSec: number;
+}
+
+export interface VoiceResult {
+  agent:  'voice';
+  url:    string;  // Real audio URL from Replicate Bark
+  script: string;  // The spoken text (for display and copy)
+}
+
+export interface VideoResult {
+  agent:       'video';
+  url:         string;  // Real .mp4 URL from Replicate
+  description: string;
+}
+
+export type SubAgentResult =
+  | VectorResult
+  | CopywritingResult
+  | AudioResult
+  | VoiceResult
+  | VideoResult;
