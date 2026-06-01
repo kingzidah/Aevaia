@@ -17,7 +17,8 @@ import { getOrchestratorService } from '@/services/ai/orchestrator';
 import { slog } from '@/lib/logger';
 import type { OrchestrationRequest, ProjectContext } from '@/types/orchestrator';
 
-export const runtime = 'nodejs';
+export const runtime    = 'nodejs';
+export const maxDuration = 300;
 
 // ── GDPR-aligned response headers ────────────────────────────────────────────
 // Applied to every response (success AND error) to ensure no orchestration

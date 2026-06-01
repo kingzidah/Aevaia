@@ -76,7 +76,7 @@ model Project {
   deviceCap    Int      @default(5)
 
   // AI orchestration context fields
-  theme         Theme    @default(dark)
+  theme         Theme?            // nullable: safe before migration adds column
   brandColors   String[] @default([])
   fontFamily    String   @default("Inter")
   fontWeights   Int[]    @default([400, 700])

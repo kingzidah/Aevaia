@@ -1,6 +1,10 @@
 // Settings — guarded by Clerk auth (auth() throws/redirects for unauthenticated users).
 // Profile and password management is delegated to Clerk's <UserProfile /> component.
 // Billing data is fetched server-side and passed to the client for the Stripe portal link.
+//
+// [[...rest]] catch-all: <UserProfile /> navigates internally to sub-paths such as
+// /settings/profile and /settings/security. Without a catch-all those paths 404 in
+// Next.js App Router.
 
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
