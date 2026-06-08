@@ -1,12 +1,22 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
+import type { CanvasElement } from "@/components/studio/StudioClient";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Plus,
   Minus,
   ChevronDown,
-  X,
+  RotateCw,
+  Maximize2,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  AlignHorizontalDistributeCenter,
+  AlignVerticalJustifyStart,
+  AlignVerticalJustifyCenter,
+  AlignVerticalJustifyEnd,
+  AlignVerticalDistributeCenter,
 } from "lucide-react";
 
 // ── Tiny helpers ──────────────────────────────────────────────────────────────
@@ -31,6 +41,7 @@ function SectionHeader({
         {onAdd && (
           <button
             type="button"
+            title={`Add ${label}`}
             onClick={onAdd}
             className="w-5 h-5 flex items-center justify-center rounded text-neutral-500 hover:text-white hover:bg-neutral-800 transition-colors"
           >
@@ -40,6 +51,7 @@ function SectionHeader({
         {collapsible && (
           <button
             type="button"
+            title={expanded ? `Collapse ${label}` : `Expand ${label}`}
             onClick={onToggle}
             className="w-5 h-5 flex items-center justify-center rounded text-neutral-500 hover:text-white hover:bg-neutral-800 transition-colors"
           >
@@ -62,7 +74,7 @@ function Row({
 }) {
   return (
     <div className="flex items-center gap-2 px-3 py-1">
-      <span className={`text-[11px] text-neutral-500 flex-shrink-0 ${labelWidth}`}>{label}</span>
+      <span className={`text-[11px] text-neutral-500 shrink-0 ${labelWidth}`}>{label}</span>
       <div className="flex-1 flex items-center gap-1.5">{children}</div>
     </div>
   );
@@ -72,14 +84,17 @@ function SmallInput({
   value,
   onChange,
   className = "",
+  label,
 }: {
-  value:    string | number;
+  value:     string | number;
   onChange?: (v: string) => void;
   className?: string;
+  label?:    string;
 }) {
   return (
     <input
       type="text"
+      aria-label={label ?? String(value)}
       defaultValue={String(value)}
       onChange={e => onChange?.(e.target.value)}
       className={`h-[26px] bg-neutral-800 border border-neutral-700/60 rounded-md px-1.5 text-[12px] text-white outline-none focus:border-neutral-500 transition-colors ${className}`}
@@ -153,7 +168,7 @@ function CollapseSection({
           animate={{ height: "auto", opacity: 1 }}
           exit={{ height: 0, opacity: 0 }}
           transition={{ duration: 0.18, ease: [0.32, 0.72, 0, 1] }}
-          style={{ overflow: "hidden" }}
+          className="overflow-hidden"
         >
           {children}
         </motion.div>
@@ -162,18 +177,26 @@ function CollapseSection({
   );
 }
 
-// ── Quick-select constraint icons (top row) ───────────────────────────────────
+// ── Padding side descriptors ──────────────────────────────────────────────────
 
-const QUICK_ICONS = [
-  // Align left, center-h, right, distribute-h, top, center-v, bottom, distribute-v
-  <svg key="al"  width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="2" width="5" height="10" rx="1" fill="currentColor" opacity="0.8"/><rect x="7" y="4" width="6" height="6" rx="1" fill="currentColor" opacity="0.4"/><line x1="1.5" y1="1" x2="1.5" y2="13" stroke="currentColor" strokeWidth="1.2"/></svg>,
-  <svg key="ac"  width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="2" y="3" width="4" height="8" rx="1" fill="currentColor" opacity="0.8"/><rect x="8" y="4" width="4" height="6" rx="1" fill="currentColor" opacity="0.4"/><line x1="7" y1="1" x2="7" y2="13" stroke="currentColor" strokeWidth="1.2"/></svg>,
-  <svg key="ar"  width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="2" y="4" width="6" height="6" rx="1" fill="currentColor" opacity="0.4"/><rect x="8" y="2" width="5" height="10" rx="1" fill="currentColor" opacity="0.8"/><line x1="12.5" y1="1" x2="12.5" y2="13" stroke="currentColor" strokeWidth="1.2"/></svg>,
-  <svg key="dh"  width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="3" width="3" height="8" rx="1" fill="currentColor" opacity="0.6"/><rect x="5.5" y="3" width="3" height="8" rx="1" fill="currentColor" opacity="0.6"/><rect x="10" y="3" width="3" height="8" rx="1" fill="currentColor" opacity="0.6"/></svg>,
-  <svg key="at"  width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="2" y="2" width="10" height="5" rx="1" fill="currentColor" opacity="0.8"/><rect x="4" y="8" width="6" height="4" rx="1" fill="currentColor" opacity="0.4"/><line x1="1" y1="1.5" x2="13" y2="1.5" stroke="currentColor" strokeWidth="1.2"/></svg>,
-  <svg key="avc" width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="2" y="1" width="10" height="5" rx="1" fill="currentColor" opacity="0.8"/><rect x="4" y="8" width="6" height="5" rx="1" fill="currentColor" opacity="0.4"/><line x1="1" y1="7" x2="13" y2="7" stroke="currentColor" strokeWidth="1.2"/></svg>,
-  <svg key="ab"  width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="4" y="2" width="6" height="4" rx="1" fill="currentColor" opacity="0.4"/><rect x="2" y="7" width="10" height="5" rx="1" fill="currentColor" opacity="0.8"/><line x1="1" y1="12.5" x2="13" y2="12.5" stroke="currentColor" strokeWidth="1.2"/></svg>,
-  <svg key="dv"  width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="3" y="1" width="8" height="3" rx="1" fill="currentColor" opacity="0.6"/><rect x="3" y="5.5" width="8" height="3" rx="1" fill="currentColor" opacity="0.6"/><rect x="3" y="10" width="8" height="3" rx="1" fill="currentColor" opacity="0.6"/></svg>,
+const PADDING_SIDES = [
+  { key: "paddingTop"    as const, label: "T" },
+  { key: "paddingRight"  as const, label: "R" },
+  { key: "paddingBottom" as const, label: "B" },
+  { key: "paddingLeft"   as const, label: "L" },
+];
+
+// ── Quick-select alignment tools (top bar) ────────────────────────────────────
+
+const ALIGN_TOOLS: { Icon: React.ComponentType<{ className?: string }>; label: string }[] = [
+  { Icon: AlignLeft,                       label: "Align Left"        },
+  { Icon: AlignCenter,                     label: "Align Center H"    },
+  { Icon: AlignRight,                      label: "Align Right"       },
+  { Icon: AlignHorizontalDistributeCenter, label: "Distribute H"      },
+  { Icon: AlignVerticalJustifyStart,       label: "Align Top"         },
+  { Icon: AlignVerticalJustifyCenter,      label: "Align Center V"    },
+  { Icon: AlignVerticalJustifyEnd,         label: "Align Bottom"      },
+  { Icon: AlignVerticalDistributeCenter,   label: "Distribute V"      },
 ];
 
 // ── Slider ────────────────────────────────────────────────────────────────────
@@ -183,15 +206,18 @@ function PropSlider({
   min = 0,
   max = 100,
   onChange,
+  label,
 }: {
   value:    number;
   min?:     number;
   max?:     number;
   onChange: (v: number) => void;
+  label?:   string;
 }) {
   return (
     <input
       type="range"
+      aria-label={label ?? "Slider"}
       min={min}
       max={max}
       value={value}
@@ -204,41 +230,26 @@ function PropSlider({
   );
 }
 
-// ── Color swatch input ────────────────────────────────────────────────────────
-
-function ColorInput({
-  hex,
-  onClear,
-}: {
-  hex:     string;
-  onClear: () => void;
-}) {
-  return (
-    <div className="flex items-center gap-1.5 h-[26px] bg-neutral-800 border border-neutral-700/60 rounded-md px-1.5 flex-1">
-      <div
-        className="w-3.5 h-3.5 rounded-[3px] border border-neutral-600 flex-shrink-0"
-        style={{ backgroundColor: `#${hex}` }}
-      />
-      <span className="text-[12px] text-white font-mono flex-1">{hex}</span>
-      <button type="button" onClick={onClear} className="text-neutral-500 hover:text-white transition-colors">
-        <X size={10} />
-      </button>
-    </div>
-  );
-}
 
 // ── Main export ───────────────────────────────────────────────────────────────
 
-export default function RightSidebar() {
+export default function RightSidebar({
+  selectedElement = null,
+  updateElement,
+}: {
+  selectedElement?: CanvasElement | null;
+  updateElement?:   (id: string, props: Partial<CanvasElement>) => void;
+}) {
   // Collapsed state per section
   const [expanded, setExpanded] = useState({
-    position:   true,
-    size:       true,
-    layout:     true,
-    cursor:     false,
-    styles:     true,
-    transforms: false,
-    selection:  false,
+    position:      true,
+    size:          true,
+    layout:        true,
+    cursor:        false,
+    styles:        true,
+    selection:     false,
+    transforms:    false,
+    codeOverrides: false,
   });
 
   // Placeholder value states
@@ -253,22 +264,130 @@ export default function RightSidebar() {
   }
 
   return (
-    <aside className="w-[240px] shrink-0 h-full flex flex-col bg-[#111111] border-l border-neutral-800 overflow-y-auto text-xs"
-      style={{ scrollbarWidth: "none" }}>
+    <aside className="w-[240px] shrink-0 h-full flex flex-col bg-[#111111] border-l border-neutral-800 overflow-y-auto text-xs scrollbar-none">
 
-      {/* ── Quick-select alignment row ──────────────────────────────────── */}
-      <div className="flex items-center justify-between px-2.5 py-2 border-b border-neutral-800">
-        {QUICK_ICONS.map((icon, i) => (
+      {/* ── Alignment quick-select bar ───────────────────────────────────── */}
+      <div className="flex items-center justify-between px-2 py-1.5 border-b border-neutral-800">
+        {ALIGN_TOOLS.map(({ Icon, label }) => (
           <button
-            key={i}
+            key={label}
             type="button"
-            className="w-7 h-7 flex items-center justify-center rounded text-neutral-600 hover:text-neutral-200 hover:bg-neutral-800 transition-colors"
-            onClick={() => console.log("[RightSidebar] quick-align", i)}
+            title={label}
+            className="w-7 h-7 flex items-center justify-center rounded text-neutral-500 hover:text-white hover:bg-neutral-800 transition-colors"
+            onClick={() => console.log("[RightSidebar]", label)}
           >
-            {icon}
+            <Icon className="w-3.5 h-3.5" />
           </button>
         ))}
       </div>
+
+      {/* ── Empty state ─────────────────────────────────────────────────── */}
+      {!selectedElement && (
+        <div className="flex flex-col items-center justify-center flex-1 gap-2 pb-8">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" className="text-neutral-700">
+            <rect x="1" y="1" width="26" height="26" rx="5" stroke="currentColor" strokeWidth="1.4" strokeDasharray="4 3" />
+            <path d="M9 14h10M14 9v10" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+          </svg>
+          <span className="text-sm text-neutral-400 font-medium">No selection</span>
+          <span className="text-xs text-neutral-500 text-center px-4 leading-relaxed">
+            Click an element on the canvas to edit its properties.
+          </span>
+        </div>
+      )}
+
+      {/* ── Inspector (shown only when an element is selected) ──────────── */}
+      {selectedElement && <>
+
+      {/* ═══════════════════════════════════════════════════════════════════
+          CONTENT
+      ════════════════════════════════════════════════════════════════════ */}
+      <div>
+        <SectionHeader
+          label="Content"
+          collapsible={false}
+          expanded={true}
+          onToggle={() => {}}
+        />
+        <div className="px-3 pb-3">
+          <textarea
+            value={selectedElement?.text ?? ''}
+            aria-label="Block text content"
+            onChange={e => updateElement?.(selectedElement!.id, { text: e.target.value })}
+            className="bg-[#111111] border border-neutral-800 focus:border-neutral-600 text-neutral-300 text-xs rounded-md w-full p-2 min-h-15 resize-none outline-none transition-colors"
+          />
+        </div>
+      </div>
+
+      <Divider />
+
+      {/* ═══════════════════════════════════════════════════════════════════
+          TYPOGRAPHY
+      ════════════════════════════════════════════════════════════════════ */}
+      <div>
+        <SectionHeader
+          label="Typography"
+          collapsible={false}
+          expanded={true}
+          onToggle={() => {}}
+        />
+        <div className="px-3 pb-3 flex flex-col gap-2">
+
+          {/* Size + Weight */}
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] text-neutral-500 shrink-0">Size</span>
+            <input
+              type="number"
+              value={parseInt(selectedElement?.fontSize ?? '16') || 16}
+              aria-label="Font size"
+              onChange={e => updateElement?.(selectedElement!.id, { fontSize: e.target.value + 'px' })}
+              className="w-14 h-6 bg-neutral-900 border border-neutral-800 rounded-md px-1.5 text-xs text-white text-right outline-none focus:border-neutral-600 transition-colors"
+            />
+            <select
+              value={selectedElement?.fontWeight ?? '400'}
+              aria-label="Font weight"
+              onChange={e => updateElement?.(selectedElement!.id, { fontWeight: e.target.value })}
+              className="flex-1 h-6 bg-neutral-900 border border-neutral-800 rounded-md px-1.5 text-xs text-neutral-300 outline-none focus:border-neutral-600 transition-colors appearance-none cursor-pointer"
+            >
+              <option value="300">Light</option>
+              <option value="400">Regular</option>
+              <option value="500">Medium</option>
+              <option value="700">Bold</option>
+            </select>
+          </div>
+
+          {/* Alignment segmented toggle */}
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] text-neutral-500 shrink-0">Align</span>
+            <div className="flex gap-0.5">
+              {[
+                { value: "left",   Icon: AlignLeft   },
+                { value: "center", Icon: AlignCenter },
+                { value: "right",  Icon: AlignRight  },
+              ].map(({ value, Icon }) => {
+                const active = (selectedElement?.textAlign ?? 'left') === value;
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    title={`Align ${value}`}
+                    onClick={() => updateElement?.(selectedElement!.id, { textAlign: value })}
+                    className={`w-8 h-6 flex items-center justify-center rounded-md border transition-colors ${
+                      active
+                        ? 'bg-neutral-700 border-neutral-600 text-white'
+                        : 'bg-neutral-900 border-neutral-800 text-neutral-400 hover:text-white hover:border-neutral-700'
+                    }`}
+                  >
+                    <Icon size={12} />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <Divider />
 
       {/* ═══════════════════════════════════════════════════════════════════
           POSITION
@@ -301,12 +420,18 @@ export default function RightSidebar() {
         />
         <CollapseSection expanded={expanded.size}>
           <Row label="Width">
-            <SmallInput value={960} className="w-14 text-right" />
-            <SmallSelect value="Fixed" options={["Fixed", "Fill", "Auto"]} className="w-[72px]" />
+            <SmallInput value={960} className="w-12 text-right shrink-0" />
+            <div className="flex items-center gap-0.5 h-5.5 px-1.5 bg-neutral-900 border border-neutral-700/40 rounded-md cursor-pointer hover:border-neutral-600 transition-colors group">
+              <span className="text-[10px] font-medium text-neutral-300 leading-none whitespace-nowrap">Fixed</span>
+              <ChevronDown size={7} className="text-neutral-600 group-hover:text-neutral-400 shrink-0 transition-colors" />
+            </div>
           </Row>
           <Row label="Height">
-            <SmallInput value={895} className="w-14 text-right" />
-            <SmallSelect value="Fit" options={["Fit", "Fill", "Fixed"]} className="w-[72px]" />
+            <SmallInput value={895} className="w-12 text-right shrink-0" />
+            <div className="flex items-center gap-0.5 h-5.5 px-1.5 bg-neutral-900 border border-neutral-700/40 rounded-md cursor-pointer hover:border-neutral-600 transition-colors group">
+              <span className="text-[10px] font-medium text-neutral-300 leading-none whitespace-nowrap">Fit</span>
+              <ChevronDown size={7} className="text-neutral-600 group-hover:text-neutral-400 shrink-0 transition-colors" />
+            </div>
           </Row>
           <Row label="Min Max">
             <button
@@ -350,7 +475,8 @@ export default function RightSidebar() {
               {/* Horizontal ← → */}
               <button
                 type="button"
-                className="flex items-center justify-center h-[26px] w-[42px] bg-neutral-800 border border-neutral-700/60 rounded-md text-neutral-300 hover:text-white hover:bg-neutral-700 transition-colors"
+                title="Horizontal layout"
+                className="flex items-center justify-center h-6.5 w-10.5 bg-neutral-800 border border-neutral-700/60 rounded-md text-neutral-300 hover:text-white hover:bg-neutral-700 transition-colors"
                 onClick={() => console.log("[RightSidebar] direction H")}
               >
                 <svg width="16" height="10" viewBox="0 0 16 10" fill="none">
@@ -360,7 +486,8 @@ export default function RightSidebar() {
               {/* Vertical ↑ ↓ */}
               <button
                 type="button"
-                className="flex items-center justify-center h-[26px] w-[42px] bg-neutral-800 border border-neutral-700/60 rounded-md text-neutral-500 hover:text-white hover:bg-neutral-700 transition-colors"
+                title="Vertical layout"
+                className="flex items-center justify-center h-6.5 w-10.5 bg-neutral-800 border border-neutral-700/60 rounded-md text-neutral-500 hover:text-white hover:bg-neutral-700 transition-colors"
                 onClick={() => console.log("[RightSidebar] direction V")}
               >
                 <svg width="10" height="16" viewBox="0 0 10 16" fill="none">
@@ -386,7 +513,7 @@ export default function RightSidebar() {
                 <button
                   key={i}
                   type="button"
-                  className="w-8 h-[26px] flex items-center justify-center bg-neutral-800 border border-neutral-700/60 rounded-md text-neutral-400 hover:text-white hover:bg-neutral-700 transition-colors"
+                  className="w-8 h-6.5 flex items-center justify-center bg-neutral-800 border border-neutral-700/60 rounded-md text-neutral-400 hover:text-white hover:bg-neutral-700 transition-colors"
                   onClick={() => console.log("[RightSidebar] align", i)}
                 >
                   {icon}
@@ -402,44 +529,29 @@ export default function RightSidebar() {
 
           {/* Gap */}
           <Row label="Gap">
-            <SmallInput value={gap} className="w-10 text-right" />
-            <PropSlider value={gap} max={200} onChange={setGap} />
+            <SmallInput value={gap} label="Gap" className="w-10 text-right" />
+            <PropSlider value={gap} max={200} onChange={setGap} label="Gap" />
           </Row>
 
           {/* Padding */}
-          <Row label="Padding">
-            <div className="flex flex-col gap-1 flex-1">
-              {/* Top row buttons */}
-              <div className="flex items-center justify-between gap-0.5">
-                {/* Sides icon */}
-                <div className="flex gap-0.5">
-                  <button type="button" className="w-5 h-5 flex items-center justify-center rounded text-neutral-500 hover:text-white transition-colors">
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                      <rect x="1" y="1" width="10" height="10" rx="1" stroke="currentColor" strokeWidth="1" fill="none"/>
-                      <rect x="1" y="1" width="10" height="1.5" rx="0.5" fill="currentColor" opacity="0.6"/>
-                      <rect x="1" y="9.5" width="10" height="1.5" rx="0.5" fill="currentColor" opacity="0.6"/>
-                    </svg>
-                  </button>
-                  <button type="button" className="w-5 h-5 flex items-center justify-center rounded text-neutral-500 hover:text-white transition-colors">
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                      <rect x="1" y="1" width="10" height="10" rx="1" stroke="currentColor" strokeWidth="1" fill="none"/>
-                      <rect x="1" y="1" width="1.5" height="10" rx="0.5" fill="currentColor" opacity="0.6"/>
-                      <rect x="9.5" y="1" width="1.5" height="10" rx="0.5" fill="currentColor" opacity="0.6"/>
-                    </svg>
-                  </button>
+          <div className="px-3 pt-0.5 pb-1">
+            <span className="block text-[10px] text-neutral-500 mb-1.5 select-none">Padding</span>
+            <div className="grid grid-cols-4 gap-1.5">
+              {PADDING_SIDES.map(({ key, label }) => (
+                <div key={label} className="flex flex-col items-center gap-0.5">
+                  <input
+                    type="text"
+                    value={parseInt(selectedElement?.[key] ?? '16') || 0}
+                    aria-label={`Padding ${label}`}
+                    title={`Padding ${label}`}
+                    onChange={e => updateElement?.(selectedElement!.id, { [key]: e.target.value + 'px' })}
+                    className="w-full h-6.5 bg-neutral-800 border border-neutral-700/60 rounded-md text-[11px] text-white text-center outline-none focus:border-neutral-500 transition-colors"
+                  />
+                  <span className="text-[10px] text-neutral-500 select-none">{label}</span>
                 </div>
-              </div>
-              {/* T/R/B/L inputs */}
-              <div className="grid grid-cols-4 gap-1">
-                {[["80","T"],["20","R"],["80","B"],["20","L"]].map(([v, side]) => (
-                  <div key={side} className="flex flex-col items-center gap-0.5">
-                    <SmallInput value={v} className="w-full text-center text-[11px] px-0.5" />
-                    <span className="text-[9px] text-neutral-600">{side}</span>
-                  </div>
-                ))}
-              </div>
+              ))}
             </div>
-          </Row>
+          </div>
 
           <div className="pb-1" />
         </CollapseSection>
@@ -477,8 +589,8 @@ export default function RightSidebar() {
 
           {/* Opacity */}
           <Row label="Opacity">
-            <SmallInput value={1} className="w-10 text-right" />
-            <PropSlider value={opacity} onChange={setOpacity} />
+            <SmallInput value={1} label="Opacity" className="w-10 text-right" />
+            <PropSlider value={opacity} onChange={setOpacity} label="Opacity" />
           </Row>
 
           {/* Visible */}
@@ -488,7 +600,22 @@ export default function RightSidebar() {
 
           {/* Fill */}
           <Row label="Fill">
-            <ColorInput hex="000000" onClear={() => console.log("[RightSidebar] clear fill")} />
+            <div className="flex items-center gap-1.5 flex-1">
+              <input
+                type="color"
+                aria-label="Pick fill color"
+                value={selectedElement?.backgroundColor ?? '#262626'}
+                onChange={e => updateElement?.(selectedElement!.id, { backgroundColor: e.target.value })}
+                className="w-6 h-6 rounded border border-neutral-700 shrink-0 cursor-pointer p-0 bg-transparent overflow-hidden"
+              />
+              <input
+                type="text"
+                value={selectedElement?.backgroundColor ?? '#262626'}
+                aria-label="Fill color hex"
+                onChange={e => updateElement?.(selectedElement!.id, { backgroundColor: e.target.value })}
+                className="flex-1 h-6 bg-neutral-900 border border-neutral-800 rounded-md px-1.5 text-xs text-white font-mono outline-none focus:border-neutral-600 transition-colors"
+              />
+            </div>
           </Row>
 
           {/* Overflow */}
@@ -498,16 +625,35 @@ export default function RightSidebar() {
 
           {/* Radius */}
           <Row label="Radius">
-            <SmallInput value={0} className="w-14 text-right" />
+            <div className="flex items-center gap-1.5">
+              <svg
+                width="14" height="14" viewBox="0 0 14 14" fill="none"
+                aria-hidden
+                className="shrink-0 text-neutral-500"
+              >
+                <path
+                  d="M3 11V5a2 2 0 0 1 2-2h6"
+                  stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"
+                />
+              </svg>
+              <input
+                type="text"
+                value={parseInt(selectedElement?.borderRadius ?? '0') || 0}
+                aria-label="Border radius"
+                onChange={e => updateElement?.(selectedElement!.id, { borderRadius: e.target.value + 'px' })}
+                className="w-12 h-6 bg-neutral-900 border border-neutral-800 rounded-md px-1.5 text-xs text-white text-right outline-none focus:border-neutral-600 transition-colors"
+              />
+            </div>
           </Row>
 
           {/* Border */}
           <Row label="Border">
             <button
               type="button"
-              className="text-[11px] text-neutral-400 hover:text-white transition-colors"
+              className="flex items-center gap-1 h-6 px-2 rounded-md border border-neutral-800 bg-neutral-900 text-[11px] text-neutral-400 hover:text-white hover:border-neutral-700 transition-colors"
               onClick={() => console.log("[RightSidebar] add border")}
             >
+              <Plus size={10} />
               Add...
             </button>
           </Row>
@@ -516,30 +662,16 @@ export default function RightSidebar() {
           <Row label="Shadows">
             <button
               type="button"
-              className="text-[11px] text-neutral-400 hover:text-white transition-colors"
+              className="flex items-center gap-1 h-6 px-2 rounded-md border border-neutral-800 bg-neutral-900 text-[11px] text-neutral-400 hover:text-white hover:border-neutral-700 transition-colors"
               onClick={() => console.log("[RightSidebar] add shadow")}
             >
+              <Plus size={10} />
               Add...
             </button>
           </Row>
 
           <div className="pb-1" />
         </CollapseSection>
-      </div>
-
-      <Divider />
-
-      {/* ═══════════════════════════════════════════════════════════════════
-          TRANSFORMS
-      ════════════════════════════════════════════════════════════════════ */}
-      <div>
-        <SectionHeader
-          label="Transforms"
-          collapsible={false}
-          expanded={expanded.transforms}
-          onToggle={() => toggle("transforms")}
-          onAdd={() => console.log("[RightSidebar] transforms add")}
-        />
       </div>
 
       <Divider />
@@ -558,12 +690,16 @@ export default function RightSidebar() {
         <div className="px-3 pb-2">
           <div className="text-[11px] text-neutral-500 mb-1.5">Colors</div>
           <div className="flex items-center gap-1.5">
-            {["111111", "ffffff", "3b82f6", "8b5cf6"].map(c => (
+            {[
+              { hex: "111111", cls: "bg-neutral-900"  },
+              { hex: "ffffff", cls: "bg-white"         },
+              { hex: "3b82f6", cls: "bg-blue-500"      },
+              { hex: "8b5cf6", cls: "bg-violet-500"    },
+            ].map(({ hex, cls }) => (
               <div
-                key={c}
-                className="w-5 h-5 rounded-full border-2 border-neutral-700 cursor-pointer hover:border-neutral-400 transition-colors"
-                style={{ backgroundColor: `#${c}` }}
-                onClick={() => console.log("[RightSidebar] color selected:", c)}
+                key={hex}
+                className={`w-5 h-5 rounded-full border-2 border-neutral-700 cursor-pointer hover:border-neutral-400 transition-colors ${cls}`}
+                onClick={() => console.log("[RightSidebar] color selected:", hex)}
               />
             ))}
             <span className="text-[10px] text-neutral-500 ml-1">+1</span>
@@ -574,20 +710,69 @@ export default function RightSidebar() {
       <Divider />
 
       {/* ═══════════════════════════════════════════════════════════════════
+          TRANSFORMS
+      ════════════════════════════════════════════════════════════════════ */}
+      <div>
+        <SectionHeader
+          label="Transforms"
+          collapsible
+          expanded={expanded.transforms}
+          onToggle={() => toggle("transforms")}
+          onAdd={() => console.log("[RightSidebar] transforms add")}
+        />
+        <CollapseSection expanded={expanded.transforms}>
+
+          {/* Rotate */}
+          <Row label="Rotate">
+            <div className="flex items-center gap-1.5">
+              <RotateCw size={13} className="text-neutral-500 shrink-0" />
+              <SmallInput value={0} className="w-12 text-right" />
+            </div>
+          </Row>
+
+          {/* Scale */}
+          <Row label="Scale">
+            <div className="flex items-center gap-1.5">
+              <Maximize2 size={13} className="text-neutral-500 shrink-0" />
+              <SmallInput value={1} className="w-12 text-right" />
+            </div>
+          </Row>
+
+          <div className="pb-1" />
+        </CollapseSection>
+      </div>
+
+      <Divider />
+
+      {/* ═══════════════════════════════════════════════════════════════════
           CODE OVERRIDES
       ════════════════════════════════════════════════════════════════════ */}
       <div>
         <SectionHeader
           label="Code Overrides"
-          collapsible={false}
-          expanded={false}
-          onToggle={() => {}}
+          collapsible
+          expanded={expanded.codeOverrides}
+          onToggle={() => toggle("codeOverrides")}
           onAdd={() => console.log("[RightSidebar] code overrides add")}
         />
+        <CollapseSection expanded={expanded.codeOverrides}>
+          <div className="px-3 pb-2">
+            <button
+              type="button"
+              className="flex items-center gap-1 h-6 px-2 rounded-md border border-neutral-800 bg-neutral-900 text-[11px] text-neutral-400 hover:text-white hover:border-neutral-700 transition-colors"
+              onClick={() => console.log("[RightSidebar] add override")}
+            >
+              <Plus size={10} />
+              Add Override
+            </button>
+          </div>
+        </CollapseSection>
       </div>
 
       {/* Bottom spacer */}
       <div className="flex-1" />
+
+      </>}
     </aside>
   );
 }

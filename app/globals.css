@@ -186,6 +186,24 @@ html.dark {
   background: transparent;
 }
 
+/* ─── Coming Soon ambient glow ──────────────────────────────────────── */
+.coming-soon-glow {
+  background: radial-gradient(ellipse 80% 60% at 50% 40%, rgba(126,34,206,0.18) 0%, transparent 70%);
+}
+
+/* ─── Canvas element blocks ─────────────────────────────────────────── */
+.canvas-block {
+  background-color: var(--canvas-block-bg, #262626);
+  border-radius:    var(--canvas-block-radius, 0px);
+  padding-top:      var(--canvas-block-pt, 16px);
+  padding-right:    var(--canvas-block-pr, 16px);
+  padding-bottom:   var(--canvas-block-pb, 16px);
+  padding-left:     var(--canvas-block-pl, 16px);
+  font-size:        var(--canvas-block-fs, 16px);
+  font-weight:      var(--canvas-block-fw, 400);
+  text-align:       var(--canvas-block-ta, left);
+}
+
 /* ─── Ambient Effects Keyframes ─────────────────────────────────────── */
 @keyframes firefly-float {
   0%   { transform: translate(0, 0);                                    opacity: 0;   }

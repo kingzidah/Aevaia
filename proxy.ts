@@ -42,6 +42,21 @@ const isMaintenanceExempt = createRouteMatcher([
 ]);
 
 export const proxy = clerkMiddleware(async (auth, req) => {
+  // ── Wedding subdomain rewrite ───────────────────────────────────────────────
+  // Serves public/wedding-demo/ as a standalone static site on any hostname
+  // that contains "opeyemianduriel" (e.g. opeyemianduriel.localhost:3000 or
+  // opeyemianduriel.aevaia.com). Returns before auth so Clerk never runs.
+  const hostname = req.headers.get('host') ?? '';
+  if (hostname.includes('opeyemianduriel')) {
+    let newPath = req.nextUrl.pathname;
+    if (newPath === '/') newPath = '/index.html';
+    if (!newPath.startsWith('/wedding-demo')) {
+      newPath = '/wedding-demo' + newPath;
+    }
+    req.nextUrl.pathname = newPath;
+    return NextResponse.rewrite(req.nextUrl);
+  }
+
   // ── Maintenance mode ────────────────────────────────────────────────────────
   // Activated by setting MAINTENANCE_MODE=true in .env.local (or Vercel env).
   // The owner bypasses the redirect by setting MAINTENANCE_BYPASS_USER_ID to

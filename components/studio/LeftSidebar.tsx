@@ -2,7 +2,11 @@
 
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Search, ChevronRight, Plus, Play, Star } from "lucide-react";
+import {
+  Search, ChevronRight, Plus, Play, Star,
+  Monitor, LayoutGrid, Layers, Type, MousePointer2,
+  Eye, Lock,
+} from "lucide-react";
 
 // ── Sidebar data ──────────────────────────────────────────────────────────────
 
@@ -153,9 +157,9 @@ function HeroShapesCard({ dark }: CardProps) {
       <div className={`w-full rounded-lg ${img} flex items-center justify-center gap-3 py-4`}>
         <div className={`w-5 h-5 rounded-[3px] ${shape}`} />
         <div className={`w-5 h-5 rounded-full ${shape}`} />
-        <div
-          style={{ width: 0, height: 0, borderLeft: "10px solid transparent", borderRight: "10px solid transparent", borderBottom: dark ? "17px solid #404040" : "17px solid #d1d5db" }}
-        />
+        <svg width="20" height="17" viewBox="0 0 20 17" aria-hidden>
+          <polygon points="0,17 20,17 10,0" className={dark ? "fill-neutral-700" : "fill-gray-300"} />
+        </svg>
       </div>
     </div>
   );
@@ -194,7 +198,9 @@ function LogoRowCard({ dark }: CardProps) {
           {t === "rect"   && <div className={`w-2.5 h-2.5 rounded-[2px] ${shape}`} />}
           {t === "circle" && <div className={`w-2.5 h-2.5 rounded-full ${shape}`} />}
           {t === "tri"    && (
-            <div style={{ width: 0, height: 0, borderLeft: "5px solid transparent", borderRight: "5px solid transparent", borderBottom: dark ? "9px solid #404040" : "9px solid #d1d5db" }} />
+            <svg width="10" height="9" viewBox="0 0 10 9" aria-hidden>
+              <polygon points="0,9 10,9 5,0" className={dark ? "fill-neutral-700" : "fill-gray-300"} />
+            </svg>
           )}
           <span className={`text-[7px] font-medium ${text}`}>{lbl}</span>
         </div>
@@ -327,18 +333,101 @@ const CARD_COMPONENTS: Array<React.ComponentType<CardProps>> = [
   PricingCard,
 ];
 
+const CARD_LABELS: string[] = [
+  "Hero Section",
+  "Hero Buttons",
+  "Logo Row",
+  "Split Section",
+  "Feature Two Col",
+  "Three Column",
+  "Stats",
+  "Testimonial",
+  "Pricing",
+];
+
+// ── Layer tree data ───────────────────────────────────────────────────────────
+
+type LayerNode = {
+  id:    string;
+  label: string;
+  Icon:  React.ComponentType<{ className?: string }>;
+  depth: 0 | 1 | 2 | 3;
+};
+
+// Static Tailwind classes — one per depth level (8px + depth * 12px)
+const DEPTH_PL = ["pl-2", "pl-5", "pl-8", "pl-11"] as const;
+
+const LAYER_TREE: LayerNode[] = [
+  { id: "page",    label: "Page: Home",    Icon: Monitor,       depth: 0 },
+  { id: "hero",    label: "Hero Section",  Icon: LayoutGrid,    depth: 1 },
+  { id: "stack",   label: "Main Stack",    Icon: Layers,        depth: 2 },
+  { id: "heading", label: "Heading Text",  Icon: Type,          depth: 3 },
+  { id: "button",  label: "Action Button", Icon: MousePointer2, depth: 3 },
+];
+
+// ── Layer row ─────────────────────────────────────────────────────────────────
+
+function LayerRow({
+  node,
+  selected,
+  onSelect,
+}: {
+  node:     LayerNode;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  const { Icon, label, depth } = node;
+  return (
+    // Plain div — not role="button" so nested <button> elements are valid
+    <div
+      onClick={onSelect}
+      className={`group flex items-center gap-1.5 h-7 pr-1.5 rounded-md cursor-pointer transition-colors ${DEPTH_PL[depth]} ${
+        selected
+          ? "bg-neutral-800 text-white"
+          : "hover:bg-neutral-800/50 text-neutral-300"
+      }`}
+    >
+      <Icon className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+      <span className="flex-1 text-xs truncate leading-none">{label}</span>
+
+      {/* Hover action icons */}
+      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+        <button
+          type="button"
+          title="Toggle visibility"
+          onClick={e => { e.stopPropagation(); console.log("[Layers] toggle visibility", label); }}
+          className="p-0.5 rounded text-neutral-600 hover:text-neutral-300 transition-colors"
+        >
+          <Eye size={11} />
+        </button>
+        <button
+          type="button"
+          title="Lock layer"
+          onClick={e => { e.stopPropagation(); console.log("[Layers] lock", label); }}
+          className="p-0.5 rounded text-neutral-600 hover:text-neutral-300 transition-colors"
+        >
+          <Lock size={11} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ── Props ─────────────────────────────────────────────────────────────────────
 
 interface LeftSidebarProps {
-  activeItem:  string | null;
-  onItemClick: (id: string | null) => void;
+  activeItem:    string | null;
+  onItemClick:   (id: string | null) => void;
+  onAddElement?: (type: string) => void;
 }
 
 // ── Main export ───────────────────────────────────────────────────────────────
 
-export default function LeftSidebar({ activeItem, onItemClick }: LeftSidebarProps) {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [previewTab,  setPreviewTab]  = useState<"light" | "dark">("light");
+export default function LeftSidebar({ activeItem, onItemClick, onAddElement }: LeftSidebarProps) {
+  const [searchQuery,    setSearchQuery]    = useState("");
+  const [previewTab,     setPreviewTab]     = useState<"light" | "dark">("dark");
+  const [sidebarTab,     setSidebarTab]     = useState<"Layers" | "Components" | "Assets">("Components");
+  const [selectedLayer,  setSelectedLayer]  = useState<string | null>("hero");
 
   function handleItemClick(id: string) {
     onItemClick(activeItem === id ? null : id);
@@ -369,8 +458,41 @@ export default function LeftSidebar({ activeItem, onItemClick }: LeftSidebarProp
           </div>
         </div>
 
-        {/* Accordion groups */}
-        <div className="flex-1 overflow-y-auto pb-4" style={{ scrollbarWidth: "none" }}>
+        {/* Mode tabs */}
+        <div className="flex items-center gap-0.5 px-2 pb-2 shrink-0">
+          {(["Layers", "Components", "Assets"] as const).map(tab => (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setSidebarTab(tab)}
+              className={`py-1.5 px-3 rounded-md text-xs font-medium transition-colors ${
+                sidebarTab === tab
+                  ? "bg-neutral-800 text-white"
+                  : "text-neutral-500 hover:text-neutral-300"
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+
+        {/* ── Layers tree (Layers tab) ─────────────────────────────────── */}
+        {sidebarTab === "Layers" && (
+          <div className="flex-1 overflow-y-auto px-2 pb-4 space-y-0.5 scrollbar-none">
+            {LAYER_TREE.map(node => (
+              <LayerRow
+                key={node.id}
+                node={node}
+                selected={selectedLayer === node.id}
+                onSelect={() => setSelectedLayer(node.id)}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* ── Component categories (Components / Assets tabs) ──────────── */}
+        {sidebarTab !== "Layers" && (
+        <div className="flex-1 overflow-y-auto pb-4 scrollbar-none">
           {GROUPS.map(group => (
             <div key={group.label}>
               {/* Section header */}
@@ -408,6 +530,7 @@ export default function LeftSidebar({ activeItem, onItemClick }: LeftSidebarProp
             </div>
           ))}
         </div>
+        )}
       </div>
 
       {/* ── Secondary panel (slides in when item is active) ────────────── */}
@@ -445,12 +568,15 @@ export default function LeftSidebar({ activeItem, onItemClick }: LeftSidebarProp
               </div>
 
               {/* Preview cards scroll */}
-              <div className="flex-1 overflow-y-auto px-3 pb-4 space-y-2" style={{ scrollbarWidth: "none" }}>
+              <div className="flex-1 overflow-y-auto px-3 pb-4 space-y-2 scrollbar-none">
                 {CARD_COMPONENTS.map((Card, i) => (
                   <div
                     key={i}
-                    className="cursor-pointer rounded-xl transition-all hover:ring-2 hover:ring-blue-500 hover:ring-offset-1 hover:ring-offset-[#111111]"
-                    onClick={() => console.log("[LeftSidebar] section card selected:", i)}
+                    className="cursor-grab active:cursor-grabbing rounded-xl select-none
+                               transition-all duration-200 ease-in-out
+                               hover:-translate-y-0.5 hover:shadow-lg hover:border-neutral-600
+                               hover:ring-2 hover:ring-blue-500 hover:ring-offset-1 hover:ring-offset-[#111111]"
+                    onClick={() => onAddElement?.(CARD_LABELS[i] ?? "Component")}
                   >
                     <Card dark={previewTab === "dark"} />
                   </div>

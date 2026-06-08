@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>You're Invited | Opeyemi & Uriel's Wedding</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@23.8.1/build/css/intlTelInput.css">
+    <link rel="stylesheet" href="/wedding-demo/styles.css">
+</head>
+<body>
+
+    <div class="ambient-background">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+    </div>
+
+    <div class="cursor-trail" id="cursor-trail"></div>
+
+    <audio id="bg-music" loop>
+        <source src="/wedding-demo/assets/background-music.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="voice-note">
+        <source src="/wedding-demo/assets/voice-note.mp3" type="audio/mpeg">
+    </audio>
+
+    <section id="scene-landing" class="scene active">
+        <div class="landing-content">
+            <h1>You're Invited</h1>
+            <span class="couple-names">Opeyemi &amp; Uriel</span>
+            <p>Are you ready to share in our love story?</p>
+
+            <div class="button-container">
+                <button id="btn-yes" class="main-btn">YES, I AM!</button>
+                <button id="btn-no" class="main-btn secondary">Not Sure...</button>
+            </div>
+
+            <p id="no-message" class="no-message hidden">
+                We think you'll love what awaits you... 💕
+            </p>
+        </div>
+
+    </section>
+
+    <section id="scene-candle" class="scene hidden">
+        <div class="fog-layer"></div>
+
+        <div class="reveal-wrapper">
+            <div class="reveal-card" id="reveal-card" role="button" aria-label="Touch to reveal the invitation" tabindex="0">
+                <div class="wax-seal">
+                    <i class="fas fa-heart"></i>
+                </div>
+                <p class="reveal-tagline">Touch to Unveil<br>Our Story</p>
+                <p class="reveal-hashtag">#OUFOREVER26</p>
+            </div>
+            <p class="reveal-hint">A love story waiting to be told...</p>
+        </div>
+
+    </section>
+
+    <section id="scene-gallery" class="scene hidden">
+        <h2 class="scene-title">Our Love</h2>
+
+        <div class="gallery-grid">
+            <div class="gallery-frame main-photo" onclick="openModal('/wedding-demo/assets/couple1.jpg')">
+                <img src="/wedding-demo/assets/couple1.jpg" alt="Opeyemi and Uriel" loading="lazy">
+            </div>
+            <div class="gallery-frame side-photo" onclick="openModal('/wedding-demo/assets/couple2.jpg')">
+                <img src="/wedding-demo/assets/couple2.jpg" alt="Opeyemi and Uriel" loading="lazy">
+            </div>
+            <div class="gallery-frame side-photo" onclick="openModal('/wedding-demo/assets/couple3.jpg')">
+                <img src="/wedding-demo/assets/couple3.jpg" alt="Opeyemi and Uriel" loading="lazy">
+            </div>
+        </div>
+
+        <button class="next-btn" onclick="nextScene('scene-letter')">
+            Read Our Invitation <i class="fas fa-arrow-right"></i>
+        </button>
+
+    </section>
+
+    <div id="image-modal" class="modal hidden">
+        <div class="modal-card">
+            <span class="close-modal" onclick="closeModal()" aria-label="Close">&times;</span>
+            <img class="modal-content" id="modal-img" alt="Memory">
+        </div>
+    </div>
+
+    <section id="scene-letter" class="scene hidden">
+        <div class="glass-envelope">
+            <h1 class="dear-name">To our dearest family &amp; friends,</h1>
+            <p class="verse-subtitle">"He makes everything beautiful in its time." – Ecclesiastes 3:11</p>
+
+            <div class="typewriter-container">
+                <p id="typewriter-text"></p>
+            </div>
+
+            <div class="letter-footer">
+                <div class="signature-row">
+                    <span id="signed-name" class="signed-name"></span>
+                    <p class="hashtag-letter">#OUFOREVER26</p>
+                </div>
+
+                <div id="voice-note-player" class="voice-note-container" title="A message from the couple">
+                    <div class="mic-icon-circle"><i class="fas fa-microphone"></i></div>
+                    <div class="waveform-container">
+                        <div class="waveform-bar bar-1"></div><div class="waveform-bar bar-2"></div>
+                        <div class="waveform-bar bar-3"></div><div class="waveform-bar bar-4"></div>
+                        <div class="waveform-bar bar-5"></div><div class="waveform-bar bar-6"></div>
+                        <div class="waveform-bar bar-7"></div><div class="waveform-bar bar-8"></div>
+                        <div class="waveform-bar bar-9"></div><div class="waveform-bar bar-10"></div>
+                        <div class="waveform-bar bar-11"></div><div class="waveform-bar bar-12"></div>
+                        <div class="waveform-bar bar-13"></div><div class="waveform-bar bar-14"></div>
+                        <div class="waveform-bar bar-15"></div><div class="waveform-bar bar-16"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button class="next-btn" onclick="nextScene('scene-rsvp')">
+            RSVP Now! <i class="fas fa-ring"></i>
+        </button>
+
+    </section>
+
+    <section id="scene-rsvp" class="scene hidden">
+        <div class="glass-card rsvp-card">
+            <p class="rsvp-heading">Will you celebrate with us?</p>
+            <p class="rsvp-sub">Let us know if you'll be joining our special day</p>
+
+            <div class="rsvp-choice-btns" id="rsvp-choice-btns">
+                <button type="button" class="main-btn rsvp-main-btn" id="rsvp-yes-btn">Yes, I'll Be There</button>
+                <button type="button" class="main-btn secondary rsvp-main-btn" id="rsvp-no-btn">Respectfully, No</button>
+            </div>
+
+            <div class="rsvp-section" id="rsvp-yes-form">
+                <div class="rsvp-field">
+                    <label class="rsvp-label" for="rsvp-name">Your Full Name</label>
+                    <input type="text" id="rsvp-name" class="rsvp-input" placeholder="Enter your full name..." autocomplete="name">
+                </div>
+                <div class="rsvp-field">
+                    <label class="rsvp-label" for="rsvp-phone">Phone Number</label>
+                    <input type="tel" id="rsvp-phone" class="rsvp-input" placeholder="Enter your phone number..." autocomplete="tel">
+                    <p id="phone-error" class="rsvp-phone-error hidden">Please enter a valid phone number.</p>
+                </div>
+                <div class="rsvp-field">
+                    <label class="rsvp-label" for="rsvp-email">Email Address</label>
+                    <input type="email" id="rsvp-email" class="rsvp-input" placeholder="Enter your email address..." autocomplete="email">
+                </div>
+                <div class="rsvp-field">
+                    <label class="rsvp-label">Which side do you belong to?</label>
+                    <div class="custom-select-wrapper" id="rsvp-side-wrapper">
+                        <div class="custom-select-trigger" id="rsvp-side-trigger"
+                             role="combobox" aria-label="Which side do you belong to?"
+                             aria-expanded="false" aria-haspopup="listbox" tabindex="0">
+                            <span class="custom-select-display placeholder" id="rsvp-side-display">Choose your group...</span>
+                            <span class="custom-select-chevron">&#9662;</span>
+                        </div>
+                        <ul class="custom-select-menu" id="rsvp-side-menu" role="listbox" aria-label="Guest group">
+                            <li class="custom-select-item" data-value="Family of the Bride" role="option">Family of the Bride 🌸</li>
+                            <li class="custom-select-item" data-value="Family of the Groom" role="option">Family of the Groom 👔</li>
+                            <li class="custom-select-item" data-value="Friends of the Couple" role="option">Friends of the Couple ✨</li>
+                            <li class="custom-select-item" data-value="Rubycom" role="option">Rubycom 🏢</li>
+                            <li class="custom-select-item" data-value="PTML" role="option">PTML 🚢</li>
+                            <li class="custom-select-item" data-value="Parents' Friends (Bride's Mother)" role="option">Parents' Friends (Bride's Mother) 🕊️</li>
+                            <li class="custom-select-item" data-value="Parents' Friends (Bride's Father)" role="option">Parents' Friends (Bride's Father) 🥂</li>
+                            <li class="custom-select-item" data-value="Parents' Friends (Groom's Mother)" role="option">Parents' Friends (Groom's Mother) 🤍</li>
+                            <li class="custom-select-item" data-value="Parents' Friends (Groom's Father)" role="option">Parents' Friends (Groom's Father) 🍾</li>
+                        </ul>
+                    </div>
+                </div>
+                <button type="button" class="rsvp-submit-btn" id="rsvp-submit-yes">Confirm Attendance 💍</button>
+                <p id="rsvp-submit-error" class="rsvp-submit-error hidden">Something went wrong. Please check your connection and try again.</p>
+            </div>
+
+            <div class="rsvp-section" id="rsvp-no-form">
+                <div class="rsvp-field">
+                    <label class="rsvp-label" for="rsvp-message">Leave a warm message for the couple:</label>
+                    <textarea id="rsvp-message" class="rsvp-textarea" placeholder="Write your heartfelt message here..."></textarea>
+                </div>
+                <button type="button" class="rsvp-submit-btn" id="rsvp-submit-no">Send with Love 💌</button>
+            </div>
+
+            <div class="rsvp-section" id="rsvp-thanks">
+                <div class="rsvp-thanks-icon" id="rsvp-thanks-icon">💍</div>
+                <p class="rsvp-thanks-text" id="rsvp-thanks-text"></p>
+                <button type="button" class="next-btn rsvp-next-btn" onclick="nextScene('scene-finale')">
+                    View the Countdown <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+
+    </section>
+
+    <section id="scene-finale" class="scene hidden">
+        <div class="glass-card finale-countdown-card">
+            <p class="countdown-label">Counting Down to Forever</p>
+            <p class="countdown-sub">The Big Day Arrives In:</p>
+
+            <div class="countdown-wrapper">
+                <div class="time-block"><span id="days">00</span><label>Days</label></div>
+                <div class="time-block"><span id="hours">00</span><label>Hrs</label></div>
+                <div class="time-block"><span id="mins">00</span><label>Min</label></div>
+                <div class="time-block"><span id="secs">00</span><label>Sec</label></div>
+            </div>
+
+            <p class="venue-details">
+                <strong>November 28, 2026 &bull; Dress Code: White &amp; wine</strong>
+            </p>
+        </div>
+
+        <!-- ── Hashtag stamp ── -->
+        <div class="hashtag-finale-wrapper">
+            <span class="hashtag-finale">#OUFOREVER26</span>
+        </div>
+
+        <div class="glass-card venue-glass-card">
+            <div class="venue-card-header">
+                <span class="venue-card-icon">💒</span>
+                <p class="venue-card-title">The Venue</p>
+            </div>
+            <p class="venue-name-text" id="venue-name-text">Pleasant Event Center</p>
+            <p class="venue-address-text" id="venue-address-text">Ikeja</p>
+            <button type="button" class="directions-btn" onclick="openDirections()">
+                Open Live Directions 🚗
+            </button>
+            <button type="button" class="calendar-btn" onclick="addToCalendar()">
+                Add to Calendar 📅
+            </button>
+            <button type="button" class="calendar-btn" onclick="nextScene('aevaia-waitlist')">
+                Create your own invitation
+            </button>
+        </div>
+
+    </section>
+
+    <!-- ── AEVAIA Waitlist Scene ─────────────────────────────────────── -->
+    <section id="aevaia-waitlist" class="scene hidden">
+
+        <p class="aw-brand">AEVAIA</p>
+
+        <h2 class="aw-headline">The future of digital gifting and event experiences is almost here.</h2>
+
+        <p class="aw-subtext">AEVAIA is an invite-only platform. Join the waitlist for early access.</p>
+
+        <form id="aevaia-waitlist-form" class="aw-form">
+            <input type="email" id="aevaia-email-input" class="aw-input" placeholder="Enter your email address" required>
+            <button type="submit" class="aw-submit">Join Waitlist</button>
+        </form>
+
+        <p class="aw-success hidden" id="aevaia-success-msg">You're on the list. We'll be in touch.</p>
+
+    </section>
+
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@23.8.1/build/js/intlTelInput.min.js"></script>
+    <script>
+    (function () {
+        var phoneInput = document.getElementById('rsvp-phone');
+        window._iti = window.intlTelInput(phoneInput, {
+            initialCountry: 'ng',
+            preferredCountries: ['ng', 'gb', 'us'],
+            utilsScript: 'https://cdn.jsdelivr.net/npm/intl-tel-input@23.8.1/build/js/utils.js',
+        });
+    })();
+    </script>
+    <script type="module" src="/wedding-demo/app.js"></script>
+    <script>
+    (function () {
+        var form = document.getElementById('aevaia-waitlist-form');
+        if (!form) return;
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            var input = document.getElementById('aevaia-email-input');
+            if (!input || !input.value.trim()) return;
+            form.style.display = 'none';
+            var msg = document.getElementById('aevaia-success-msg');
+            if (msg) msg.classList.remove('hidden');
+        });
+    })();
+    </script>
+
+    <div class="aevaia-fixed-watermark">POWERED BY AEVAIA</div>
+</body>
+</html>
