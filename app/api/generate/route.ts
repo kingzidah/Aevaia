@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 import { createOpenAI } from "@ai-sdk/openai";
 import { generateText } from "ai";
 import { legacyGenerateSchema } from "@/lib/validation";
@@ -37,10 +38,18 @@ const TONE_SYSTEM: Record<string, string> = {
 // Body: { taskType: 'rewrite_text' | 'orchestrate' | 'generate_theme'; prompt: string; tone?: string }
 // Returns: { text: string }
 export async function POST(request: Request) {
+  // ── Auth: reject unauthenticated callers before any OpenRouter call ───────
+  const { userId } = await auth();
+  if (!userId) {
+    return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+  }
+
   // ── Rate limit: 20 AI requests per IP per minute ─────────────────────────
+  // failClosed: a Redis outage must not open an unmetered path onto OpenRouter.
   const rl = await rateLimit(`generate:${getIp(request)}`, {
-    limit:    20,
-    windowMs: 60 * 1000,
+    limit:      20,
+    windowMs:   60 * 1000,
+    failClosed: true,
   });
   if (!rl.success) {
     return NextResponse.json(

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 import Replicate from "replicate";
 import { imageGenerateSchema, firstZodError } from "@/lib/validation";
 import { rateLimit, getIp } from "@/lib/rate-limit";
@@ -7,6 +8,12 @@ import { rateLimit, getIp } from "@/lib/rate-limit";
 // Body: { prompt: string; theme?: string }
 // Returns: { imageUrl: string }
 export async function POST(req: Request) {
+  // ── Auth: reject unauthenticated callers before any Replicate call ────────
+  const { userId } = await auth();
+  if (!userId) {
+    return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+  }
+
   // ── Guard: require API key before doing anything else ────────────────────
   // Replicate is expensive; fail fast if not configured rather than silently
   // constructing the client with an empty token.
@@ -19,9 +26,11 @@ export async function POST(req: Request) {
 
   // ── Rate limit: 10 image generations per IP per minute ───────────────────
   // Image generation is the most costly operation; tighter limit than text.
+  // failClosed: a Redis outage must not open an unmetered path onto Replicate.
   const rl = await rateLimit(`generate-image:${getIp(req)}`, {
-    limit:    10,
-    windowMs: 60 * 1000,
+    limit:      10,
+    windowMs:   60 * 1000,
+    failClosed: true,
   });
   if (!rl.success) {
     return NextResponse.json(

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 import { createOpenAI } from "@ai-sdk/openai";
 import { generateText } from "ai";
 import { prisma } from "@/lib/prisma";
@@ -60,12 +61,20 @@ type AllowedModel = typeof ALLOWED_MODELS[number];
 // Body: { prompt: string; tone: string; blockType?: string; sessionId?: string; projectId?: string }
 // Returns: { text: string }  |  403 { error: 'BATTERY_DEPLETED' }
 export async function POST(request: Request) {
+  // ── Auth: reject unauthenticated callers before any OpenRouter call ───────
+  const { userId } = await auth();
+  if (!userId) {
+    return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+  }
+
   // ── Rate limit: 20 AI generations per IP per minute ──────────────────────
   // Protects OpenRouter spend.  Authenticated sessions are also bound by the
   // credit system, but IP limiting adds a second independent backstop.
+  // failClosed: a Redis outage must not open an unmetered path onto OpenRouter.
   const rl = await rateLimit(`ai-generate:${getIp(request)}`, {
-    limit:    20,
-    windowMs: 60 * 1000,
+    limit:      20,
+    windowMs:   60 * 1000,
+    failClosed: true,
   });
   if (!rl.success) {
     return NextResponse.json(
