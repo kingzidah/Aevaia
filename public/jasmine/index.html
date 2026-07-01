@@ -1266,8 +1266,10 @@
         enableMicBtn.addEventListener('click', async () => {
             pulsePhone(50);
             try {
+                // Raw mic: noiseSuppression/echoCancellation would filter out the
+                // "wind" of a blow (they treat it as noise), so we disable them.
                 const stream = await navigator.mediaDevices.getUserMedia({
-                    audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: false }
+                    audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
                 });
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 // iOS/Safari start the context suspended — without resuming, the
@@ -1301,8 +1303,25 @@
             }
             const lowAvg = lowCount > 0 ? lowSum / lowCount : 0;
             const overallAvg = totalSum / bufferLength;
-            const threshold = (BLOW_THRESHOLD / 100) * 180 + 20;
-            if (lowAvg > threshold && overallAvg > threshold * 0.8) {
+            const loudness = Math.max(lowAvg, overallAvg);
+
+            // Live feedback: the flame leans, shrinks and dims with your breath,
+            // so you can see the mic is picking you up and how hard to blow.
+            const strength = Math.min(1, loudness / 85);
+            if (flame && !flame.classList.contains('blown-out')) {
+                if (strength > 0.12) {
+                    flame.style.animationPlayState = 'paused';
+                    flame.style.transform = `translateX(-50%) scaleY(${1 - strength * 0.55}) rotate(${strength * 16}deg)`;
+                    flame.style.opacity = `${1 - strength * 0.7}`;
+                } else {
+                    flame.style.animationPlayState = '';
+                    flame.style.transform = '';
+                    flame.style.opacity = '';
+                }
+            }
+
+            const threshold = (BLOW_THRESHOLD / 100) * 180 + 20; // ~47
+            if (loudness > threshold) {
                 blowDuration++;
                 if (blowDuration > BLOW_DURATION_REQUIRED && !blowDetected) { blowDetected = true; triggerFlameOut(); }
             } else {
@@ -1316,6 +1335,10 @@
             if (flame.classList.contains('blown-out')) return;
             listening = false;
             pulsePhone([100, 50, 100]);
+            // Clear any live-feedback inline styles so the blow-out transition is clean.
+            flame.style.animationPlayState = '';
+            flame.style.transform = '';
+            flame.style.opacity = '';
             flame.classList.add('blown-out');
             candleBody.classList.add('off');
             document.querySelector('.candle-wrapper').classList.add('blown');
