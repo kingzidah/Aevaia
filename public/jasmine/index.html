@@ -1088,14 +1088,24 @@
                 <div class="vapor"></div> <div class="wick"></div>
                 <div class="flame" id="flame"></div>
             </div>
-            <p id="mic-instruction" class="instruction-text">
-                <strong>Tap the candle</strong> to blow it out &#127874; &mdash; or enable the mic and really blow!
-            </p>
-            <button id="enable-mic-btn" class="small-btn">
-                Blow into the mic <i class="fas fa-microphone"></i>
-            </button>
-            <div>
-                <button id="tap-blow-link" class="tap-blow-link">or just tap the candle &#10024;</button>
+
+            <!-- Make-a-wish beat: shown first, before the blow controls -->
+            <div id="wish-prompt" class="wish-prompt">
+                <p class="instruction-text">Close your eyes and make a wish&hellip; &#129293;</p>
+                <button id="made-wish-btn" class="small-btn">I made my wish &#10024;</button>
+            </div>
+
+            <!-- Blow controls: revealed only after the wish is made -->
+            <div id="blow-controls" class="hidden">
+                <p id="mic-instruction" class="instruction-text">
+                    <strong>Tap the candle</strong> to blow it out &#127874; &mdash; or enable the mic and really blow!
+                </p>
+                <button id="enable-mic-btn" class="small-btn">
+                    Blow into the mic <i class="fas fa-microphone"></i>
+                </button>
+                <div>
+                    <button id="tap-blow-link" class="tap-blow-link">or just tap the candle &#10024;</button>
+                </div>
             </div>
         </div>
     </section>
@@ -1353,9 +1363,23 @@
             }, 1000);
         }
 
+        // ── Make-a-wish beat: reveal the blow controls only after the wish ──
+        let wishMade = false;
+        const madeWishBtn = document.getElementById('made-wish-btn');
+        if (madeWishBtn) madeWishBtn.addEventListener('click', () => {
+            wishMade = true;
+            pulsePhone(50);
+            sfx.chime();
+            const wp = document.getElementById('wish-prompt');
+            const bc = document.getElementById('blow-controls');
+            if (wp) wp.classList.add('hidden');
+            if (bc) bc.classList.remove('hidden');
+        });
+
         // Tap-to-blow fallback so a phone never gets stuck on the candle
         function blowFromTap() {
             if (!document.getElementById('scene-candle').classList.contains('active')) return;
+            if (!wishMade) return; // let her make the wish first
             triggerFlameOut();
         }
         const tapBlowLink = document.getElementById('tap-blow-link');
