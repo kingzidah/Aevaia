@@ -57,6 +57,20 @@ export const proxy = clerkMiddleware(async (auth, req) => {
     return NextResponse.rewrite(req.nextUrl);
   }
 
+  // ── Jasmine subdomain rewrite ───────────────────────────────────────────────
+  // Serves public/jasmine/ as a standalone static site on any hostname that
+  // contains "jasmine" (e.g. jasmine.localhost:3000 or jasmine.aevaia.com).
+  // Returns before auth so Clerk never runs. Mirrors the wedding-demo rewrite.
+  if (hostname.includes('jasmine')) {
+    let newPath = req.nextUrl.pathname;
+    if (newPath === '/') newPath = '/index.html';
+    if (!newPath.startsWith('/jasmine')) {
+      newPath = '/jasmine' + newPath;
+    }
+    req.nextUrl.pathname = newPath;
+    return NextResponse.rewrite(req.nextUrl);
+  }
+
   // ── Maintenance mode ────────────────────────────────────────────────────────
   // Activated by setting MAINTENANCE_MODE=true in .env.local (or Vercel env).
   // The owner bypasses the redirect by setting MAINTENANCE_BYPASS_USER_ID to
