@@ -46,7 +46,7 @@
             background-color: var(--bg-color);
             font-family: var(--font-main);
             color: var(--text-dark);
-            height: 100vh; width: 100vw;
+            height: 100vh; height: 100dvh; width: 100vw;
             cursor: default; position: relative;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
@@ -458,19 +458,19 @@
            LETTER SCENE
            ========================================= */
         #scene-letter {
-            justify-content: flex-start;
-            padding-top: 50px;
-            padding-bottom: 40px;
+            justify-content: center;
+            padding-top: 20px;
+            padding-bottom: 16px;
         }
 
         .glass-envelope {
             background: var(--glass); backdrop-filter: blur(25px); border: 1px solid var(--glass-border);
             border-radius: 20px;
-            padding: 25px 20px;
+            padding: 22px 20px;
             max-width: 700px; width: 100%;
-            height: 80vh;
-            max-height: 750px;
-            min-height: 400px;
+            height: 70dvh;
+            max-height: 640px;
+            min-height: 320px;
             display: flex; flex-direction: column;
             justify-content: space-between;
             box-shadow: 0 20px 60px rgba(142, 68, 173, 0.25);
@@ -873,8 +873,16 @@
         .letter-graphic {
             position: relative; width: 150px; height: 188px; margin-top: 6px;
             animation: floaty 4.5s ease-in-out infinite;
+            cursor: pointer; -webkit-tap-highlight-color: transparent;
         }
         @keyframes floaty { 0%,100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-14px) rotate(1.5deg); } }
+        /* Tap-to-open: the envelope pops then folds away into the letter scene */
+        .letter-graphic.opening { animation: envOpen 0.5s var(--ease-elastic) forwards; }
+        @keyframes envOpen {
+            0%   { transform: scale(1) rotate(0deg); }
+            40%  { transform: scale(1.18) rotate(-3deg); opacity: 1; }
+            100% { transform: scale(0.15) rotate(4deg); opacity: 0; }
+        }
 
         .letter-graphic .glow {
             position: absolute; inset: -36px; border-radius: 50%; z-index: 0;
@@ -1127,7 +1135,7 @@
 
             <!-- Make-a-wish beat: shown first, before the blow controls -->
             <div id="wish-prompt" class="wish-prompt">
-                <p class="instruction-text">Close your eyes and make a wish&hellip; &#129293;</p>
+                <p class="instruction-text">Close your eyes and make a wish&hellip;</p>
                 <button id="made-wish-btn" class="small-btn">I made my wish &#10024;</button>
             </div>
 
@@ -1181,7 +1189,7 @@
     <section id="scene-sparkler" class="scene hidden">
         <h2 class="scene-title">A little something first&hellip;</h2>
         <div class="reveal-stage">
-            <div class="letter-graphic">
+            <div class="letter-graphic" id="envelope-open" role="button" tabindex="0" aria-label="Open the letter">
                 <div class="rays"></div>
                 <div class="glow"></div>
                 <div class="letter-emoji">&#128140;</div>
@@ -1192,7 +1200,7 @@
                 <span class="tw t5">&#10024;</span>
             </div>
             <h1 class="reveal-title">There&rsquo;s a letter<br>waiting for you</h1>
-            <p class="reveal-sub">made just for you, Jasmine</p>
+            <p class="reveal-sub">made just for you, Jasmine &middot; <em>tap to open</em></p>
         </div>
         <button id="sparkler-continue" class="next-btn hidden" onclick="nextScene('scene-letter')">
             Read your letter <i class="fas fa-arrow-right"></i>
@@ -1234,6 +1242,23 @@
         try { isDark = localStorage.getItem('jasmine-theme') === 'dark'; } catch (e) {}
         applyTheme(isDark);
         if (themeToggle) themeToggle.addEventListener('click', () => { isDark = !isDark; applyTheme(isDark); pulsePhone(30); });
+
+        // ── Tap the floating envelope to open straight into the letter ──
+        const envelopeOpen = document.getElementById('envelope-open');
+        function openEnvelope() {
+            if (!document.getElementById('scene-sparkler').classList.contains('active')) return;
+            if (envelopeOpen && envelopeOpen.classList.contains('opening')) return;
+            pulsePhone(40);
+            if (typeof sfx !== 'undefined' && sfx.whoosh) sfx.whoosh();
+            if (envelopeOpen) envelopeOpen.classList.add('opening');
+            setTimeout(() => nextScene('scene-letter'), 450);
+        }
+        if (envelopeOpen) {
+            envelopeOpen.addEventListener('click', openEnvelope);
+            envelopeOpen.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openEnvelope(); }
+            });
+        }
 
         // SCENE SWITCHER (music removed)
         function nextScene(sceneId) {
