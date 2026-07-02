@@ -1154,6 +1154,62 @@
         }
         .egg-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+        /* Shooting stars (midnight mode + idle magic) */
+        .shooting-star {
+            position: fixed; width: 4px; height: 4px; border-radius: 50%; z-index: 40;
+            background: #fff; pointer-events: none;
+            box-shadow: 0 0 8px 2px rgba(255,255,255,0.95), 0 0 22px 5px rgba(224,195,252,0.6);
+            animation: shoot 1.25s linear forwards;
+        }
+        .shooting-star::before {
+            content: ''; position: absolute; top: 50%; right: 4px;
+            width: 130px; height: 2px; transform: translateY(-50%);
+            background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,0.85));
+            border-radius: 2px;
+        }
+        @keyframes shoot {
+            0%   { transform: translate(0,0) rotate(18deg);            opacity: 0; }
+            12%  { opacity: 1; }
+            100% { transform: translate(-58vw, 42vh) rotate(18deg);    opacity: 0; }
+        }
+
+        /* Long-press target shouldn't trigger the OS text-selection popup */
+        #letter-envelope { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+
+        /* Hidden letter line (long-press the letter to reveal) */
+        .letter-secret {
+            margin-top: 14px; padding-top: 12px; border-top: 1px dashed rgba(142,68,173,0.25);
+            color: var(--lilac-deep); font-style: italic;
+        }
+        .letter-secret:not(.hidden) { animation: fadeInUp 1s var(--ease-lux) backwards; }
+
+        /* Bonus mini-game overlay (unlocked when all stars are found) */
+        .bonus-overlay {
+            position: fixed; inset: 0; z-index: 10001; display: flex;
+            flex-direction: column; align-items: center; justify-content: center; gap: 22px;
+            background: rgba(18,10,30,0.92); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+            opacity: 0; pointer-events: none; transition: opacity 0.6s var(--ease-lux); text-align: center; padding: 24px;
+        }
+        .bonus-overlay.show { opacity: 1; pointer-events: auto; }
+        .bonus-title { font-family: var(--font-hand); font-size: 2.2rem; color: #e9d4ff; }
+        .bonus-sub { color: #cbb6ec; font-family: var(--font-fancy); font-size: 1.2rem; max-width: 360px; }
+        .bonus-cakes { display: flex; gap: 26px; }
+        .bonus-cake { font-size: 66px; cursor: pointer; -webkit-user-select: none; user-select: none;
+            transition: transform 0.3s var(--ease-elastic); filter: drop-shadow(0 0 18px rgba(255,190,90,0.5)); }
+        .bonus-cake:active { transform: scale(0.9); }
+        .bonus-cake.done { filter: none; opacity: 0.5; }
+        .bonus-msg { color: #f3e9ff; font-family: var(--font-fancy); font-size: 1.35rem; max-width: 420px; min-height: 2em; }
+        .bonus-close { margin-top: 6px; background: transparent; border: none; color: #b98fe0;
+            font-size: 0.85rem; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; }
+
+        /* Gift button that appears on the finale once all stars are found */
+        .bonus-gift {
+            margin-top: 18px; background: transparent; border: none; cursor: pointer;
+            font-size: 40px; line-height: 1; animation: softFloat 3s ease-in-out infinite;
+            filter: drop-shadow(0 0 16px rgba(224,195,252,0.5)); -webkit-tap-highlight-color: transparent;
+        }
+        .bonus-gift:active { transform: scale(0.9); }
+
     </style>
 </head>
 <body>
@@ -1238,10 +1294,11 @@
 
     <section id="scene-letter" class="scene hidden">
         <span class="hidden-star" data-star="3" style="top: 30px; left: 22px;" aria-hidden="true">&#10024;</span>
-        <div class="glass-envelope">
+        <div class="glass-envelope" id="letter-envelope">
             <h1 class="dear-name">Hey Jasmine,</h1>
             <div class="typewriter-container">
                 <p id="typewriter-text"></p>
+                <p id="letter-secret" class="letter-secret hidden">&#10024; (you pressed long enough to find this) &mdash; of everything I wrote, this line is the most true: I&rsquo;m really glad you exist. Happy birthday, Jasmine.</p>
             </div>
             <div class="letter-footer">
                 <div class="signature-row">
@@ -1311,7 +1368,15 @@
         let isDark = false; // default: light
         try { isDark = localStorage.getItem('jasmine-theme') === 'dark'; } catch (e) {}
         applyTheme(isDark);
-        if (themeToggle) themeToggle.addEventListener('click', () => { isDark = !isDark; applyTheme(isDark); pulsePhone(30); });
+        let moonTaps = 0, moonTapTimer = null, midnightOn = false;
+        if (themeToggle) themeToggle.addEventListener('click', () => {
+            isDark = !isDark; applyTheme(isDark); pulsePhone(30);
+            // Egg: five quick taps on the moon → "midnight mode" (shooting stars)
+            moonTaps++;
+            clearTimeout(moonTapTimer);
+            moonTapTimer = setTimeout(() => { moonTaps = 0; }, 900);
+            if (moonTaps >= 5 && !midnightOn) { moonTaps = 0; startMidnight(); }
+        });
 
         // ── Tap the floating envelope to open straight into the letter ──
         const envelopeOpen = document.getElementById('envelope-open');
@@ -1508,8 +1573,37 @@
                 screenFlash();
                 confetti({ particleCount: 220, spread: 110, origin: { y: 0.6 } });
                 fireworks(1600);
-                setTimeout(() => nextScene('scene-sparkler'), 2000);
+                // Egg: a long-press can relight the candle during this window and cancel the advance.
+                candleAdvanceTimer = setTimeout(() => nextScene('scene-sparkler'), 2600);
             }, 1000);
+        }
+        // ── Egg: long-press the just-blown candle to relight it and blow again ──
+        let candleAdvanceTimer = null;
+        let candleLongPressed = false;
+        function relightCandle() {
+            if (!document.getElementById('scene-candle').classList.contains('active')) return;
+            if (!flame.classList.contains('blown-out')) return;
+            clearTimeout(candleAdvanceTimer);
+            flame.classList.remove('blown-out');
+            candleBody.classList.remove('off');
+            document.querySelector('.candle-wrapper').classList.remove('blown');
+            document.querySelector('.vapor').classList.remove('rise');
+            flame.style.animationPlayState = ''; flame.style.transform = ''; flame.style.opacity = '';
+            blowDetected = false; blowDuration = 0;
+            micInstruction.innerHTML = 'Make another wish&hellip; then <strong>tap to blow</strong> again &#10024;';
+            startEmbers();
+            if (typeof sfx !== 'undefined' && sfx.sparkle) sfx.sparkle();
+            pulsePhone(50);
+            eggToast('🕯️ Relit — blow it out again!');
+        }
+        {
+            let lpTimer = null;
+            const startLP = () => { lpTimer = setTimeout(() => { candleLongPressed = true; relightCandle(); }, 550); };
+            const cancelLP = () => { clearTimeout(lpTimer); };
+            candleBody.addEventListener('pointerdown', startLP);
+            candleBody.addEventListener('pointerup', cancelLP);
+            candleBody.addEventListener('pointerleave', cancelLP);
+            candleBody.addEventListener('pointercancel', cancelLP);
         }
 
         // ── Make-a-wish beat: reveal the blow controls only after the wish ──
@@ -1519,6 +1613,7 @@
             wishMade = true;
             pulsePhone(50);
             sfx.chime();
+            enableTilt(); // also unlocks shake (same Motion & Orientation permission)
             const wp = document.getElementById('wish-prompt');
             const bc = document.getElementById('blow-controls');
             if (wp) wp.classList.add('hidden');
@@ -1527,6 +1622,7 @@
 
         // Tap-to-blow fallback so a phone never gets stuck on the candle
         function blowFromTap() {
+            if (candleLongPressed) { candleLongPressed = false; return; } // that tap was a relight long-press
             if (!document.getElementById('scene-candle').classList.contains('active')) return;
             if (!wishMade) return; // let her make the wish first
             triggerFlameOut();
@@ -1665,11 +1761,11 @@
                 typeof DeviceOrientationEvent.requestPermission === 'function') {
                 DeviceOrientationEvent.requestPermission()
                     .then((state) => {
-                        if (state === 'granted') { window.addEventListener('deviceorientation', handleTilt); tiltOn = true; }
+                        if (state === 'granted') { window.addEventListener('deviceorientation', handleTilt); tiltOn = true; enableShake(); }
                     })
                     .catch(() => {});
             } else if (typeof DeviceOrientationEvent !== 'undefined') {
-                window.addEventListener('deviceorientation', handleTilt); tiltOn = true;
+                window.addEventListener('deviceorientation', handleTilt); tiltOn = true; enableShake();
             }
         }
         // Called from the "One last surprise" tap so the motion prompt is allowed.
@@ -1806,6 +1902,7 @@
                 for (let i = 0; i < 8; i++) setTimeout(spawnHeart, 800 + i * 170);
             }
             setTimeout(showReturnNote, 1400); // egg: a line that changes with each rewatch
+            setTimeout(maybeShowBonusGift, 1600); // egg: bonus gift if all stars already found
         }
 
         /* =========================================
@@ -1998,11 +2095,135 @@
                     eggToast('✨ You found every hidden star!');
                     pulsePhone([60, 40, 120]);
                     if (typeof confetti === 'function') confetti({ particleCount: 120, spread: 100, origin: { y: 0.5 } });
+                    unlockBonus();
                 } else {
                     eggToast('✨ Hidden star ' + list.length + '/' + totalStars);
                 }
             });
         });
+
+        // ── Egg: shake the phone → a burst of confetti + sparkles ──
+        let shakeOn = false, lastShake = 0;
+        function onDeviceMotion(e) {
+            const a = e.accelerationIncludingGravity || e.acceleration;
+            if (!a) return;
+            const mag = Math.abs(a.x || 0) + Math.abs(a.y || 0) + Math.abs(a.z || 0);
+            if (mag > 30) {
+                const now = Date.now();
+                if (now - lastShake > 1400) { lastShake = now; shakeBurst(); }
+            }
+        }
+        function shakeBurst() {
+            pulsePhone([40, 30, 40]);
+            if (typeof confetti === 'function') confetti({ particleCount: 90, spread: 100, origin: { y: 0.5 } });
+            if (!reduceMotion && typeof spawnHeart === 'function') for (let i = 0; i < 6; i++) setTimeout(spawnHeart, i * 70);
+            if (typeof sfx !== 'undefined' && sfx.sparkle) sfx.sparkle();
+        }
+        function enableShake() {
+            if (shakeOn || typeof DeviceMotionEvent === 'undefined') return;
+            window.addEventListener('devicemotion', onDeviceMotion); shakeOn = true;
+        }
+        // Non-iOS (no permission gate) → shake works from the start.
+        if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission !== 'function') {
+            enableShake();
+        }
+
+        // ── Egg: shooting stars (used by midnight mode + idle magic) ──
+        function spawnShootingStar() {
+            if (reduceMotion) return;
+            const s = document.createElement('div');
+            s.className = 'shooting-star';
+            s.style.left = (Math.random() * 55 + 40) + 'vw';
+            s.style.top = (Math.random() * 30 + 4) + 'vh';
+            document.body.appendChild(s);
+            setTimeout(() => s.remove(), 1400);
+        }
+        let midnightTimer = null;
+        function startMidnight() {
+            if (midnightOn) return;
+            midnightOn = true;
+            if (!isDark) { isDark = true; applyTheme(true); }
+            eggToast('🌠 Midnight mode');
+            pulsePhone([30, 30, 60]);
+            spawnShootingStar();
+            midnightTimer = setInterval(() => {
+                spawnShootingStar();
+                if (Math.random() < 0.4) setTimeout(spawnShootingStar, 400);
+            }, 2600);
+        }
+
+        // ── Egg: idle magic — a shooting star drifts by if she just watches ──
+        let idleTimer = null;
+        function resetIdle() {
+            clearTimeout(idleTimer);
+            idleTimer = setTimeout(() => { spawnShootingStar(); resetIdle(); }, 13000);
+        }
+        ['pointerdown', 'keydown', 'devicemotion'].forEach((ev) =>
+            window.addEventListener(ev, resetIdle, { passive: true }));
+        resetIdle();
+
+        // ── Egg: long-press the letter → reveal a hidden line ──
+        (function () {
+            const env = document.getElementById('letter-envelope');
+            const secret = document.getElementById('letter-secret');
+            if (!env || !secret) return;
+            let lp = null;
+            const reveal = () => {
+                if (!secret.classList.contains('hidden')) return;
+                secret.classList.remove('hidden');
+                pulsePhone([40, 30, 60]);
+                if (typeof sfx !== 'undefined' && sfx.chime) sfx.chime();
+                const c = env.querySelector('.typewriter-container');
+                if (c) setTimeout(() => { c.scrollTop = c.scrollHeight; }, 60);
+            };
+            env.addEventListener('pointerdown', () => { lp = setTimeout(reveal, 650); });
+            ['pointerup', 'pointerleave', 'pointercancel'].forEach((ev) => env.addEventListener(ev, () => clearTimeout(lp)));
+        })();
+
+        // ── Egg: bonus mini-game (unlocked when all stars are found) ──
+        function unlockBonus() {
+            const finalCard = document.getElementById('final-card');
+            if (!finalCard || document.getElementById('bonus-gift')) return;
+            const gift = document.createElement('button');
+            gift.id = 'bonus-gift'; gift.className = 'bonus-gift'; gift.type = 'button';
+            gift.setAttribute('aria-label', 'Open your bonus'); gift.textContent = '🎁';
+            gift.addEventListener('click', openBonusGame);
+            finalCard.appendChild(gift);
+        }
+        // If she already found all stars on a previous visit, surface the gift when the finale shows.
+        function maybeShowBonusGift() {
+            try { if ((JSON.parse(lsGet('jasmine-stars', '[]')) || []).length >= totalStars) unlockBonus(); } catch (e) {}
+        }
+        function openBonusGame() {
+            if (document.getElementById('bonus-overlay')) return;
+            const ov = document.createElement('div');
+            ov.id = 'bonus-overlay'; ov.className = 'bonus-overlay';
+            ov.innerHTML =
+                '<div class="bonus-title">One more wish 🎂</div>' +
+                '<div class="bonus-sub">You found every hidden star — so here’s a bonus. Blow out all three.</div>' +
+                '<div class="bonus-cakes"><span class="bonus-cake">🕯️</span><span class="bonus-cake">🕯️</span><span class="bonus-cake">🕯️</span></div>' +
+                '<div class="bonus-msg"></div>' +
+                '<button type="button" class="bonus-close">close</button>';
+            document.body.appendChild(ov);
+            requestAnimationFrame(() => ov.classList.add('show'));
+            let done = 0;
+            const cakes = ov.querySelectorAll('.bonus-cake');
+            const msg = ov.querySelector('.bonus-msg');
+            cakes.forEach((c) => c.addEventListener('click', () => {
+                if (c.classList.contains('done')) return;
+                c.classList.add('done'); c.textContent = '💨';
+                pulsePhone(40);
+                if (typeof sfx !== 'undefined' && sfx.pop) sfx.pop(++done);
+                if (typeof spawnSparkAt === 'function') { const r = c.getBoundingClientRect(); spawnSparkAt(r.left + r.width / 2, r.top + r.height / 2, 6); }
+                if (done >= cakes.length) {
+                    if (typeof confetti === 'function') confetti({ particleCount: 160, spread: 110, origin: { y: 0.5 } });
+                    if (typeof sfx !== 'undefined' && sfx.fanfare) sfx.fanfare();
+                    pulsePhone([60, 40, 120]);
+                    msg.textContent = 'That’s the last secret. Thank you for looking this closely, Jasmine. ✨';
+                }
+            }));
+            ov.querySelector('.bonus-close').addEventListener('click', () => { ov.classList.remove('show'); setTimeout(() => ov.remove(), 600); });
+        }
 
     </script>
 </body>
