@@ -235,9 +235,10 @@
         .scene {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             opacity: 0;
-            transition: opacity 1.2s var(--ease-lux), transform 1.2s var(--ease-lux);
-            transform: scale(0.98) translateY(20px);
-            filter: blur(10px);
+            /* filter is now transitioned too, so scenes ease from soft-focus into focus */
+            transition: opacity 1s var(--ease-lux), transform 1s var(--ease-lux), filter 1s var(--ease-lux);
+            transform: scale(0.985) translateY(14px);
+            filter: blur(8px);
             z-index: 1; pointer-events: none;
             overflow: hidden;
             display: flex; flex-direction: column;
@@ -892,11 +893,11 @@
         }
         @keyframes floaty { 0%,100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-14px) rotate(1.5deg); } }
         /* Tap-to-open: the envelope pops then folds away into the letter scene */
-        .letter-graphic.opening { animation: envOpen 0.5s var(--ease-elastic) forwards; }
+        .letter-graphic.opening { animation: envOpen 1.15s var(--ease-lux) forwards; }
         @keyframes envOpen {
-            0%   { transform: scale(1) rotate(0deg); }
-            40%  { transform: scale(1.18) rotate(-3deg); opacity: 1; }
-            100% { transform: scale(0.15) rotate(4deg); opacity: 0; }
+            0%   { transform: scale(1)    rotate(0deg);   opacity: 1; }
+            30%  { transform: scale(1.12) rotate(-2deg);  opacity: 1; }   /* a little breath in */
+            100% { transform: scale(2.4)  rotate(2deg);   opacity: 0; }   /* blooms open toward you */
         }
 
         .letter-graphic .glow {
@@ -1266,7 +1267,8 @@
             pulsePhone(40);
             if (typeof sfx !== 'undefined' && sfx.whoosh) sfx.whoosh();
             if (envelopeOpen) envelopeOpen.classList.add('opening');
-            setTimeout(() => nextScene('scene-letter'), 450);
+            // Let the envelope bloom fully open before the letter fades in.
+            setTimeout(() => nextScene('scene-letter'), 950);
         }
         if (envelopeOpen) {
             envelopeOpen.addEventListener('click', openEnvelope);
@@ -1281,9 +1283,14 @@
             const nextScene = document.getElementById(sceneId);
 
             pulsePhone(50);
-            screenFlash();
+            // No flash on scene changes — let it be a silky cross-fade.
+            // (screenFlash is kept for the celebratory beats: blow-out, win, finale.)
 
-            if (currentScene) currentScene.classList.remove('active');
+            if (currentScene) {
+                currentScene.classList.remove('active');
+                // Tidy up: fully hide the old scene once it has faded out.
+                setTimeout(() => { if (currentScene !== document.querySelector('.scene.active')) currentScene.classList.add('hidden'); }, 1100);
+            }
             if (nextScene) {
                 nextScene.classList.remove('hidden');
                 nextScene.scrollTop = 0;
