@@ -1105,6 +1105,55 @@
         body.theme-dark .small-btn { background: rgba(58,38,82,0.9); color: #f0e4ff; box-shadow: 0 5px 15px rgba(0,0,0,0.45); }
         body.theme-dark .pulse-play-btn { background: rgba(40,24,60,0.92); color: #e9d4ff; border-color: #b98fe0; }
 
+        /* =========================================
+           EASTER EGGS (hidden features)
+           ========================================= */
+        /* Hidden stars tucked into scene corners — faint, findable, tappable */
+        .hidden-star {
+            position: absolute; z-index: 30; font-size: 16px; line-height: 1;
+            opacity: 0.14; cursor: pointer; -webkit-tap-highlight-color: transparent;
+            filter: drop-shadow(0 0 6px rgba(255,225,150,0.6));
+            transition: opacity 0.4s ease, transform 0.4s var(--ease-elastic);
+            -webkit-user-select: none; user-select: none;
+        }
+        .hidden-star:hover { opacity: 0.5; }
+        .hidden-star.found {
+            animation: starFound 0.7s var(--ease-elastic) forwards;
+            pointer-events: none;
+        }
+        @keyframes starFound {
+            0%   { opacity: 0.5; transform: scale(1) rotate(0deg); }
+            45%  { opacity: 1;   transform: scale(1.9) rotate(25deg); }
+            100% { opacity: 0;   transform: scale(0.3) rotate(-15deg); }
+        }
+
+        /* Secret P.S. — revealed by tapping the finale title 5x */
+        .secret-ps {
+            font-family: var(--font-fancy); font-style: italic;
+            font-size: 1.05rem; line-height: 1.55; color: var(--lilac-deep);
+            max-width: 460px; margin: 18px auto 0;
+        }
+        .secret-ps:not(.hidden) { animation: fadeInUp 1s var(--ease-lux) backwards; }
+
+        /* Return-visitor note on the finale */
+        .return-note {
+            font-family: var(--font-hand); font-size: 1.35rem; color: var(--lilac-deep);
+            margin-top: 14px; opacity: 0.9;
+        }
+        .return-note:not(.hidden) { animation: popIn 0.9s var(--ease-elastic) backwards; }
+
+        /* Little toast for egg feedback */
+        .egg-toast {
+            position: fixed; left: 50%; bottom: 88px; transform: translateX(-50%) translateY(18px);
+            background: rgba(60,40,85,0.88); color: #f3e9ff;
+            padding: 10px 18px; border-radius: 999px; font-size: 0.82rem; letter-spacing: 1px;
+            z-index: 10000; opacity: 0; pointer-events: none;
+            -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+            transition: opacity 0.4s ease, transform 0.4s var(--ease-elastic);
+        }
+        .egg-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
     </style>
 </head>
 <body>
@@ -1124,6 +1173,7 @@
     <!-- MUSIC REMOVED: no background music / voice-note audio in this version -->
 
     <section id="scene-landing" class="scene active">
+        <span class="hidden-star" data-star="1" style="top: 26px; right: 22px;" aria-hidden="true">&#10024;</span>
         <div class="landing-content">
             <h1>Hi Jasmine,</h1>
             <p>Do you want to see a little surprise I made for you?</p>
@@ -1142,6 +1192,7 @@
     </section>
 
     <section id="scene-candle" class="scene hidden">
+        <span class="hidden-star" data-star="2" style="bottom: 30px; left: 24px;" aria-hidden="true">&#10024;</span>
         <div class="fog-layer"></div>
         <div class="candle-wrapper">
             <div class="candle" id="candle-body">
@@ -1186,6 +1237,7 @@
     </section>
 
     <section id="scene-letter" class="scene hidden">
+        <span class="hidden-star" data-star="3" style="top: 30px; left: 22px;" aria-hidden="true">&#10024;</span>
         <div class="glass-envelope">
             <h1 class="dear-name">Hey Jasmine,</h1>
             <div class="typewriter-container">
@@ -1226,8 +1278,10 @@
     <section id="scene-final" class="scene hidden">
         <div class="final-card" id="final-card">
             <div class="rays"></div>
-            <h1 class="reveal-title">Happy Birthday,<br>Jasmine <span class="heart-soft">&#127881;</span></h1>
+            <h1 class="reveal-title" id="final-title">Happy Birthday,<br>Jasmine <span class="heart-soft">&#127881;</span></h1>
             <p class="reveal-sub">I hope this new year of your life is gentle with you &mdash; and full of God&rsquo;s goodness.</p>
+            <p id="return-note" class="return-note hidden"></p>
+            <p id="secret-ps" class="secret-ps hidden">P.S. &mdash; you kept tapping until you found this. That curiosity? It suits you. Happy birthday again, Jasmine. &#10024;</p>
         </div>
     </section>
 
@@ -1751,6 +1805,7 @@
             if (!reduceMotion) {
                 for (let i = 0; i < 8; i++) setTimeout(spawnHeart, 800 + i * 170);
             }
+            setTimeout(showReturnNote, 1400); // egg: a line that changes with each rewatch
         }
 
         /* =========================================
@@ -1859,6 +1914,95 @@
             if (!el) return;
             el.classList.remove('pulse-pop'); void el.offsetWidth; el.classList.add('pulse-pop');
         }
+
+        /* =========================================
+           EASTER EGGS (hidden features)
+           ========================================= */
+        function lsGet(k, d) { try { return localStorage.getItem(k) ?? d; } catch (e) { return d; } }
+        function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+
+        // Little toast used by the egg feedback
+        let eggToastTimer = null;
+        function eggToast(msg) {
+            let t = document.getElementById('egg-toast');
+            if (!t) { t = document.createElement('div'); t.id = 'egg-toast'; t.className = 'egg-toast'; document.body.appendChild(t); }
+            t.textContent = msg;
+            t.classList.remove('show'); void t.offsetWidth; t.classList.add('show');
+            clearTimeout(eggToastTimer); eggToastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+        }
+
+        // ── Egg 1: return-visitor count → a different line each rewatch ──
+        const visitCount = parseInt(lsGet('jasmine-visits', '0'), 10) + 1;
+        lsSet('jasmine-visits', String(visitCount));
+        function showReturnNote() {
+            const el = document.getElementById('return-note');
+            if (!el || visitCount < 2) return;
+            const lines = {
+                2:  'Back again? ✨',
+                3:  'Third time already…',
+                4:  'You really like this one, huh?',
+                5:  'Five times. Okay, now I’m smiling.',
+                7:  'Still here. That means a lot.',
+                10: 'Ten times — you’ve officially made my year. ✨'
+            };
+            const msg = lines[visitCount] || (visitCount > 10 ? 'You keep coming back. ✨' : '');
+            if (!msg) return;
+            el.textContent = msg;
+            el.classList.remove('hidden');
+        }
+
+        // ── Egg 2: tap the finale title 5x → a secret P.S. blooms open ──
+        const finalTitle = document.getElementById('final-title');
+        let psTaps = 0;
+        if (finalTitle) finalTitle.addEventListener('click', () => {
+            if (lsGet('jasmine-ps', '0') === '1') return; // already unlocked before
+            psTaps++;
+            pulseEl(finalTitle);
+            if (psTaps >= 5) {
+                lsSet('jasmine-ps', '1');
+                const ps = document.getElementById('secret-ps');
+                if (ps) ps.classList.remove('hidden');
+                pulsePhone([50, 40, 90]);
+                if (typeof sfx !== 'undefined' && sfx.chime) sfx.chime();
+                if (typeof confetti === 'function') confetti({ particleCount: 80, spread: 70, scalar: 0.8, origin: { y: 0.5 } });
+                if (!reduceMotion) for (let i = 0; i < 5; i++) setTimeout(spawnHeart, i * 90);
+            }
+        });
+        // If she already found the P.S. on a previous visit, keep it visible.
+        if (lsGet('jasmine-ps', '0') === '1') {
+            const ps = document.getElementById('secret-ps');
+            if (ps) ps.classList.remove('hidden');
+        }
+
+        // ── Egg 3: hidden-star hunt across scenes (collected across visits) ──
+        function getFoundStars() { try { return JSON.parse(lsGet('jasmine-stars', '[]')) || []; } catch (e) { return []; } }
+        const totalStars = document.querySelectorAll('.hidden-star').length;
+        document.querySelectorAll('.hidden-star').forEach((star) => {
+            const id = star.getAttribute('data-star');
+            const found = getFoundStars();
+            if (found.includes(id)) { star.classList.add('found'); return; } // already collected
+            star.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const list = getFoundStars();
+                if (list.includes(id)) return;
+                list.push(id);
+                lsSet('jasmine-stars', JSON.stringify(list));
+                star.classList.add('found');
+                pulsePhone(40);
+                if (typeof sfx !== 'undefined' && sfx.sparkle) sfx.sparkle();
+                if (typeof spawnSparkAt === 'function') {
+                    const r = star.getBoundingClientRect();
+                    spawnSparkAt(r.left + r.width / 2, r.top + r.height / 2, 8);
+                }
+                if (list.length >= totalStars) {
+                    eggToast('✨ You found every hidden star!');
+                    pulsePhone([60, 40, 120]);
+                    if (typeof confetti === 'function') confetti({ particleCount: 120, spread: 100, origin: { y: 0.5 } });
+                } else {
+                    eggToast('✨ Hidden star ' + list.length + '/' + totalStars);
+                }
+            });
+        });
 
     </script>
 </body>
