@@ -1047,9 +1047,45 @@
             .aurora, .rays, .candle-wrapper::before, .next-btn { animation: none !important; }
         }
 
+        /* =========================================
+           THEME TOGGLE + DARK MODE
+           Light is the default; the 🌙 button switches to dark.
+           ========================================= */
+        .theme-btn {
+            position: fixed; top: 14px; left: 14px; z-index: 9999;
+            width: 44px; height: 44px; border-radius: 50%;
+            border: none; cursor: pointer; font-size: 1.15rem; line-height: 1;
+            background: rgba(255,255,255,0.6); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+            box-shadow: 0 4px 14px rgba(142,68,173,0.25);
+            transition: transform 0.3s var(--ease-elastic), background 0.4s ease;
+        }
+        .theme-btn:hover { transform: scale(1.1) rotate(-10deg); }
+        .theme-btn:active { transform: scale(0.9); }
+
+        body.theme-dark {
+            --bg-color:     #120a1e;
+            --lilac-light:  #231533;
+            --lilac-deep:   #d8b3f7;
+            --lilac-soft:   #a879d6;
+            --text-dark:    #ece2f7;
+            --glass:        rgba(32, 20, 48, 0.72);
+            --glass-border: rgba(200, 160, 250, 0.20);
+        }
+        body.theme-dark .theme-btn { background: rgba(60,40,85,0.6); }
+        body.theme-dark #scene-candle { background-color: #0e0718; }
+        /* Keep buttons & headings high-contrast on the dark canvas */
+        body.theme-dark .landing-content h1 { text-shadow: 0 0 26px rgba(216,179,247,0.55); }
+        body.theme-dark .main-btn { background: linear-gradient(135deg, #9b59b6, #6d2f89); }
+        body.theme-dark .next-btn { background: #8e44ad; }
+        body.theme-dark .next-btn:hover { background: #9b59b6; }
+        body.theme-dark .small-btn { background: rgba(58,38,82,0.9); color: #f0e4ff; box-shadow: 0 5px 15px rgba(0,0,0,0.45); }
+        body.theme-dark .pulse-play-btn { background: rgba(40,24,60,0.92); color: #e9d4ff; border-color: #b98fe0; }
+
     </style>
 </head>
 <body>
+
+    <button id="theme-toggle" class="theme-btn" aria-label="Toggle dark mode">&#127769;</button>
 
     <div class="aurora"></div>
 
@@ -1186,6 +1222,18 @@
             cursorTrail.style.left = e.clientX + 'px';
             cursorTrail.style.top = e.clientY + 'px';
         });
+
+        // ── Theme toggle: light by default, 🌙 switches to dark, remembers choice ──
+        const themeToggle = document.getElementById('theme-toggle');
+        function applyTheme(dark) {
+            document.body.classList.toggle('theme-dark', dark);
+            if (themeToggle) themeToggle.innerHTML = dark ? '&#9728;' : '&#127769;'; // ☀ / 🌙
+            try { localStorage.setItem('jasmine-theme', dark ? 'dark' : 'light'); } catch (e) {}
+        }
+        let isDark = false; // default: light
+        try { isDark = localStorage.getItem('jasmine-theme') === 'dark'; } catch (e) {}
+        applyTheme(isDark);
+        if (themeToggle) themeToggle.addEventListener('click', () => { isDark = !isDark; applyTheme(isDark); pulsePhone(30); });
 
         // SCENE SWITCHER (music removed)
         function nextScene(sceneId) {
