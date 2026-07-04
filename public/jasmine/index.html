@@ -523,7 +523,7 @@
             flex-shrink: 0;
             width: 100%;
         }
-        .signature-row { display: flex; align-items: center; flex: 1; justify-content: flex-end; }
+        .signature-row { display: flex; align-items: center; flex: 1; justify-content: flex-start; }
 
         .signed-name {
             font-family: var(--font-hand); font-size: 1.8rem; color: var(--lilac-deep);
@@ -538,7 +538,7 @@
             justify-content: center;
             background: transparent;
             padding: 10px 10px;
-            min-width: 200px;
+            min-width: 0;
             cursor: default;
             transition: transform 0.4s var(--ease-elastic);
         }
@@ -564,8 +564,9 @@
         .waveform-bar {
             width: 4px; background-color: var(--lilac-deep);
             margin: 0 3px; border-radius: 2px;
-            animation: wave 1s infinite ease-in-out;
+            animation: wave 1s infinite ease-in-out; animation-play-state: paused;
         }
+        .waveform-bar.playing { animation-play-state: running; }
         .bar-1 { height: 40%; } .bar-2 { height: 70%; } .bar-3 { height: 100%; } .bar-4 { height: 60%; }
         .bar-5 { height: 80%; } .bar-6 { height: 50%; } .bar-7 { height: 90%; } .bar-8 { height: 30%; }
         .bar-9 { height: 55%; } .bar-10 { height: 85%; } .bar-11 { height: 45%; } .bar-12 { height: 65%; }
@@ -791,8 +792,14 @@
             .game-container { transform: scale(0.8); }
             .win-title { font-size: 2.5rem; }
             .win-text-container { font-size: 1.2rem; }
-            .letter-footer { flex-wrap: wrap; justify-content: center; }
-            .signature-row { justify-content: center; margin-bottom: 10px; }
+            .letter-footer { flex-wrap: nowrap; gap: 8px; }
+            .signature-row { justify-content: flex-start; margin-bottom: 0; flex: 0 1 auto; }
+            .voice-note-container { padding: 4px 0; }
+            .mic-icon-circle { width: 36px; height: 36px; margin-right: 8px; }
+            .mic-icon-circle i { font-size: 1rem; }
+            .waveform-container { height: 26px; }
+            .waveform-bar { margin: 0 2px; width: 3px; }
+            .signed-name { font-size: 1.5rem; }
             .modal-card { padding: 0; }
         }
 
@@ -852,6 +859,11 @@
             color: var(--lilac-deep); line-height: 1.15;
         }
         .reveal-sub { font-family: var(--font-fancy); font-size: 1.2rem; color: var(--text-dark); max-width: 360px; }
+        .headphone-hint {
+            margin-top: 10px; color: var(--lilac-deep); opacity: 0.8;
+            font-size: 0.95rem; letter-spacing: 0.3px; font-weight: 700;
+            animation: softFloat 3.5s ease-in-out infinite;
+        }
         .sparkler-canvas {
             position: absolute; inset: 0; width: 100%; height: 100%;
             border-radius: 24px; touch-action: none; cursor: crosshair;
@@ -1312,6 +1324,9 @@
                 <p id="letter-secret" class="letter-secret hidden">&#10024; (you pressed long enough to find this) &mdash; of everything I wrote, this line is the most true. Happy birthday, Jasmine.</p>
             </div>
             <div class="letter-footer">
+                <div class="signature-row">
+                    <span id="signed-name" class="signed-name">Adetayo</span>
+                </div>
                 <div class="voice-note-container" aria-hidden="true">
                     <div class="mic-icon-circle">
                         <i class="fas fa-music"></i>
@@ -1335,9 +1350,6 @@
                         <div class="waveform-bar bar-16"></div>
                     </div>
                 </div>
-                <div class="signature-row">
-                    <span id="signed-name" class="signed-name">Adetayo</span>
-                </div>
             </div>
         </div>
         <button class="next-btn" onclick="enterCatch()">
@@ -1360,6 +1372,7 @@
             </div>
             <h1 class="reveal-title">There&rsquo;s a letter<br>waiting for you</h1>
             <p class="reveal-sub">made just for you, Jasmine &middot; <em>tap to open</em></p>
+            <p class="headphone-hint">&#127911; you might want your headphones for this</p>
         </div>
         <button id="sparkler-continue" class="next-btn hidden" onclick="nextScene('scene-letter')">
             Read your letter <i class="fas fa-arrow-right"></i>
@@ -1620,13 +1633,16 @@
             if (bc) bc.classList.remove('hidden');
         });
 
-        // Tap the candle (or flame) to blow it out — reliable everywhere.
-        function blowFromTap() {
+        // Tap anywhere on the candle area to blow it out — big, reliable target.
+        function blowFromTap(e) {
+            if (e && e.target && e.target.closest && e.target.closest('button')) return; // ignore button taps
             if (!document.getElementById('scene-candle').classList.contains('active')) return;
             if (!wishMade) return; // let her make the wish first
             triggerFlameOut();
         }
         candleBody.addEventListener('click', blowFromTap);
+        const candleWrapEl = document.querySelector('.candle-wrapper');
+        if (candleWrapEl) candleWrapEl.addEventListener('click', blowFromTap);
 
         // Soft embers rising from the candle while it's lit
         let emberTimer = null;
