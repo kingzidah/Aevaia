@@ -1393,6 +1393,25 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     <script>
 
+        // ── Fresh-start reset ────────────────────────────────────────────────
+        // Visiting  ?reset=1  (or ?fresh=1) wipes every saved "jasmine-*" state —
+        // visit count, found stars, unlocked P.S., mute — so the whole experience
+        // (and all the Easter eggs) plays as a brand-new first time again. Used for
+        // testing now, and to factory-reset before it's handed to her. Runs FIRST,
+        // before anything reads localStorage, then strips the param from the URL.
+        (function resetIfAsked() {
+            try {
+                const q = new URLSearchParams(location.search);
+                if (!q.has('reset') && !q.has('fresh')) return;
+                for (let i = localStorage.length - 1; i >= 0; i--) {
+                    const k = localStorage.key(i);
+                    if (k && k.indexOf('jasmine-') === 0) localStorage.removeItem(k);
+                }
+                const clean = location.origin + location.pathname;
+                history.replaceState(null, '', clean); // drop ?reset so a refresh won't re-wipe
+            } catch (e) {}
+        })();
+
         // HAPTIC FEEDBACK HELPER
         function pulsePhone(pattern = 200) {
             if (navigator.vibrate) {
@@ -1877,7 +1896,7 @@
         // ============================================================
         // Happy little faces — catching smiles for her birthday. Nothing romantic.
         // 20 to catch: one for every year she's turning.
-        const GOODIES = ['😊','😄','😁','🥰','😍','🥳'];
+        const GOODIES = ['😊','😄','😁','😃','🙂','🥳'];
         const CATCH_GOAL = 20;
         const catchField = document.getElementById('catch-field');
         const basket = document.getElementById('basket');
