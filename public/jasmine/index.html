@@ -525,6 +525,25 @@
         }
         .signature-row { display: flex; align-items: center; flex: 1; justify-content: flex-end; }
 
+        /* "Now playing" waveform — animates while the song plays, stops when muted */
+        .music-wave { display: flex; align-items: center; gap: 3px; height: 24px; flex-shrink: 0; opacity: 0.55; }
+        .music-wave .wave-bar {
+            width: 3px; height: 18px; border-radius: 2px; background: var(--lilac-deep);
+            transform: scaleY(0.35); transform-origin: center;
+            animation: waveBar 0.9s ease-in-out infinite; animation-play-state: paused;
+        }
+        .music-wave.playing .wave-bar { animation-play-state: running; }
+        .music-wave .wave-bar:nth-child(1) { animation-delay: 0s;    }
+        .music-wave .wave-bar:nth-child(2) { animation-delay: 0.12s; }
+        .music-wave .wave-bar:nth-child(3) { animation-delay: 0.24s; }
+        .music-wave .wave-bar:nth-child(4) { animation-delay: 0.36s; }
+        .music-wave .wave-bar:nth-child(5) { animation-delay: 0.10s; }
+        .music-wave .wave-bar:nth-child(6) { animation-delay: 0.30s; }
+        .music-wave .wave-bar:nth-child(7) { animation-delay: 0.18s; }
+        .music-wave .wave-bar:nth-child(8) { animation-delay: 0.06s; }
+        .music-wave .wave-bar:nth-child(9) { animation-delay: 0.22s; }
+        @keyframes waveBar { 0%, 100% { transform: scaleY(0.3); } 50% { transform: scaleY(1); } }
+
         .signed-name {
             font-family: var(--font-hand); font-size: 1.8rem; color: var(--lilac-deep);
             white-space: nowrap;
@@ -1318,6 +1337,11 @@
                 <p id="letter-secret" class="letter-secret hidden">&#10024; (you pressed long enough to find this) &mdash; of everything I wrote, this line is the most true. Happy birthday, Jasmine.</p>
             </div>
             <div class="letter-footer">
+                <div id="music-wave" class="music-wave" aria-hidden="true">
+                    <span class="wave-bar"></span><span class="wave-bar"></span><span class="wave-bar"></span>
+                    <span class="wave-bar"></span><span class="wave-bar"></span><span class="wave-bar"></span>
+                    <span class="wave-bar"></span><span class="wave-bar"></span><span class="wave-bar"></span>
+                </div>
                 <div class="signature-row">
                     <span id="signed-name" class="signed-name">Adetayo</span>
                 </div>
@@ -1424,6 +1448,10 @@
                 else { bgMusic.volume = target; clearInterval(musicFadeTimer); }
             }, 90); // ~1.5s to reach target
         }
+        // "Now playing" waveform in the letter — moves while the song plays.
+        const musicWave = document.getElementById('music-wave');
+        function setWave(on) { if (musicWave) musicWave.classList.toggle('playing', on); }
+
         function startMusic() {
             if (!bgMusic || musicStarted) return;
             musicStarted = true;
@@ -1432,14 +1460,15 @@
             bgMusic.volume = 0;
             bgMusic.play().catch(() => {});
             fadeMusicTo(MUSIC_VOL);
+            setWave(true);                        // start the waveform moving
         }
         if (musicToggle) musicToggle.addEventListener('click', () => {
             musicMuted = !musicMuted;
             try { localStorage.setItem('jasmine-muted', musicMuted ? '1' : '0'); } catch (e) {}
             musicToggle.innerHTML = musicMuted ? '&#128263;' : '&#128266;'; // 🔇 / 🔊
             pulsePhone(20);
-            if (musicMuted) { fadeMusicTo(0); setTimeout(() => { if (musicMuted && bgMusic) bgMusic.pause(); }, 700); }
-            else if (musicStarted) { bgMusic.play().catch(() => {}); fadeMusicTo(MUSIC_VOL); }
+            if (musicMuted) { fadeMusicTo(0); setWave(false); setTimeout(() => { if (musicMuted && bgMusic) bgMusic.pause(); }, 700); }
+            else if (musicStarted) { bgMusic.play().catch(() => {}); fadeMusicTo(MUSIC_VOL); setWave(true); }
         });
 
         // ── Tap the floating envelope to open straight into the letter ──
