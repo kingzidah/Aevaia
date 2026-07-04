@@ -1398,7 +1398,7 @@
         // ── Background music: Olivia Dean "Dive" — subtle, fades in at the letter ──
         const bgMusic = document.getElementById('bg-music');
         const musicToggle = document.getElementById('music-toggle');
-        const MUSIC_VOL = 0.18;                 // low, so it sits under the words
+        const MUSIC_VOL = 0.10;                 // very low, sits well under the words
         let musicPrimed = false, musicStarted = false, musicFadeTimer = null;
         let musicMuted = false;
         try { musicMuted = localStorage.getItem('jasmine-muted') === '1'; } catch (e) {}
