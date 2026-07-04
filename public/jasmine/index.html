@@ -1294,8 +1294,9 @@
             <!-- Blow controls: revealed only after the wish is made -->
             <div id="blow-controls" class="hidden">
                 <p id="mic-instruction" class="instruction-text">
-                    Now <strong>tap the candle</strong> to blow it out &#127874;
+                    <strong>Tap the candle</strong> to blow it out &#127874; &mdash; or use the mic and really blow!
                 </p>
+                <button type="button" id="enable-mic-btn" class="small-btn">Blow into the mic <i class="fas fa-microphone"></i></button>
             </div>
         </div>
     </section>
@@ -1432,10 +1433,15 @@
         const bgMusic = document.getElementById('bg-music');
         const musicToggle = document.getElementById('music-toggle');
         const waveformBars = document.querySelectorAll('.waveform-bar');
-        const MUSIC_VOL = 0.12;                 // genuine 12% — quiet, under the words
+        const MUSIC_VOL  = 0.12;                // genuine 12% — quiet, under the words
+        const MUSIC_DUCK = MUSIC_VOL * 0.5;     // half volume while the letter types out
+        // A different song each visit — cycles back to the first after the last.
+        // Drop more filenames in here (song 2, 3, 4…) and the rotation just works.
+        const SONG_TRACKS = ['dive.mp3'];
         let musicStarted = false, musicMuted = false, musicPrimed = false;
         let musicCtx = null, musicGain = null, musicSrc = null;
-        try { musicMuted = localStorage.getItem('jasmine-muted') === '1'; } catch (e) {}
+        // Sound starts ON every visit. We intentionally do NOT restore a past mute
+        // here — she asked for it to begin unmuted each time she opens it.
 
         // Route the <audio> through a gain node (once).
         function setupMusicGain() {
@@ -1481,12 +1487,22 @@
         function startMusic() {
             if (!bgMusic || musicStarted) return;
             musicStarted = true;
+            // Pick this visit's song (loops back to the first after the last track).
+            try {
+                const i = (((visitCount - 1) % SONG_TRACKS.length) + SONG_TRACKS.length) % SONG_TRACKS.length;
+                const want = SONG_TRACKS[i];
+                if (want && !bgMusic.src.endsWith(want)) { bgMusic.src = want; bgMusic.load(); }
+            } catch (e) {}
             if (musicToggle) { musicToggle.classList.remove('hidden'); musicToggle.innerHTML = musicMuted ? '&#128263;' : '&#128266;'; }
             if (musicMuted) return;               // she muted it earlier — respect that
             bgMusic.play().catch(() => {});
             setMusicLevel(MUSIC_VOL, 2);
             setWave(true);
         }
+
+        // Music ducks to half while the letter types, then rises back to normal.
+        function duckMusic()    { if (musicStarted && !musicMuted) setMusicLevel(MUSIC_DUCK, 1.2); }
+        function restoreMusic() { if (musicStarted && !musicMuted) setMusicLevel(MUSIC_VOL, 2); }
         if (musicToggle) musicToggle.addEventListener('click', () => {
             musicMuted = !musicMuted;
             try { localStorage.setItem('jasmine-muted', musicMuted ? '1' : '0'); } catch (e) {}
@@ -1543,8 +1559,11 @@
             }
 
             if (sceneId === 'scene-letter') {
-                setTimeout(typeWriter, 800);
-                startMusic(); // Olivia Dean — "Dive" fades in softly here
+                startMusic();            // this visit's song fades in softly here
+                setTimeout(() => {
+                    duckMusic();         // dip the music to half while she reads it type out
+                    typeWriter();
+                }, 800);
             }
 
             if (sceneId === 'scene-sparkler') {
@@ -1594,17 +1613,99 @@
         startBtn.addEventListener('click', () => nextScene('scene-candle'));
 
         // ============================================================
-        //  CANDLE — make a wish, then TAP to blow it out.
-        //  (Tap works on every phone/browser; mic blow was unreliable, removed.)
+        //  CANDLE — make a wish, then blow it out. Three ways, so a phone
+        //  can NEVER get stuck:
+        //    1) mic        — actually blow into the phone
+        //    2) tap        — tap anywhere on the candle (always works)
+        //    3) long-press the *blown* candle → relight it and blow again (egg)
         // ============================================================
+        const enableMicBtn = document.getElementById('enable-mic-btn');
         const flame = document.getElementById('flame');
         const candleBody = document.getElementById('candle-body');
         const micInstruction = document.getElementById('mic-instruction');
 
+        let audioContext, analyser, microphone, dataArray, bufferLength;
+        let listening = false;
+        const LOW_FREQ_START = 0, LOW_FREQ_END = 200, BLOW_DURATION_REQUIRED = 3;
+        let blowDetected = false, blowDuration = 0;
+
+        if (enableMicBtn) enableMicBtn.addEventListener('click', async () => {
+            pulsePhone(50);
+            try {
+                // Raw mic: noiseSuppression/echoCancellation would filter out the
+                // "wind" of a blow (they treat it as noise), so we disable them.
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+                });
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                // iOS/Safari start the context suspended — without resuming, the
+                // analyser only ever reads zeros and the blow is never detected.
+                if (audioContext.state === 'suspended') await audioContext.resume();
+                analyser = audioContext.createAnalyser();
+                microphone = audioContext.createMediaStreamSource(stream);
+                microphone.connect(analyser);
+                analyser.fftSize = 256;
+                bufferLength = analyser.frequencyBinCount;
+                dataArray = new Uint8Array(bufferLength);
+                enableMicBtn.classList.add('hidden');
+                micInstruction.innerHTML = '<strong>NOW BLOW!</strong> &#128168; (or just tap the candle)';
+                listening = true;
+                analyzeAudio();
+            } catch (err) {
+                micInstruction.innerHTML = 'No mic? <strong>Tap the candle</strong> to blow it out &#10024;';
+            }
+        });
+
+        function analyzeAudio() {
+            if (!listening) return;
+            analyser.getByteFrequencyData(dataArray);
+            const binSize = audioContext.sampleRate / analyser.fftSize;
+            let lowSum = 0, lowCount = 0, totalSum = 0;
+            for (let i = 0; i < bufferLength; i++) {
+                const freq = i * binSize;
+                if (freq >= LOW_FREQ_START && freq <= LOW_FREQ_END) { lowSum += dataArray[i]; lowCount++; }
+                totalSum += dataArray[i];
+            }
+            const lowAvg = lowCount > 0 ? lowSum / lowCount : 0;
+            const overallAvg = totalSum / bufferLength;
+            const loudness = Math.max(lowAvg, overallAvg);
+
+            // Live feedback: the flame leans, shrinks and dims with your breath,
+            // so you can see the mic is picking you up and how hard to blow.
+            const strength = Math.min(1, loudness / 85);
+            if (flame && !flame.classList.contains('blown-out')) {
+                if (strength > 0.12) {
+                    flame.style.animationPlayState = 'paused';
+                    flame.style.transform = `translateX(-50%) scaleY(${1 - strength * 0.55}) rotate(${strength * 16}deg)`;
+                    flame.style.opacity = `${1 - strength * 0.7}`;
+                } else {
+                    flame.style.animationPlayState = '';
+                    flame.style.transform = '';
+                    flame.style.opacity = '';
+                }
+            }
+
+            const threshold = 47; // loudness needed to count as a real blow
+            if (loudness > threshold) {
+                blowDuration++;
+                if (blowDuration > BLOW_DURATION_REQUIRED && !blowDetected) { blowDetected = true; triggerFlameOut(); }
+            } else {
+                blowDuration = Math.max(0, blowDuration - 1);
+                if (blowDetected && blowDuration <= 0) blowDetected = false;
+            }
+            requestAnimationFrame(analyzeAudio);
+        }
+
+        let candleAdvanceTimer = null;
         function triggerFlameOut() {
             if (flame.classList.contains('blown-out')) return;
+            listening = false;
             pulsePhone([100, 50, 100]);
             if (typeof sfx !== 'undefined' && sfx.blow) sfx.blow();
+            // Clear any live-feedback inline styles so the blow-out is clean.
+            flame.style.animationPlayState = '';
+            flame.style.transform = '';
+            flame.style.opacity = '';
             flame.classList.add('blown-out');
             candleBody.classList.add('off');
             document.querySelector('.candle-wrapper').classList.add('blown');
@@ -1615,11 +1716,11 @@
                 screenFlash();
                 confetti({ particleCount: 220, spread: 110, origin: { y: 0.6 } });
                 fireworks(1600);
-                setTimeout(() => nextScene('scene-sparkler'), 2600);
+                candleAdvanceTimer = setTimeout(() => nextScene('scene-sparkler'), 2600);
             }, 1000);
         }
 
-        // ── Make-a-wish beat: reveal the "tap to blow" prompt only after the wish ──
+        // ── Make-a-wish beat: reveal the blow controls only after the wish ──
         let wishMade = false;
         const madeWishBtn = document.getElementById('made-wish-btn');
         if (madeWishBtn) madeWishBtn.addEventListener('click', () => {
@@ -1633,8 +1734,44 @@
             if (bc) bc.classList.remove('hidden');
         });
 
+        // ── Egg: long-press the *blown* candle to relight it and blow again ──
+        let candleLongPressed = false;
+        function relightCandle() {
+            if (!document.getElementById('scene-candle').classList.contains('active')) return;
+            if (!flame.classList.contains('blown-out')) return;
+            clearTimeout(candleAdvanceTimer);
+            flame.classList.remove('blown-out');
+            candleBody.classList.remove('off');
+            document.querySelector('.candle-wrapper').classList.remove('blown');
+            document.querySelector('.vapor').classList.remove('rise');
+            flame.style.animationPlayState = ''; flame.style.transform = ''; flame.style.opacity = '';
+            blowDetected = false; blowDuration = 0;
+            if (micInstruction) micInstruction.innerHTML = 'Make another wish&hellip; then <strong>blow or tap</strong> again &#10024;';
+            startEmbers();
+            if (typeof sfx !== 'undefined' && sfx.sparkle) sfx.sparkle();
+            pulsePhone(50);
+            eggToast('🕯️ Relit — blow it out again!');
+        }
+        {
+            let lpTimer = null;
+            // Only treat a long-press as a "relight" when the candle is ALREADY
+            // blown out. While it's still lit, a long press must NOT swallow the
+            // tap — that was the old bug that stopped phones blowing it out.
+            const startLP = () => {
+                lpTimer = setTimeout(() => {
+                    if (flame.classList.contains('blown-out')) { candleLongPressed = true; relightCandle(); }
+                }, 550);
+            };
+            const cancelLP = () => { clearTimeout(lpTimer); };
+            candleBody.addEventListener('pointerdown', startLP);
+            candleBody.addEventListener('pointerup', cancelLP);
+            candleBody.addEventListener('pointerleave', cancelLP);
+            candleBody.addEventListener('pointercancel', cancelLP);
+        }
+
         // Tap anywhere on the candle area to blow it out — big, reliable target.
         function blowFromTap(e) {
+            if (candleLongPressed) { candleLongPressed = false; return; } // that tap was a relight long-press
             if (e && e.target && e.target.closest && e.target.closest('button')) return; // ignore button taps
             if (!document.getElementById('scene-candle').classList.contains('active')) return;
             if (!wishMade) return; // let her make the wish first
@@ -1676,6 +1813,7 @@
                 if (charIndex % 30 === 0) spawnLetterHeart();
                 setTimeout(typeWriter, 35);
             } else {
+                restoreMusic();          // letter's done typing — music back up to normal
                 setTimeout(typeWriterName, 500);
             }
         }
