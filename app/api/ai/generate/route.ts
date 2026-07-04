@@ -113,9 +113,12 @@ export async function POST(request: Request) {
   // pre-read check before either decrement lands.
   if (sessionId) {
     try {
+      // userId scopes the decrement to the caller's own session row — a forged
+      // or foreign sessionId matches zero rows and naturally no-ops (no decrement
+      // of another user's balance). Mirrors the ownership gate in project/save.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { count } = await (prisma as any).usageTracking.updateMany({
-        where: { id: sessionId, aiCredits: { gt: 0 } },
+        where: { id: sessionId, userId, aiCredits: { gt: 0 } },
         data:  { aiCredits: { decrement: 1 }, requestCount: { increment: 1 } },
       }) as { count: number };
       if (count === 0) {
@@ -160,7 +163,7 @@ export async function POST(request: Request) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (prisma as any).usageTracking
           .updateMany({
-            where: { id: sessionId },
+            where: { id: sessionId, userId },
             data:  { aiCredits: { increment: 1 }, requestCount: { decrement: 1 } },
           })
           .catch((err: unknown) => console.error("[ai/generate] Credit refund failed:", err));
@@ -170,9 +173,19 @@ export async function POST(request: Request) {
   }
 
   if (projectId) {
+    // Verify the caller owns the project before writing its audit row — prevents
+    // cross-tenant pollution of another user's generation history. Still
+    // fire-and-forget: a non-owned/missing project simply skips the write (no 500).
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (prisma as any).aiGeneration
-      .create({ data: { projectId, prompt, response: generatedText, modelUsed } })
+    (prisma as any).project
+      .findUnique({ where: { id: projectId }, select: { userId: true } })
+      .then((proj: { userId: string } | null) => {
+        if (!proj || proj.userId !== userId) return;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return (prisma as any).aiGeneration.create({
+          data: { projectId, prompt, response: generatedText, modelUsed },
+        });
+      })
       .catch((err: unknown) => console.error("[ai/generate] AiGeneration audit log failed:", err));
   }
 

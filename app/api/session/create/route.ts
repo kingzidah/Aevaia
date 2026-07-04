@@ -7,11 +7,12 @@ import { resolveUserId } from "@/lib/system-user";
 // The client stores the returned `id` in localStorage as `hc_session_id`
 // and sends it with every AI request to track remaining credits.
 export async function POST() {
-  // Allow fallback to system user so unauthenticated studio previews still
-  // get 10 free credits. Authenticated users get their own tracking row.
+  // Clerk-authenticated users get their own tracking row. Unauthenticated
+  // callers are rejected — the system-user fallback was removed with Clerk,
+  // so this is an auth failure (401), not a server error.
   const userId = await resolveUserId(true);
   if (!userId) {
-    return NextResponse.json({ error: "Failed to resolve user" }, { status: 500 });
+    return NextResponse.json({ error: "Authentication required" }, { status: 401 });
   }
 
   try {
