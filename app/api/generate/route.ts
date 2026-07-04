@@ -99,7 +99,7 @@ export async function POST(request: Request) {
     // ── orchestrate: general-purpose AI reasoning via Gemini ─────────────
     if (taskType === "orchestrate") {
       const { text } = await generateText({
-        model: openRouter.chat("google/gemini-1.5-pro"),
+        model: openRouter.chat("google/gemini-2.5-flash"),
         system:
           "You are Aevaia's AI orchestrator. Help craft deeply personal, " +
           "emotionally resonant gift messages. Be concise, warm, and human. " +
@@ -112,7 +112,7 @@ export async function POST(request: Request) {
     // ── generate_theme: return structured JSON for global theme + UI navigation ─
     if (taskType === "generate_theme") {
       const { text } = await generateText({
-        model: openRouter.chat("google/gemini-1.5-pro"),
+        model: openRouter.chat("google/gemini-2.5-flash"),
         system:
           "You are Aevaia's AI orchestrator and UI navigator. " +
           "Based on the user's message, either set the visual atmosphere, navigate to a UI panel, or both.\n" +

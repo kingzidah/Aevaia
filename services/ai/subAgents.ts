@@ -31,10 +31,13 @@ import type {
 
 const VECTOR_MODEL = 'anthropic/claude-sonnet-4-5';         // Superior SVG fidelity
 const COPY_MODEL   = 'deepseek/deepseek-chat';              // Precision copywriting
-const VOICE_MODEL  = 'anthropic/claude-haiku-4-5-20251001'; // Fast narration scripts
+const VOICE_MODEL  = 'anthropic/claude-haiku-4-5'; // Fast narration scripts
 
-const AUDIO_MODEL  = 'meta/musicgen';    // Replicate: text → MP3
-const VOICE_TTS_MODEL = 'suno-ai/bark'; // Replicate: text → WAV narration
+// musicgen is a community model — Replicate requires a pinned version hash for
+// those (bare "owner/name" 404s). minimax models are official and run by name
+// on always-warm infrastructure (no cold-boot timeouts).
+const AUDIO_MODEL  = 'meta/musicgen:671ac645ce5e552cc63a54a2bbff63fcf798043055d2dac5fc9e36a837eedcfb';    // Replicate: text → MP3
+const VOICE_TTS_MODEL = 'minimax/speech-02-turbo'; // Replicate: text → MP3 narration
 const VIDEO_MODEL  = 'minimax/video-01'; // Replicate: text → MP4
 
 // 2 minutes — media generation is CPU-intensive. Note: Next.js route config
@@ -56,22 +59,6 @@ function extractContent(completion: OpenAI.Chat.ChatCompletion, tag: string): st
   const text = completion.choices[0]?.message?.content?.trim();
   if (!text) throw new Error(`[${tag}] OpenRouter returned an empty content block`);
   return text;
-}
-
-function stripFences(raw: string): string {
-  return raw
-    .replace(/^```(?:json|svg|xml)?\s*/i, '')
-    .replace(/\s*```$/i, '')
-    .trim();
-}
-
-function parseJson<T>(raw: string, tag: string): T {
-  const cleaned = stripFences(raw);
-  try {
-    return JSON.parse(cleaned) as T;
-  } catch {
-    throw new Error(`[${tag}] JSON parse failed. Received: ${cleaned.slice(0, 200)}`);
-  }
 }
 
 /** Race a promise against a ceiling; throws a descriptive error on timeout. */
@@ -216,14 +203,16 @@ export async function generateAudioTrack(
   return { agent: 'audio', url, title, durationSec: 15 };
 }
 
-// ── 4. Voice — real TTS audio via Replicate suno-ai/bark ─────────────────────
+// ── 4. Voice — real TTS audio via Replicate minimax/speech-02-turbo ──────────
 //
 // Two-step pipeline:
 //   1. Claude Haiku (OpenRouter) extracts clean spoken text from the enriched prompt.
-//   2. Replicate Bark converts that text to a real WAV audio file.
+//   2. Replicate minimax/speech-02-turbo converts that text to a real MP3 audio file.
 //
-// We run the text-extraction step first so Bark receives prose narration rather than
-// the orchestrator's descriptive enriched prompt, which is not suitable as raw TTS input.
+// We run the text-extraction step first so the TTS model receives prose narration
+// rather than the orchestrator's descriptive enriched prompt, which is not suitable
+// as raw TTS input. (Previously suno-ai/bark — replaced because its cold boots
+// routinely exceeded the 120s timeout, making voice generation fail by default.)
 
 export async function generateVoiceScript(
   enrichedPrompt: string,
@@ -248,16 +237,14 @@ Maximum 120 words. Every word must be naturally speakable.`,
 
   const spokenText = extractContent(scriptCompletion, 'voice-script');
 
-  // ── Step 2: Generate real TTS audio via Replicate Bark ───────────────────────
+  // ── Step 2: Generate real TTS audio via Replicate minimax/speech-02-turbo ────
   const replicate = getReplicateClient();
 
   const output = await withTimeout(
     replicate.run(VOICE_TTS_MODEL, {
       input: {
-        prompt:         spokenText,
-        history_prompt: 'announcer', // Neutral, clear voice preset
-        text_temp:      0.7,
-        waveform_temp:  0.7,
+        text:     spokenText,
+        voice_id: 'Friendly_Person', // Warm, clear narration preset
       },
     }),
     REPLICATE_TIMEOUT_MS,

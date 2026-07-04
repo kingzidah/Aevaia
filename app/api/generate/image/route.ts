@@ -57,14 +57,23 @@ export async function POST(req: Request) {
   const enhancedPrompt = `A beautiful, high-quality gift card illustration, ${theme ?? "elegant"} style, ${prompt}, heart-shaped bokeh, soft lighting, 8k resolution`;
 
   try {
-    const replicate = new Replicate({ auth: process.env.REPLICATE_API_TOKEN });
+    // useFileOutput: false → replicate v1 returns plain URL strings instead of
+    // FileOutput stream objects, which would serialise to {} in the JSON below.
+    const replicate = new Replicate({
+      auth:          process.env.REPLICATE_API_TOKEN,
+      useFileOutput: false,
+    });
 
     const output = await replicate.run(
       "black-forest-labs/flux-schnell",
       { input: { prompt: enhancedPrompt } }
     );
 
-    const imageUrl = (output as string[])[0];
+    const imageUrl = Array.isArray(output) ? String(output[0]) : String(output);
+    if (!imageUrl.startsWith("http")) {
+      console.error("[generate/image] Unexpected Replicate output shape:", typeof output);
+      return NextResponse.json({ error: "Failed to generate image" }, { status: 502 });
+    }
     return NextResponse.json({ imageUrl });
   } catch (error) {
     console.error("[generate/image] Replicate error:", error);
