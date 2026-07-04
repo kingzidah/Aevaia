@@ -1086,6 +1086,19 @@
         .theme-btn:hover { transform: scale(1.1) rotate(-10deg); }
         .theme-btn:active { transform: scale(0.9); }
 
+        /* Music mute button — mirrors the theme button, top-right */
+        .music-btn {
+            position: fixed; top: 14px; right: 14px; z-index: 9999;
+            width: 44px; height: 44px; border-radius: 50%;
+            border: none; cursor: pointer; font-size: 1.1rem; line-height: 1;
+            background: rgba(255,255,255,0.6); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+            box-shadow: 0 4px 14px rgba(142,68,173,0.25);
+            transition: transform 0.3s var(--ease-elastic), background 0.4s ease, opacity 0.5s ease;
+        }
+        .music-btn:hover { transform: scale(1.1); }
+        .music-btn:active { transform: scale(0.9); }
+        body.theme-dark .music-btn { background: rgba(60,40,85,0.6); }
+
         body.theme-dark {
             --bg-color:     #120a1e;
             --lilac-light:  #231533;
@@ -1215,6 +1228,10 @@
 <body>
 
     <button id="theme-toggle" class="theme-btn" aria-label="Toggle dark mode">&#127769;</button>
+
+    <!-- Background music: Olivia Dean — "Dive". Fades in softly at the letter. -->
+    <audio id="bg-music" src="dive.mp3" loop preload="auto"></audio>
+    <button id="music-toggle" class="music-btn hidden" aria-label="Mute music">&#128266;</button>
 
     <div class="aurora"></div>
 
@@ -1378,6 +1395,53 @@
             if (moonTaps >= 5 && !midnightOn) { moonTaps = 0; startMidnight(); }
         });
 
+        // ── Background music: Olivia Dean "Dive" — subtle, fades in at the letter ──
+        const bgMusic = document.getElementById('bg-music');
+        const musicToggle = document.getElementById('music-toggle');
+        const MUSIC_VOL = 0.18;                 // low, so it sits under the words
+        let musicPrimed = false, musicStarted = false, musicFadeTimer = null;
+        let musicMuted = false;
+        try { musicMuted = localStorage.getItem('jasmine-muted') === '1'; } catch (e) {}
+
+        // Browsers block autoplay — "prime" the element on the first tap so a later
+        // programmatic play() (at the letter) is allowed.
+        function primeMusic() {
+            if (musicPrimed || !bgMusic) return;
+            musicPrimed = true;
+            bgMusic.volume = 0;
+            bgMusic.play().then(() => { bgMusic.pause(); try { bgMusic.currentTime = 0; } catch (e) {} }).catch(() => {});
+        }
+        ['pointerdown', 'touchstart', 'keydown'].forEach((ev) =>
+            window.addEventListener(ev, primeMusic, { passive: true }));
+
+        function fadeMusicTo(target) {
+            if (!bgMusic) return;
+            clearInterval(musicFadeTimer);
+            musicFadeTimer = setInterval(() => {
+                const step = 0.012;
+                if (bgMusic.volume < target - step) bgMusic.volume = Math.min(1, bgMusic.volume + step);
+                else if (bgMusic.volume > target + step) bgMusic.volume = Math.max(0, bgMusic.volume - step);
+                else { bgMusic.volume = target; clearInterval(musicFadeTimer); }
+            }, 90); // ~1.5s to reach target
+        }
+        function startMusic() {
+            if (!bgMusic || musicStarted) return;
+            musicStarted = true;
+            if (musicToggle) { musicToggle.classList.remove('hidden'); musicToggle.innerHTML = musicMuted ? '&#128263;' : '&#128266;'; }
+            if (musicMuted) return;               // she muted it earlier — respect that
+            bgMusic.volume = 0;
+            bgMusic.play().catch(() => {});
+            fadeMusicTo(MUSIC_VOL);
+        }
+        if (musicToggle) musicToggle.addEventListener('click', () => {
+            musicMuted = !musicMuted;
+            try { localStorage.setItem('jasmine-muted', musicMuted ? '1' : '0'); } catch (e) {}
+            musicToggle.innerHTML = musicMuted ? '&#128263;' : '&#128266;'; // 🔇 / 🔊
+            pulsePhone(20);
+            if (musicMuted) { fadeMusicTo(0); setTimeout(() => { if (musicMuted && bgMusic) bgMusic.pause(); }, 700); }
+            else if (musicStarted) { bgMusic.play().catch(() => {}); fadeMusicTo(MUSIC_VOL); }
+        });
+
         // ── Tap the floating envelope to open straight into the letter ──
         const envelopeOpen = document.getElementById('envelope-open');
         function openEnvelope() {
@@ -1426,6 +1490,7 @@
 
             if (sceneId === 'scene-letter') {
                 setTimeout(typeWriter, 800);
+                startMusic(); // Olivia Dean — "Dive" fades in softly here
             }
 
             if (sceneId === 'scene-sparkler') {
