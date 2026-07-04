@@ -525,25 +525,6 @@
         }
         .signature-row { display: flex; align-items: center; flex: 1; justify-content: flex-end; }
 
-        /* "Now playing" waveform — animates while the song plays, stops when muted */
-        .music-wave { display: flex; align-items: center; gap: 3px; height: 24px; flex-shrink: 0; opacity: 0.55; }
-        .music-wave .wave-bar {
-            width: 3px; height: 18px; border-radius: 2px; background: var(--lilac-deep);
-            transform: scaleY(0.35); transform-origin: center;
-            animation: waveBar 0.9s ease-in-out infinite; animation-play-state: paused;
-        }
-        .music-wave.playing .wave-bar { animation-play-state: running; }
-        .music-wave .wave-bar:nth-child(1) { animation-delay: 0s;    }
-        .music-wave .wave-bar:nth-child(2) { animation-delay: 0.12s; }
-        .music-wave .wave-bar:nth-child(3) { animation-delay: 0.24s; }
-        .music-wave .wave-bar:nth-child(4) { animation-delay: 0.36s; }
-        .music-wave .wave-bar:nth-child(5) { animation-delay: 0.10s; }
-        .music-wave .wave-bar:nth-child(6) { animation-delay: 0.30s; }
-        .music-wave .wave-bar:nth-child(7) { animation-delay: 0.18s; }
-        .music-wave .wave-bar:nth-child(8) { animation-delay: 0.06s; }
-        .music-wave .wave-bar:nth-child(9) { animation-delay: 0.22s; }
-        @keyframes waveBar { 0%, 100% { transform: scaleY(0.3); } 50% { transform: scaleY(1); } }
-
         .signed-name {
             font-family: var(--font-hand); font-size: 1.8rem; color: var(--lilac-deep);
             white-space: nowrap;
@@ -1301,14 +1282,8 @@
             <!-- Blow controls: revealed only after the wish is made -->
             <div id="blow-controls" class="hidden">
                 <p id="mic-instruction" class="instruction-text">
-                    <strong>Tap the candle</strong> to blow it out &#127874; &mdash; or enable the mic and really blow!
+                    Now <strong>tap the candle</strong> to blow it out &#127874;
                 </p>
-                <button id="enable-mic-btn" class="small-btn">
-                    Blow into the mic <i class="fas fa-microphone"></i>
-                </button>
-                <div>
-                    <button id="tap-blow-link" class="tap-blow-link">or just tap the candle &#10024;</button>
-                </div>
             </div>
         </div>
     </section>
@@ -1337,10 +1312,28 @@
                 <p id="letter-secret" class="letter-secret hidden">&#10024; (you pressed long enough to find this) &mdash; of everything I wrote, this line is the most true. Happy birthday, Jasmine.</p>
             </div>
             <div class="letter-footer">
-                <div id="music-wave" class="music-wave" aria-hidden="true">
-                    <span class="wave-bar"></span><span class="wave-bar"></span><span class="wave-bar"></span>
-                    <span class="wave-bar"></span><span class="wave-bar"></span><span class="wave-bar"></span>
-                    <span class="wave-bar"></span><span class="wave-bar"></span><span class="wave-bar"></span>
+                <div class="voice-note-container" aria-hidden="true">
+                    <div class="mic-icon-circle">
+                        <i class="fas fa-music"></i>
+                    </div>
+                    <div class="waveform-container">
+                        <div class="waveform-bar bar-1"></div>
+                        <div class="waveform-bar bar-2"></div>
+                        <div class="waveform-bar bar-3"></div>
+                        <div class="waveform-bar bar-4"></div>
+                        <div class="waveform-bar bar-5"></div>
+                        <div class="waveform-bar bar-6"></div>
+                        <div class="waveform-bar bar-7"></div>
+                        <div class="waveform-bar bar-8"></div>
+                        <div class="waveform-bar bar-9"></div>
+                        <div class="waveform-bar bar-10"></div>
+                        <div class="waveform-bar bar-11"></div>
+                        <div class="waveform-bar bar-12"></div>
+                        <div class="waveform-bar bar-13"></div>
+                        <div class="waveform-bar bar-14"></div>
+                        <div class="waveform-bar bar-15"></div>
+                        <div class="waveform-bar bar-16"></div>
+                    </div>
                 </div>
                 <div class="signature-row">
                     <span id="signed-name" class="signed-name">Adetayo</span>
@@ -1419,56 +1412,75 @@
             if (moonTaps >= 5 && !midnightOn) { moonTaps = 0; startMidnight(); }
         });
 
-        // ── Background music: Olivia Dean "Dive" — subtle, fades in at the letter ──
+        // ── Background music — subtle, fades in at the letter ──
+        // iOS Safari IGNORES HTMLAudioElement.volume (it always plays at system
+        // volume), so we route the audio through a Web Audio GainNode — which iOS
+        // DOES respect — and control THAT. That's the real fix for "still loud".
         const bgMusic = document.getElementById('bg-music');
         const musicToggle = document.getElementById('music-toggle');
-        const MUSIC_VOL = 0.10;                 // very low, sits well under the words
-        let musicPrimed = false, musicStarted = false, musicFadeTimer = null;
-        let musicMuted = false;
+        const waveformBars = document.querySelectorAll('.waveform-bar');
+        const MUSIC_VOL = 0.12;                 // genuine 12% — quiet, under the words
+        let musicStarted = false, musicMuted = false, musicPrimed = false;
+        let musicCtx = null, musicGain = null, musicSrc = null;
         try { musicMuted = localStorage.getItem('jasmine-muted') === '1'; } catch (e) {}
 
-        // Browsers block autoplay — "prime" the element on the first tap so a later
-        // programmatic play() (at the letter) is allowed.
+        // Route the <audio> through a gain node (once).
+        function setupMusicGain() {
+            if (musicGain || !bgMusic) return;
+            try {
+                musicCtx = (typeof ensureAudio === 'function' && ensureAudio()) ||
+                           new (window.AudioContext || window.webkitAudioContext)();
+                if (!musicCtx) return;
+                musicSrc  = musicCtx.createMediaElementSource(bgMusic);
+                musicGain = musicCtx.createGain();
+                musicGain.gain.value = 0;
+                musicSrc.connect(musicGain);
+                musicGain.connect(musicCtx.destination);
+            } catch (e) { /* fall back to element .volume below */ }
+        }
+        function setMusicLevel(target, seconds) {
+            setupMusicGain();
+            if (musicGain && musicCtx) {
+                try {
+                    if (musicCtx.state === 'suspended') musicCtx.resume();
+                    const now = musicCtx.currentTime;
+                    musicGain.gain.cancelScheduledValues(now);
+                    musicGain.gain.setValueAtTime(musicGain.gain.value, now);
+                    musicGain.gain.linearRampToValueAtTime(target, now + (seconds || 1.5));
+                } catch (e) {}
+            } else if (bgMusic) {
+                bgMusic.volume = target; // desktop/Android fallback
+            }
+        }
+        // Prime playback on the first tap so a later programmatic play() is allowed.
         function primeMusic() {
             if (musicPrimed || !bgMusic) return;
             musicPrimed = true;
-            bgMusic.volume = 0;
+            setupMusicGain();
             bgMusic.play().then(() => { bgMusic.pause(); try { bgMusic.currentTime = 0; } catch (e) {} }).catch(() => {});
         }
         ['pointerdown', 'touchstart', 'keydown'].forEach((ev) =>
             window.addEventListener(ev, primeMusic, { passive: true }));
 
-        function fadeMusicTo(target) {
-            if (!bgMusic) return;
-            clearInterval(musicFadeTimer);
-            musicFadeTimer = setInterval(() => {
-                const step = 0.012;
-                if (bgMusic.volume < target - step) bgMusic.volume = Math.min(1, bgMusic.volume + step);
-                else if (bgMusic.volume > target + step) bgMusic.volume = Math.max(0, bgMusic.volume - step);
-                else { bgMusic.volume = target; clearInterval(musicFadeTimer); }
-            }, 90); // ~1.5s to reach target
-        }
-        // "Now playing" waveform in the letter — moves while the song plays.
-        const musicWave = document.getElementById('music-wave');
-        function setWave(on) { if (musicWave) musicWave.classList.toggle('playing', on); }
+        // "Now playing" bars — animate while the song plays, freeze when muted.
+        function setWave(on) { waveformBars.forEach((b) => b.classList.toggle('playing', on)); }
 
         function startMusic() {
             if (!bgMusic || musicStarted) return;
             musicStarted = true;
             if (musicToggle) { musicToggle.classList.remove('hidden'); musicToggle.innerHTML = musicMuted ? '&#128263;' : '&#128266;'; }
             if (musicMuted) return;               // she muted it earlier — respect that
-            bgMusic.volume = 0;
             bgMusic.play().catch(() => {});
-            fadeMusicTo(MUSIC_VOL);
-            setWave(true);                        // start the waveform moving
+            setMusicLevel(MUSIC_VOL, 2);
+            setWave(true);
         }
         if (musicToggle) musicToggle.addEventListener('click', () => {
             musicMuted = !musicMuted;
             try { localStorage.setItem('jasmine-muted', musicMuted ? '1' : '0'); } catch (e) {}
             musicToggle.innerHTML = musicMuted ? '&#128263;' : '&#128266;'; // 🔇 / 🔊
             pulsePhone(20);
-            if (musicMuted) { fadeMusicTo(0); setWave(false); setTimeout(() => { if (musicMuted && bgMusic) bgMusic.pause(); }, 700); }
-            else if (musicStarted) { bgMusic.play().catch(() => {}); fadeMusicTo(MUSIC_VOL); setWave(true); }
+            if (musicMuted) { setMusicLevel(0, 0.5); setWave(false); setTimeout(() => { if (musicMuted && bgMusic) bgMusic.pause(); }, 600); }
+            else if (musicStarted) { bgMusic.play().catch(() => {}); setMusicLevel(MUSIC_VOL, 1); setWave(true); }
         });
 
         // ── Tap the floating envelope to open straight into the letter ──
@@ -1569,144 +1581,38 @@
         startBtn.addEventListener('click', () => nextScene('scene-candle'));
 
         // ============================================================
-        //  CANDLE — blow it out (mic), with a tap fallback for phones
+        //  CANDLE — make a wish, then TAP to blow it out.
+        //  (Tap works on every phone/browser; mic blow was unreliable, removed.)
         // ============================================================
-        const enableMicBtn = document.getElementById('enable-mic-btn');
         const flame = document.getElementById('flame');
         const candleBody = document.getElementById('candle-body');
         const micInstruction = document.getElementById('mic-instruction');
 
-        let audioContext, analyser, microphone, dataArray, bufferLength;
-        let listening = false;
-        const BLOW_THRESHOLD = 15, LOW_FREQ_START = 0, LOW_FREQ_END = 200, BLOW_DURATION_REQUIRED = 3;
-        let blowDetected = false, blowDuration = 0;
-
-        enableMicBtn.addEventListener('click', async () => {
-            pulsePhone(50);
-            try {
-                // Raw mic: noiseSuppression/echoCancellation would filter out the
-                // "wind" of a blow (they treat it as noise), so we disable them.
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
-                });
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                // iOS/Safari start the context suspended — without resuming, the
-                // analyser only ever reads zeros and the blow is never detected.
-                if (audioContext.state === 'suspended') await audioContext.resume();
-                analyser = audioContext.createAnalyser();
-                microphone = audioContext.createMediaStreamSource(stream);
-                microphone.connect(analyser);
-                analyser.fftSize = 256;
-                bufferLength = analyser.frequencyBinCount;
-                dataArray = new Uint8Array(bufferLength);
-                enableMicBtn.classList.add('hidden');
-                micInstruction.innerHTML = '<strong>NOW BLOW!</strong> &#128168;';
-                listening = true;
-                analyzeAudio();
-            } catch (err) {
-                console.error(err);
-                micInstruction.innerHTML = 'No mic? <strong>Tap the candle</strong> to blow it out &#10024;';
-            }
-        });
-
-        function analyzeAudio() {
-            if (!listening) return;
-            analyser.getByteFrequencyData(dataArray);
-            const binSize = audioContext.sampleRate / analyser.fftSize;
-            let lowSum = 0, lowCount = 0, totalSum = 0;
-            for (let i = 0; i < bufferLength; i++) {
-                const freq = i * binSize;
-                if (freq >= LOW_FREQ_START && freq <= LOW_FREQ_END) { lowSum += dataArray[i]; lowCount++; }
-                totalSum += dataArray[i];
-            }
-            const lowAvg = lowCount > 0 ? lowSum / lowCount : 0;
-            const overallAvg = totalSum / bufferLength;
-            const loudness = Math.max(lowAvg, overallAvg);
-
-            // Live feedback: the flame leans, shrinks and dims with your breath,
-            // so you can see the mic is picking you up and how hard to blow.
-            const strength = Math.min(1, loudness / 85);
-            if (flame && !flame.classList.contains('blown-out')) {
-                if (strength > 0.12) {
-                    flame.style.animationPlayState = 'paused';
-                    flame.style.transform = `translateX(-50%) scaleY(${1 - strength * 0.55}) rotate(${strength * 16}deg)`;
-                    flame.style.opacity = `${1 - strength * 0.7}`;
-                } else {
-                    flame.style.animationPlayState = '';
-                    flame.style.transform = '';
-                    flame.style.opacity = '';
-                }
-            }
-
-            const threshold = (BLOW_THRESHOLD / 100) * 180 + 20; // ~47
-            if (loudness > threshold) {
-                blowDuration++;
-                if (blowDuration > BLOW_DURATION_REQUIRED && !blowDetected) { blowDetected = true; triggerFlameOut(); }
-            } else {
-                blowDuration = Math.max(0, blowDuration - 1);
-                if (blowDetected && blowDuration <= 0) blowDetected = false;
-            }
-            requestAnimationFrame(analyzeAudio);
-        }
-
         function triggerFlameOut() {
             if (flame.classList.contains('blown-out')) return;
-            listening = false;
             pulsePhone([100, 50, 100]);
-            // Clear any live-feedback inline styles so the blow-out transition is clean.
-            flame.style.animationPlayState = '';
-            flame.style.transform = '';
-            flame.style.opacity = '';
+            if (typeof sfx !== 'undefined' && sfx.blow) sfx.blow();
             flame.classList.add('blown-out');
             candleBody.classList.add('off');
             document.querySelector('.candle-wrapper').classList.add('blown');
             document.querySelector('.vapor').classList.add('rise');
-            micInstruction.textContent = 'Yay!';
+            if (micInstruction) micInstruction.textContent = 'Yay!';
             setTimeout(() => {
                 document.querySelector('.fog-layer').classList.add('cleared');
                 screenFlash();
                 confetti({ particleCount: 220, spread: 110, origin: { y: 0.6 } });
                 fireworks(1600);
-                // Egg: a long-press can relight the candle during this window and cancel the advance.
-                candleAdvanceTimer = setTimeout(() => nextScene('scene-sparkler'), 2600);
+                setTimeout(() => nextScene('scene-sparkler'), 2600);
             }, 1000);
         }
-        // ── Egg: long-press the just-blown candle to relight it and blow again ──
-        let candleAdvanceTimer = null;
-        let candleLongPressed = false;
-        function relightCandle() {
-            if (!document.getElementById('scene-candle').classList.contains('active')) return;
-            if (!flame.classList.contains('blown-out')) return;
-            clearTimeout(candleAdvanceTimer);
-            flame.classList.remove('blown-out');
-            candleBody.classList.remove('off');
-            document.querySelector('.candle-wrapper').classList.remove('blown');
-            document.querySelector('.vapor').classList.remove('rise');
-            flame.style.animationPlayState = ''; flame.style.transform = ''; flame.style.opacity = '';
-            blowDetected = false; blowDuration = 0;
-            micInstruction.innerHTML = 'Make another wish&hellip; then <strong>tap to blow</strong> again &#10024;';
-            startEmbers();
-            if (typeof sfx !== 'undefined' && sfx.sparkle) sfx.sparkle();
-            pulsePhone(50);
-            eggToast('🕯️ Relit — blow it out again!');
-        }
-        {
-            let lpTimer = null;
-            const startLP = () => { lpTimer = setTimeout(() => { candleLongPressed = true; relightCandle(); }, 550); };
-            const cancelLP = () => { clearTimeout(lpTimer); };
-            candleBody.addEventListener('pointerdown', startLP);
-            candleBody.addEventListener('pointerup', cancelLP);
-            candleBody.addEventListener('pointerleave', cancelLP);
-            candleBody.addEventListener('pointercancel', cancelLP);
-        }
 
-        // ── Make-a-wish beat: reveal the blow controls only after the wish ──
+        // ── Make-a-wish beat: reveal the "tap to blow" prompt only after the wish ──
         let wishMade = false;
         const madeWishBtn = document.getElementById('made-wish-btn');
         if (madeWishBtn) madeWishBtn.addEventListener('click', () => {
             wishMade = true;
             pulsePhone(50);
-            sfx.chime();
+            if (typeof sfx !== 'undefined' && sfx.chime) sfx.chime();
             enableTilt(); // also unlocks shake (same Motion & Orientation permission)
             const wp = document.getElementById('wish-prompt');
             const bc = document.getElementById('blow-controls');
@@ -1714,15 +1620,12 @@
             if (bc) bc.classList.remove('hidden');
         });
 
-        // Tap-to-blow fallback so a phone never gets stuck on the candle
+        // Tap the candle (or flame) to blow it out — reliable everywhere.
         function blowFromTap() {
-            if (candleLongPressed) { candleLongPressed = false; return; } // that tap was a relight long-press
             if (!document.getElementById('scene-candle').classList.contains('active')) return;
             if (!wishMade) return; // let her make the wish first
             triggerFlameOut();
         }
-        const tapBlowLink = document.getElementById('tap-blow-link');
-        if (tapBlowLink) tapBlowLink.addEventListener('click', blowFromTap);
         candleBody.addEventListener('click', blowFromTap);
 
         // Soft embers rising from the candle while it's lit
