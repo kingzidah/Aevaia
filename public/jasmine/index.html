@@ -523,7 +523,7 @@
             flex-shrink: 0;
             width: 100%;
         }
-        .signature-row { display: flex; align-items: center; flex: 1; justify-content: flex-start; }
+        .signature-row { display: flex; align-items: center; flex: 1; justify-content: flex-end; }
 
         .signed-name {
             font-family: var(--font-hand); font-size: 1.8rem; color: var(--lilac-deep);
@@ -793,7 +793,7 @@
             .win-title { font-size: 2.5rem; }
             .win-text-container { font-size: 1.2rem; }
             .letter-footer { flex-wrap: nowrap; gap: 8px; }
-            .signature-row { justify-content: flex-start; margin-bottom: 0; flex: 0 1 auto; }
+            .signature-row { justify-content: flex-end; margin-bottom: 0; flex: 0 1 auto; }
             .voice-note-container { padding: 4px 0; }
             .mic-icon-circle { width: 36px; height: 36px; margin-right: 8px; }
             .mic-icon-circle i { font-size: 1rem; }
@@ -1242,7 +1242,7 @@
     <button id="theme-toggle" class="theme-btn" aria-label="Toggle dark mode">&#127769;</button>
 
     <!-- Background music: Olivia Dean — "Dive". Fades in softly at the letter. -->
-    <audio id="bg-music" src="dive.mp3" loop preload="auto"></audio>
+    <audio id="bg-music" src="made-for-jasmine.mp3" loop preload="auto"></audio>
     <button id="music-toggle" class="music-btn hidden" aria-label="Mute music">&#128266;</button>
 
     <div class="aurora"></div>
@@ -1325,9 +1325,6 @@
                 <p id="letter-secret" class="letter-secret hidden">&#10024; (you pressed long enough to find this) &mdash; of everything I wrote, this line is the most true. Happy birthday, Jasmine.</p>
             </div>
             <div class="letter-footer">
-                <div class="signature-row">
-                    <span id="signed-name" class="signed-name">Adetayo</span>
-                </div>
                 <div class="voice-note-container" aria-hidden="true">
                     <div class="mic-icon-circle">
                         <i class="fas fa-music"></i>
@@ -1350,6 +1347,9 @@
                         <div class="waveform-bar bar-15"></div>
                         <div class="waveform-bar bar-16"></div>
                     </div>
+                </div>
+                <div class="signature-row">
+                    <span id="signed-name" class="signed-name">Adetayo</span>
                 </div>
             </div>
         </div>
@@ -1455,8 +1455,12 @@
         const MUSIC_VOL  = 0.12;                // genuine 12% — quiet, under the words
         const MUSIC_DUCK = MUSIC_VOL * 0.5;     // half volume while the letter types out
         // A different song each visit — cycles back to the first after the last.
-        // Drop more filenames in here (song 2, 3, 4…) and the rotation just works.
-        const SONG_TRACKS = ['dive.mp3'];
+        const SONG_TRACKS = [
+            'made-for-jasmine.mp3',         // visit 1
+            'dive.mp3',                     // visit 2 — Olivia Dean, "Dive"
+            'happy-birthday-jasmine.mp3',   // visit 3
+            'happy-birthday-jasmine-2.mp3'  // visit 4  (then loops back to #1)
+        ];
         let musicStarted = false, musicMuted = false, musicPrimed = false;
         let musicCtx = null, musicGain = null, musicSrc = null;
         // Sound starts ON every visit. We intentionally do NOT restore a past mute
@@ -1830,7 +1834,7 @@
                 charIndex++;
                 container.scrollTop = container.scrollHeight;
                 if (charIndex % 30 === 0) spawnLetterHeart();
-                setTimeout(typeWriter, 35);
+                setTimeout(typeWriter, 90); // slowed for a calm, readable reveal (was 35)
             } else {
                 restoreMusic();          // letter's done typing — music back up to normal
                 setTimeout(typeWriterName, 500);
@@ -2204,15 +2208,17 @@
         function showReturnNote() {
             const el = document.getElementById('return-note');
             if (!el || visitCount < 2) return;
+            const cheeky = 'I see you 👀 you love it — and you keep coming back.';
             const lines = {
                 2:  'Back again? ✨',
                 3:  'Third time already…',
                 4:  'You really like this one, huh?',
                 5:  'Five times. Okay, now I’m smiling.',
+                6:  cheeky,
                 7:  'Still here. That means a lot.',
                 10: 'Ten times — you’ve officially made my year. ✨'
             };
-            const msg = lines[visitCount] || (visitCount > 10 ? 'You keep coming back. ✨' : '');
+            const msg = lines[visitCount] || (visitCount >= 6 ? cheeky : '');
             if (!msg) return;
             el.textContent = msg;
             el.classList.remove('hidden');
