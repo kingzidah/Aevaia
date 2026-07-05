@@ -1319,7 +1319,7 @@
     <section id="scene-letter" class="scene hidden">
         <span class="hidden-star" data-star="3" style="top: 30px; left: 22px;" aria-hidden="true">&#10024;</span>
         <div class="glass-envelope" id="letter-envelope">
-            <h1 class="dear-name">Hey Jasmine,</h1>
+            <h1 class="dear-name">Happy birthday, Jasmine</h1>
             <div class="typewriter-container">
                 <p id="typewriter-text"></p>
                 <p id="letter-secret" class="letter-secret hidden">&#10024; (you pressed long enough to find this) &mdash; of everything I wrote, this line is the most true. Happy birthday, Jasmine.</p>
@@ -1394,21 +1394,33 @@
     <script>
 
         // ── Fresh-start reset ────────────────────────────────────────────────
-        // Visiting  ?reset=1  (or ?fresh=1) wipes every saved "jasmine-*" state —
-        // visit count, found stars, unlocked P.S., mute — so the whole experience
-        // (and all the Easter eggs) plays as a brand-new first time again. Used for
-        // testing now, and to factory-reset before it's handed to her. Runs FIRST,
-        // before anything reads localStorage, then strips the param from the URL.
-        (function resetIfAsked() {
+        // Wipes every saved "jasmine-*" state (visit count, found stars, unlocked
+        // P.S., mute) so the whole experience + all the Easter eggs play as a
+        // brand-new first time. Runs FIRST, before anything reads localStorage.
+        //   (1) One-time on this release — everyone gets a clean slate once.
+        //   (2) On demand via ?reset=1 (or ?fresh=1) — for testing / handoff.
+        (function freshStart() {
+            function wipeJasmine() {
+                try {
+                    for (let i = localStorage.length - 1; i >= 0; i--) {
+                        const k = localStorage.key(i);
+                        if (k && k.indexOf('jasmine-') === 0) localStorage.removeItem(k);
+                    }
+                } catch (e) {}
+            }
+            // On-demand reset, then strip the param so a refresh won't re-wipe.
             try {
                 const q = new URLSearchParams(location.search);
-                if (!q.has('reset') && !q.has('fresh')) return;
-                for (let i = localStorage.length - 1; i >= 0; i--) {
-                    const k = localStorage.key(i);
-                    if (k && k.indexOf('jasmine-') === 0) localStorage.removeItem(k);
+                if (q.has('reset') || q.has('fresh')) {
+                    wipeJasmine();
+                    history.replaceState(null, '', location.origin + location.pathname);
                 }
-                const clean = location.origin + location.pathname;
-                history.replaceState(null, '', clean); // drop ?reset so a refresh won't re-wipe
+            } catch (e) {}
+            // One-time reset for this release. The tag is deliberately NOT a
+            // "jasmine-*" key, so the wipes never clear it — this fires once ever.
+            try {
+                const TAG = '_jz_fresh_20260705';
+                if (!localStorage.getItem(TAG)) { wipeJasmine(); localStorage.setItem(TAG, '1'); }
             } catch (e) {}
         })();
 
@@ -1822,7 +1834,7 @@
 
         // LETTER TYPEWRITER
         // EDIT: write Jasmine's letter here.
-        const letterText = `We don't really talk — so consider this me, quietly breaking my own record.\n\nI'm better with a keyboard than with hallways and hellos, so I built the words instead of saying them. Happy birthday, Jasmine.\n\nI hope this new year of your life is a kind one, and that God keeps being good to you.\n\nNo big ask. I just didn't want the day to pass without something real from my side.\n\nHave the best one — you deserve it.`;
+        const letterText = `I wanted to take today to tell you something. You've quietly stood out to me. There's a real warmth in the way you carry yourself, and that smile of yours has a way of making a whole room feel a little brighter.\n\nI hope this year is good to you. The kind of good that surprises you — joy you didn't see coming, people who love you well, and plenty of reasons to keep smiling exactly like that.\n\nMaybe we'll cross paths and talk more this year. I'd like that.\n\nHappy birthday, Jasmine. I hope it's a beautiful one.`;
         let charIndex = 0;
 
         function typeWriter() {
