@@ -18,15 +18,21 @@ if (_env !== "development" && _env !== "production" && _env !== "test") {
 }
 
 // Explicit public-route allowlist — everything else is authenticated.
+//
+// SECURITY — patterns are matched by path-to-regexp and are PREFIX-greedy, so a
+// pattern like "/api/gift(.*)" also matches "/api/gifts/list". Every entry here
+// is therefore anchored as tightly as possible so it exposes ONLY the intended
+// endpoint and never accidentally whitelists a sibling route (e.g. /api/gifts/*).
 const isPublicRoute = createRouteMatcher([
-  "/",               // landing page
-  "/p(.*)",          // public gift viewer
-  "/sign-in(.*)",    // Clerk hosted sign-in
-  "/sign-up(.*)",    // Clerk hosted sign-up
-  "/api/webhook(.*)", // Stripe / Clerk webhooks (signed separately)
-  "/api/gift(.*)",    // gift check-in (runs pre-auth on the viewer)
-  "/api/rsvp(.*)",   // RSVP links shared with unauthenticated guests
-  "/gift/(.*)",       // legacy gift viewer
+  "/",                          // landing page
+  "/p/(.*)",                    // public gift viewer
+  "/sign-in(.*)",               // Clerk hosted sign-in
+  "/sign-up(.*)",               // Clerk hosted sign-up
+  "/api/webhook",               // Stripe webhook (signature-verified)
+  "/api/webhooks/(.*)",         // Clerk/svix webhooks (signature-verified)
+  "/api/gift/check-in",         // guest device check-in (runs pre-auth on viewer)
+  "/api/rsvp",                  // RSVP links shared with unauthenticated guests
+  "/gift/(.*)",                 // legacy gift viewer
   "/privacy",
   "/terms",
   "/contact",

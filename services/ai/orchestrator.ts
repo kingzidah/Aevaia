@@ -5,7 +5,7 @@
 //            No ANTHROPIC_API_KEY, no GEMINI_API_KEY, no SDK-level provider lock.
 //
 // ROUTING:   Primary model → google/gemini-2.5-flash  (strict JSON enforcement)
-//            Fallback model → anthropic/claude-haiku-4-5-20251001
+//            Fallback model → anthropic/claude-haiku-4-5
 //            Fallback fires only on retriable failures: 429, 503, timeout.
 //
 // LOGGING:   Structured JSON via lib/logger — no console.* calls.
@@ -26,7 +26,7 @@ import { runSubAgent } from '@/services/ai/subAgents';
 // ── Routing model constants ───────────────────────────────────────────────────
 
 const ROUTER_PRIMARY  = 'google/gemini-2.5-flash';
-const ROUTER_FALLBACK = 'anthropic/claude-haiku-4-5-20251001';
+const ROUTER_FALLBACK = 'anthropic/claude-haiku-4-5';
 
 // Per-attempt ceiling. Two attempts → max wall-clock exposure is 2× this value.
 const ROUTE_TIMEOUT_MS = 25_000;

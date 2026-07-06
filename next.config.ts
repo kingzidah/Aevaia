@@ -1,34 +1,39 @@
 import type { NextConfig } from "next";
+import path from "path";
 
-// ── Content Security Policy (REPORT-ONLY) ─────────────────────────────────────
-// Violations are logged to the browser console but NOT enforced.
-// Review the console for blocked resources before switching the header key to
-// "Content-Security-Policy" to enable enforcement.
+// ── Content Security Policy (ENFORCED) ────────────────────────────────────────
+// Every allowed source below maps to a real dependency the app loads in the
+// browser. Anything not listed is blocked. To roll back to observe-only, change
+// the header key at the bottom of this file back to
+// "Content-Security-Policy-Report-Only".
 //
-// Notes on individual directives:
-//   script-src  'unsafe-inline' — required by Next.js for hydration scripts
-//   script-src  'unsafe-eval'   — required by Next.js dev tooling; audit in prod
-//   style-src   'unsafe-inline' — Tailwind and canvas editor inline styles
-//   img-src     https:          — gallery blocks load external images
-//   connect-src Clerk endpoints — client-side auth state polling via FAPI
-//   connect-src api.stripe.com  — client-side payment intent creation
-//   frame-src   Stripe          — 3-D Secure iframes during checkout
-//   worker-src  blob:           — canvas editor web workers
-//   media-src   blob: data:     — audio/video blocks in the sensory engine
+// Per-directive rationale (host list derived from a full source audit):
+//   script-src   'unsafe-inline'/'unsafe-eval' — required by Next.js hydration
+//                + js.stripe.com (Stripe.js) + *.clerk.* (Clerk auth SDK)
+//   style-src    'unsafe-inline' — Tailwind + canvas editor inline styles
+//   img-src      https: — gallery/template/AI images from arbitrary CDNs
+//   connect-src  Clerk FAPI + telemetry, Stripe API; app talks to its own
+//                origin ('self'). Replicate/OpenRouter/Supabase are server-only.
+//   frame-src    Stripe (3-DS), Clerk (auth), and the embeddable media blocks
+//                a creator can add to a gift (YouTube, Vimeo, Spotify, Maps)
+//   media-src    AI audio/voice (replicate.delivery) + soundscape loops
+//   worker-src   blob: — canvas editor + Clerk web workers
+//   object-src 'none' / base-uri 'self' / frame-ancestors 'none' — hard denies
+const CLERK  = "https://*.clerk.accounts.dev https://*.clerk.com";
 const ContentSecurityPolicy = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com",
+  `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com ${CLERK}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
-  "connect-src 'self' https://*.clerk.accounts.dev wss://*.clerk.accounts.dev https://api.stripe.com",
-  "frame-src https://js.stripe.com https://hooks.stripe.com",
+  `connect-src 'self' ${CLERK} wss://*.clerk.accounts.dev https://clerk-telemetry.com https://api.stripe.com`,
+  `frame-src 'self' https://js.stripe.com https://hooks.stripe.com ${CLERK} https://maps.google.com https://www.youtube.com https://player.vimeo.com https://open.spotify.com`,
+  "media-src 'self' blob: data: https://replicate.delivery https://www.soundhelix.com",
   "frame-ancestors 'none'",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self' https://hooks.stripe.com",
   "worker-src 'self' blob:",
-  "media-src 'self' blob: data:",
   "manifest-src 'self'",
 ].join("; ");
 
@@ -52,14 +57,21 @@ const securityHeaders = [
     key: "Strict-Transport-Security",
     value: "max-age=63072000; includeSubDomains; preload",
   },
-  // CSP in REPORT-ONLY — change key to "Content-Security-Policy" to enforce.
+  // CSP ENFORCED. To revert to observe-only, change the key back to
+  // "Content-Security-Policy-Report-Only".
   {
-    key: "Content-Security-Policy-Report-Only",
+    key: "Content-Security-Policy",
     value: ContentSecurityPolicy,
   },
 ];
 
 const nextConfig: NextConfig = {
+  // Pin the workspace root to this project. A stray package-lock.json in the
+  // user home directory otherwise makes Turbopack infer C:\Users\<user> as the
+  // root, which silently breaks route discovery (pages and /api/* return 404).
+  turbopack: {
+    root: path.join(__dirname),
+  },
   async headers() {
     return [
       {
