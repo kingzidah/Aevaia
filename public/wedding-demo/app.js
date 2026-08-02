@@ -1,50 +1,34 @@
 /* =========================================
-   1. FIREBASE SETUP
+   1. ANALYTICS
    ========================================= */
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
-
-const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    projectId: "YOUR_PROJECT_ID",
-    appId: "YOUR_APP_ID"
-};
-
-let db;
-try {
-    const app = initializeApp(firebaseConfig);
-    db = getFirestore(app);
-} catch (e) {
-    console.warn("Firebase unavailable — running offline.");
-}
-
-async function logEvent(type, data = {}) {
-    if (!db) return;
-    try {
-        await addDoc(collection(db, "wedding_interactions"), { type, data, timestamp: new Date() });
-    } catch (e) {}
+// Previously a Firebase/Firestore client. Removed deliberately — it was never
+// live (the config was placeholder "YOUR_API_KEY" values, so every write failed
+// silently), and it was loaded via a STATIC ES import from www.gstatic.com.
+// Because this file is a <script type="module">, a blocked or failed import
+// aborts the entire module — meaning one CDN hiccup, or the site's Content
+// Security Policy, would take down every scene transition and the RSVP form
+// along with it. RSVP data has always gone to the webhook in section 8 instead.
+//
+// Kept as a local no-op so the two call sites below stay valid and this stays a
+// one-line change if real analytics are ever wired up.
+function logEvent(type, data = {}) {
+    if (typeof console !== 'undefined' && console.debug) {
+        console.debug('[wedding] event:', type, data);
+    }
 }
 
 /* =========================================
    2. AUDIO & HAPTICS
    ========================================= */
-const bgMusic    = document.getElementById('bg-music');
-const voiceNote  = document.getElementById('voice-note');
-const waveformBars = document.querySelectorAll('.waveform-bar');
-
-function fadeMusic(targetVolume) {
-    const step = 0.02;
-    if (bgMusic.fadeInterval) clearInterval(bgMusic.fadeInterval);
-    bgMusic.fadeInterval = setInterval(() => {
-        const current = bgMusic.volume;
-        if (Math.abs(current - targetVolume) < step) {
-            bgMusic.volume = targetVolume;
-            clearInterval(bgMusic.fadeInterval);
-            return;
-        }
-        bgMusic.volume = current > targetVolume ? Math.max(0, current - step) : Math.min(1, current + step);
-    }, 50);
-}
+// Audio (background music + a recorded voice note) was removed deliberately.
+// The two mp3s it pointed at were never added to the repo, so every guest hit a
+// 404 pair on load and the letter scene animated a "now playing" waveform over
+// silence. Removed rather than left dangling: the players, the volume fade, and
+// the waveform markup/animation are all gone.
+//
+// To bring it back: add the mp3s under assets/, restore the <audio> elements and
+// the .voice-note-container block in index.html, and reinstate the fade + a
+// playback-driven waveform toggle here.
 
 function pulsePhone(pattern = [30, 40, 30]) {
     if ('vibrate' in navigator) navigator.vibrate(pattern);
@@ -55,8 +39,6 @@ function pulsePhone(pattern = [30, 40, 30]) {
    ========================================= */
 document.getElementById('btn-yes').addEventListener('click', () => {
     pulsePhone([20]);
-    bgMusic.volume = 0.5;
-    bgMusic.play().catch(() => {});
     window.nextScene('scene-candle');
 });
 
@@ -66,8 +48,6 @@ document.getElementById('btn-no').addEventListener('click', () => {
     document.getElementById('btn-yes').style.display = 'none';
     document.getElementById('btn-no').style.display  = 'none';
     setTimeout(() => {
-        bgMusic.volume = 0.5;
-        bgMusic.play().catch(() => {});
         window.nextScene('scene-candle');
     }, 1800);
 });
@@ -117,16 +97,7 @@ window.nextScene = function(sceneId) {
     setTimeout(() => next.classList.add('active'), 50);
 
     if (sceneId === 'scene-letter') {
-        fadeMusic(0.1);
-        voiceNote.currentTime = 0;
-        voiceNote.play().catch(() => {});
-        waveformBars.forEach(b => b.classList.add('playing'));
         setTimeout(window.startTypewriter, 1000);
-    }
-    if (sceneId === 'scene-rsvp') {
-        voiceNote.pause();
-        waveformBars.forEach(b => b.classList.remove('playing'));
-        fadeMusic(0.5);
     }
     if (sceneId === 'scene-finale') {
         window.startCountdown();

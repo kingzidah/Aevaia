@@ -481,47 +481,9 @@ button, .gallery-item, .close-modal {
     transition: opacity 1.5s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
-.voice-note-container {
-    display: flex; align-items: center; justify-content: center;
-    background: transparent; padding: 10px; min-width: 200px;
-    cursor: default; transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-.voice-note-container:hover { transform: scale(1.02); }
-
-.mic-icon-circle {
-    width: 45px; height: 45px;
-    background: linear-gradient(135deg, var(--wedding-gold), var(--rose-deep));
-    border-radius: 50%; display: flex; justify-content: center; align-items: center;
-    margin-right: 15px; flex-shrink: 0;
-    box-shadow: 0 5px 18px rgba(90, 26, 32, 0.3); animation: pulse-soft 2s infinite;
-}
-.mic-icon-circle i { color: white; font-size: 1.3rem; }
-
-@keyframes pulse-soft {
-    0%, 100% { transform: scale(1); }
-    50%       { transform: scale(1.1); }
-}
-
-.waveform-container {
-    display: flex; align-items: center; height: 30px;
-    overflow: hidden; flex-grow: 1; justify-content: flex-start;
-}
-.waveform-bar {
-    width: 4px; background: linear-gradient(to top, var(--wedding-gold), var(--rose-deep));
-    margin: 0 3px; border-radius: 2px;
-    animation: wave 1s infinite ease-in-out; animation-play-state: paused;
-}
-.bar-1  { height: 40%; }  .bar-2  { height: 70%; }  .bar-3  { height: 100%; }
-.bar-4  { height: 60%; }  .bar-5  { height: 80%; }  .bar-6  { height: 50%; }
-.bar-7  { height: 90%; }  .bar-8  { height: 30%; }  .bar-9  { height: 55%; }
-.bar-10 { height: 85%; }  .bar-11 { height: 45%; }  .bar-12 { height: 65%; }
-.bar-13 { height: 40%; }  .bar-14 { height: 75%; }  .bar-15 { height: 95%; }
-.bar-16 { height: 50%; }
-.waveform-bar.playing { animation-play-state: running; }
-@keyframes wave {
-    0%, 100% { transform: scaleY(0.5); }
-    50%       { transform: scaleY(1.4); }
-}
+/* The voice-note player (mic badge + animated waveform) was removed along with
+   the site's audio — its mp3 was never shipped, so the bars animated over
+   silence. Styles deleted with the markup to avoid dead CSS. */
 
 @keyframes floatCard {
     0%, 100% { transform: translateY(0); }
@@ -1052,7 +1014,6 @@ button, .gallery-item, .close-modal {
     .dear-name                   { font-size: 1.7rem; margin-bottom: 8px; }
     .typewriter-container        { font-size: 1.1rem; line-height: 1.65; }
     .signed-name                 { font-size: 1.45rem; }
-    .voice-note-container        { min-width: 150px; padding: 8px; }
     .letter-footer               { flex-wrap: wrap; justify-content: center; gap: 10px; }
     .signature-row               { align-items: center; }
 

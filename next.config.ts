@@ -1,44 +1,12 @@
 import type { NextConfig } from "next";
 import path from "path";
-
-// ── Content Security Policy (ENFORCED) ────────────────────────────────────────
-// Every allowed source below maps to a real dependency the app loads in the
-// browser. Anything not listed is blocked. To roll back to observe-only, change
-// the header key at the bottom of this file back to
-// "Content-Security-Policy-Report-Only".
-//
-// Per-directive rationale (host list derived from a full source audit):
-//   script-src   'unsafe-inline'/'unsafe-eval' — required by Next.js hydration
-//                + js.stripe.com (Stripe.js) + *.clerk.* (Clerk auth SDK)
-//   style-src    'unsafe-inline' — Tailwind + canvas editor inline styles
-//   img-src      https: — gallery/template/AI images from arbitrary CDNs
-//   connect-src  Clerk FAPI + telemetry, Stripe API; app talks to its own
-//                origin ('self'). Replicate/OpenRouter/Supabase are server-only.
-//   frame-src    Stripe (3-DS), Clerk (auth), and the embeddable media blocks
-//                a creator can add to a gift (YouTube, Vimeo, Spotify, Maps)
-//   media-src    AI audio/voice (replicate.delivery) + soundscape loops
-//   worker-src   blob: — canvas editor + Clerk web workers
-//   object-src 'none' / base-uri 'self' / frame-ancestors 'none' — hard denies
-const CLERK  = "https://*.clerk.accounts.dev https://*.clerk.com";
-const ContentSecurityPolicy = [
-  "default-src 'self'",
-  `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com ${CLERK}`,
-  "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https:",
-  "font-src 'self' data:",
-  `connect-src 'self' ${CLERK} wss://*.clerk.accounts.dev https://clerk-telemetry.com https://api.stripe.com`,
-  `frame-src 'self' https://js.stripe.com https://hooks.stripe.com ${CLERK} https://maps.google.com https://www.youtube.com https://player.vimeo.com https://open.spotify.com`,
-  "media-src 'self' blob: data: https://replicate.delivery https://www.soundhelix.com",
-  "frame-ancestors 'none'",
-  "object-src 'none'",
-  "base-uri 'self'",
-  "form-action 'self' https://hooks.stripe.com",
-  "worker-src 'self' blob:",
-  "manifest-src 'self'",
-].join("; ");
+import { APP_CSP, WEDDING_CSP } from "./lib/csp";
 
 // ── Enforced security headers ─────────────────────────────────────────────────
-const securityHeaders = [
+// The CSP strings themselves live in lib/csp.ts so proxy.ts can reuse them.
+// To roll CSP back to observe-only, change the "Content-Security-Policy" key
+// below (and the one in proxy.ts) to "Content-Security-Policy-Report-Only".
+const baseSecurityHeaders = [
   // Blocks MIME-type sniffing (e.g. serving a text/plain file as JavaScript)
   { key: "X-Content-Type-Options", value: "nosniff" },
   // Prevents the app from being embedded in iframes (legacy browser fallback;
@@ -57,12 +25,18 @@ const securityHeaders = [
     key: "Strict-Transport-Security",
     value: "max-age=63072000; includeSubDomains; preload",
   },
-  // CSP ENFORCED. To revert to observe-only, change the key back to
-  // "Content-Security-Policy-Report-Only".
-  {
-    key: "Content-Security-Policy",
-    value: ContentSecurityPolicy,
-  },
+];
+
+const securityHeaders = [
+  ...baseSecurityHeaders,
+  { key: "Content-Security-Policy", value: APP_CSP },
+];
+
+// Same transport/framing protections, different CSP. See lib/csp.ts for why the
+// wedding invite needs its own policy instead of widening the app's.
+const weddingHeaders = [
+  ...baseSecurityHeaders,
+  { key: "Content-Security-Policy", value: WEDDING_CSP },
 ];
 
 const nextConfig: NextConfig = {
@@ -73,9 +47,33 @@ const nextConfig: NextConfig = {
     root: path.join(__dirname),
   },
   async headers() {
+    // CSP is split by HOST, not by path.
+    //
+    // Why host and not path: headers() matches the INCOMING request path, and
+    // the invite is served at "/" on the opeyemianduriel.* host via a proxy.ts
+    // rewrite — so its document arrives here as "/", never as
+    // "/wedding-demo/index.html". A path rule would therefore miss the very page
+    // it exists to cover. (Verified by probing both paths against dev.)
+    //
+    // The has/missing pair below is mutually exclusive, which matters: Next.js
+    // merges ALL matching header rules, and a browser handed two CSP headers
+    // enforces their intersection — silently re-blocking the CDNs the wedding
+    // policy deliberately allows.
+    const onWeddingHost = [
+      { type: "host" as const, value: ".*opeyemianduriel.*" },
+    ];
+
     return [
+      // The standalone wedding invite — document and static assets alike.
       {
-        source: "/(.*)",
+        source: "/:path*",
+        has: onWeddingHost,
+        headers: weddingHeaders,
+      },
+      // The HeartCraft app itself.
+      {
+        source: "/:path*",
+        missing: onWeddingHost,
         headers: securityHeaders,
       },
     ];
