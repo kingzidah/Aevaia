@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import path from "path";
+import { withSentryConfig } from "@sentry/nextjs";
 import { APP_CSP, WEDDING_CSP } from "./lib/csp";
 
 // ── Enforced security headers ─────────────────────────────────────────────────
@@ -80,4 +81,30 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  org: "geoland-pro",
+  project: "aevaia",
+
+  // Build-time secret, separate from the DSN. Without it the build still
+  // succeeds but source maps are not uploaded, so production stack traces stay
+  // minified. Set SENTRY_AUTH_TOKEN in Vercel (and CI) to get readable frames.
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+
+  // Uploads a wider set of client files so browser stack traces resolve.
+  widenClientFileUpload: true,
+
+  // Routes Sentry events through this app's own origin instead of straight to
+  // Sentry. Two reasons that matter here: it survives ad-blockers, and it means
+  // the strict CSP's `connect-src 'self'` already covers the main event path.
+  //
+  // IMPORTANT: /monitoring is added to the public-route allowlist in proxy.ts —
+  // without that, Clerk would gate the tunnel and every event from a
+  // signed-out visitor (the whole public gift viewer) would silently fail.
+  tunnelRoute: "/monitoring",
+
+  // Keep local builds quiet; full output in CI.
+  silent: !process.env.CI,
+
+  // NOTE: no `webpack.treeshake` options — this project builds with Turbopack,
+  // where those settings do nothing.
+});

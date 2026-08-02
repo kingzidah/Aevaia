@@ -33,6 +33,12 @@ const isPublicRoute = createRouteMatcher([
   "/api/webhooks/(.*)",         // Clerk/svix webhooks (signature-verified)
   "/api/gift/check-in",         // guest device check-in (runs pre-auth on viewer)
   "/api/rsvp",                  // RSVP links shared with unauthenticated guests
+  "/monitoring",                // Sentry tunnel (tunnelRoute in next.config.ts).
+                                // Must stay public: errors from signed-out
+                                // visitors on /p/* are exactly the ones worth
+                                // capturing, and an authed tunnel drops them
+                                // silently. Write-only proxy to Sentry — it
+                                // exposes no app data.
   "/gift/(.*)",                 // legacy gift viewer
   "/privacy",
   "/terms",
@@ -46,6 +52,8 @@ const isMaintenanceExempt = createRouteMatcher([
   "/sign-in(.*)",     // admin must be able to authenticate
   "/sign-up(.*)",
   "/api/webhook(.*)", // Stripe / Clerk webhooks must never be blocked
+  "/monitoring",      // error reporting must survive maintenance mode — an
+                      // outage is when you most need the errors
 ]);
 
 // Hostname that serves the standalone wedding invite. Kept as a constant so the

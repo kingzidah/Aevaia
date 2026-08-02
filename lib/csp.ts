@@ -33,13 +33,23 @@
 //   object-src 'none' / base-uri 'self' / frame-ancestors 'none' — hard denies
 const CLERK = "https://*.clerk.accounts.dev https://*.clerk.com";
 
+// Sentry ingest for the geoland-pro org, which lives in Sentry's EU region —
+// hence `.de.` and NOT the more commonly documented `*.ingest.sentry.io`.
+//
+// Events normally travel through the same-origin tunnel (`tunnelRoute:
+// "/monitoring"` in next.config.ts), which `connect-src 'self'` already covers.
+// This host is listed as well so a tunnel miss degrades into a direct send
+// rather than a silently dropped event — the failure mode CSP is worst at,
+// because a blocked error report is invisible by definition.
+const SENTRY_INGEST = "https://*.ingest.de.sentry.io";
+
 export const APP_CSP = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com ${CLERK}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
-  `connect-src 'self' ${CLERK} wss://*.clerk.accounts.dev https://clerk-telemetry.com https://api.stripe.com`,
+  `connect-src 'self' ${CLERK} wss://*.clerk.accounts.dev https://clerk-telemetry.com https://api.stripe.com ${SENTRY_INGEST}`,
   `frame-src 'self' https://js.stripe.com https://hooks.stripe.com ${CLERK} https://maps.google.com https://www.youtube.com https://player.vimeo.com https://open.spotify.com`,
   "media-src 'self' blob: data: https://replicate.delivery https://www.soundhelix.com",
   "frame-ancestors 'none'",
