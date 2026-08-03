@@ -247,43 +247,15 @@ const rsvpYesForm    = document.getElementById('rsvp-yes-form');
 const rsvpNoForm     = document.getElementById('rsvp-no-form');
 const rsvpThanks     = document.getElementById('rsvp-thanks');
 
-/* ----- custom group picker ----- */
-const sideTrigger = document.getElementById('rsvp-side-trigger');
-const sideDisplay = document.getElementById('rsvp-side-display');
-const sideMenu    = document.getElementById('rsvp-side-menu');
-let   sideValue   = '';
-
-sideTrigger.addEventListener('click', () => {
-    const isOpen = sideTrigger.classList.toggle('open');
-    sideMenu.classList.toggle('open', isOpen);
-    sideTrigger.setAttribute('aria-expanded', String(isOpen));
-});
-
-sideMenu.querySelectorAll('.custom-select-item').forEach(item => {
-    item.addEventListener('click', () => {
-        sideValue = item.dataset.value;
-        sideDisplay.textContent = item.textContent.trim();
-        sideDisplay.classList.remove('placeholder');
-        sideMenu.querySelectorAll('.custom-select-item').forEach(i => i.classList.remove('selected'));
-        item.classList.add('selected');
-        sideTrigger.classList.remove('open', 'invalid');
-        sideMenu.classList.remove('open');
-        sideTrigger.setAttribute('aria-expanded', 'false');
-    });
-});
-
-document.addEventListener('click', e => {
-    if (!document.getElementById('rsvp-side-wrapper').contains(e.target)) {
-        sideTrigger.classList.remove('open');
-        sideMenu.classList.remove('open');
-        sideTrigger.setAttribute('aria-expanded', 'false');
-    }
-});
-
-sideTrigger.addEventListener('keydown', e => {
-    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); sideTrigger.click(); }
-    if (e.key === 'Escape') { sideTrigger.classList.remove('open'); sideMenu.classList.remove('open'); }
-});
+// The "Which side do you belong to?" group picker (Family of the Bride, PTML,
+// Rubycom, Parents' Friends, …) was removed at the couple's request — guests now
+// just give name, phone, and email.
+//
+// `group` is still SENT in the webhook payload below, as an empty string. The
+// Make.com scenario on the other end maps fields into a spreadsheet by name, so
+// dropping the key entirely could shift or break its column mapping. Keeping the
+// key with an empty value preserves the payload shape.
+const sideValue = '';
 
 function hideChoiceBtns(cb) {
     rsvpChoiceBtns.style.opacity = '0';
@@ -370,7 +342,6 @@ document.getElementById('rsvp-submit-yes').addEventListener('click', async () =>
     nameEl.classList.remove('invalid');
     phoneEl.classList.remove('invalid');
     emailEl.classList.remove('invalid');
-    sideTrigger.classList.remove('invalid');
     phoneErr.classList.add('hidden');
     submitErr.classList.add('hidden');
 
@@ -392,7 +363,6 @@ document.getElementById('rsvp-submit-yes').addEventListener('click', async () =>
 
     const emailVal = emailEl.value.trim();
     if (emailVal && !emailVal.includes('@')) { emailEl.classList.add('invalid'); valid = false; }
-    if (!sideValue) { sideTrigger.classList.add('invalid'); valid = false; }
 
     if (!valid) { pulsePhone([80, 50, 80]); return; }
 
