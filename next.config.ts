@@ -82,8 +82,11 @@ const nextConfig: NextConfig = {
 };
 
 export default withSentryConfig(nextConfig, {
-  org: "geoland-pro",
-  project: "aevaia",
+  // Read from the environment so the org/project can differ per deploy target
+  // and this file never carries a stale slug. These are build-time only (they
+  // drive source map upload), not runtime secrets.
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
 
   // Build-time secret, separate from the DSN. Without it the build still
   // succeeds but source maps are not uploaded, so production stack traces stay
