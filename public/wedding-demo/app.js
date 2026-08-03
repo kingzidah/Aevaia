@@ -382,6 +382,39 @@ document.getElementById('rsvp-submit-yes').addEventListener('click', async () =>
     btn.textContent = 'Confirming...';
     pulsePhone([20, 50, 20]);
 
+    // ── Register the guest and mint their ticket code ─────────────────────────
+    // Runs BEFORE the Make.com call so the ticket code can be included in that
+    // payload — Make embeds it in the QR on the emailed entry ticket, and the
+    // gate scanner resolves that code back to this guest.
+    //
+    // Same-origin: the proxy deliberately does not rewrite /api/* on this host.
+    //
+    // A failure here must NOT block the RSVP. The couple would rather have a
+    // guest recorded in the spreadsheet with no scannable ticket (the gate can
+    // fall back to the printed list) than lose the RSVP entirely.
+    let ticketCode = '';
+    try {
+        const ticketRes = await fetch('/api/wedding/rsvp', {
+            method: 'POST',
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                name:  guestData.name,
+                phone: guestData.phone,
+                email: guestData.email,
+            }),
+        });
+        if (ticketRes.ok) {
+            const ticketJson = await ticketRes.json();
+            ticketCode = ticketJson.ticket_code || '';
+        } else {
+            console.warn('[rsvp] ticket registration failed:', ticketRes.status);
+        }
+    } catch (err) {
+        console.warn('[rsvp] ticket registration unavailable:', err);
+    }
+
+    guestData.ticketCode = ticketCode;
+
     // ── POST to spreadsheet webhook ───────────────────────────────────────────
     try {
         await fetch(SPREADSHEET_WEBHOOK_URL, {

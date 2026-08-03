@@ -33,6 +33,9 @@ const isPublicRoute = createRouteMatcher([
   "/api/webhooks/(.*)",         // Clerk/svix webhooks (signature-verified)
   "/api/gift/check-in",         // guest device check-in (runs pre-auth on viewer)
   "/api/rsvp",                  // RSVP links shared with unauthenticated guests
+  "/api/wedding/rsvp",          // wedding invite RSVP — guests have no accounts
+  "/api/wedding/check-in",      // gate scanner; guarded by its own staff PIN,
+                                // not by Clerk (bouncers have no accounts)
   "/monitoring",                // Sentry tunnel (tunnelRoute in next.config.ts).
                                 // Must stay public: errors from signed-out
                                 // visitors on /p/* are exactly the ones worth
@@ -98,7 +101,13 @@ export function proxy(req: NextRequest, event: NextFetchEvent) {
   const hostname = req.headers.get("host") ?? "";
   const site = STATIC_SITES.find((s) => hostname.includes(s.hostMatch));
 
-  if (site) {
+  // /api/* is deliberately NOT rewritten, even on a static-site host. The
+  // rewrite prefixes every path with the site's directory, so without this an
+  // in-page fetch("/api/wedding/rsvp") from the invite would be rewritten to
+  // /wedding-demo/api/wedding/rsvp and 404 — the RSVP would fail silently for
+  // every guest. Falling through lets those calls reach the real route handlers
+  // (still subject to the public-route allowlist above).
+  if (site && !req.nextUrl.pathname.startsWith("/api/")) {
     let newPath = req.nextUrl.pathname;
     if (newPath === "/") newPath = "/index.html";
     if (!newPath.startsWith(site.dir)) {
