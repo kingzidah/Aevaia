@@ -4,7 +4,7 @@
 
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse, type NextRequest, type NextFetchEvent } from "next/server";
-import { WEDDING_CSP } from "./lib/csp";
+import { STATIC_SITES, STATIC_SITE_CSP } from "./lib/csp";
 
 // Startup assertion: fail loudly if NODE_ENV is missing or unrecognised so the
 // auth layer never silently misconfigures itself on a custom/misconfigured host.
@@ -56,10 +56,6 @@ const isMaintenanceExempt = createRouteMatcher([
                       // outage is when you most need the errors
 ]);
 
-// Hostname that serves the standalone wedding invite. Kept as a constant so the
-// value stays in step with the host matcher in next.config.ts headers().
-const WEDDING_HOST_MATCH = "opeyemianduriel";
-
 const clerkHandler = clerkMiddleware(async (auth, req) => {
   // ── Maintenance mode ────────────────────────────────────────────────────────
   // Activated by setting MAINTENANCE_MODE=true in .env.local (or Vercel env).
@@ -87,32 +83,35 @@ const clerkHandler = clerkMiddleware(async (auth, req) => {
 });
 
 export function proxy(req: NextRequest, event: NextFetchEvent) {
-  // ── Wedding subdomain rewrite ───────────────────────────────────────────────
-  // Serves public/wedding-demo/ as a standalone static site on any hostname
-  // containing "opeyemianduriel" (e.g. opeyemianduriel.localhost:3000 or
-  // opeyemianduriel.aevaia.com).
+  // ── Standalone static site rewrites ─────────────────────────────────────────
+  // Serves each entry in STATIC_SITES (the wedding invite, Jasmine's birthday
+  // page) from its own directory under public/, keyed on hostname — e.g.
+  // opeyemianduriel.aevaia.com → public/wedding-demo/, jasmine.aevaia.com →
+  // public/jasmine/. Also works locally via <name>.localhost:3000.
   //
-  // This runs OUTSIDE clerkMiddleware on purpose. Previously the host check
-  // lived inside the Clerk handler, which does not skip Clerk: clerkMiddleware
-  // wraps the callback, so its handshake ran first and bounced every guest
-  // through a `?__clerk_handshake=…` 307 before the invite rendered — extra
-  // latency on first load, plus Clerk session cookies set on a domain that has
-  // no accounts. Short-circuiting here means the invite touches no auth at all.
+  // This runs OUTSIDE clerkMiddleware on purpose. Both rewrites previously lived
+  // inside the Clerk handler with a comment claiming Clerk never ran — it did.
+  // clerkMiddleware wraps the callback, so its handshake fired first and bounced
+  // every visitor through a `?__clerk_handshake=…` 307 before the page rendered:
+  // extra latency on first load, plus Clerk session cookies set on domains that
+  // have no accounts. Short-circuiting here means these pages touch no auth.
   const hostname = req.headers.get("host") ?? "";
-  if (hostname.includes(WEDDING_HOST_MATCH)) {
+  const site = STATIC_SITES.find((s) => hostname.includes(s.hostMatch));
+
+  if (site) {
     let newPath = req.nextUrl.pathname;
     if (newPath === "/") newPath = "/index.html";
-    if (!newPath.startsWith("/wedding-demo")) {
-      newPath = "/wedding-demo" + newPath;
+    if (!newPath.startsWith(site.dir)) {
+      newPath = site.dir + newPath;
     }
     req.nextUrl.pathname = newPath;
 
     const res = NextResponse.rewrite(req.nextUrl);
-    // Belt-and-braces: next.config.ts already applies WEDDING_CSP by host, but
-    // set it here too so the invite is never served under the app's stricter
-    // policy if that host rule is ever edited. Same string, so no conflicting
-    // second header (browsers intersect duplicate CSP headers).
-    res.headers.set("Content-Security-Policy", WEDDING_CSP);
+    // Belt-and-braces: next.config.ts already applies STATIC_SITE_CSP by host,
+    // but set it here too so these pages are never served under the app's
+    // stricter policy if that host rule is ever edited. Same string, so no
+    // conflicting second header (browsers intersect duplicate CSP headers).
+    res.headers.set("Content-Security-Policy", STATIC_SITE_CSP);
     return res;
   }
 

@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 import path from "path";
 import { withSentryConfig } from "@sentry/nextjs";
-import { APP_CSP, WEDDING_CSP } from "./lib/csp";
+import { APP_CSP, STATIC_SITE_CSP, STATIC_SITE_HOST_REGEX } from "./lib/csp";
 
 // ── Enforced security headers ─────────────────────────────────────────────────
 // The CSP strings themselves live in lib/csp.ts so proxy.ts can reuse them.
@@ -34,10 +34,10 @@ const securityHeaders = [
 ];
 
 // Same transport/framing protections, different CSP. See lib/csp.ts for why the
-// wedding invite needs its own policy instead of widening the app's.
-const weddingHeaders = [
+// standalone static sites need their own policy instead of widening the app's.
+const staticSiteHeaders = [
   ...baseSecurityHeaders,
-  { key: "Content-Security-Policy", value: WEDDING_CSP },
+  { key: "Content-Security-Policy", value: STATIC_SITE_CSP },
 ];
 
 const nextConfig: NextConfig = {
@@ -51,30 +51,33 @@ const nextConfig: NextConfig = {
     // CSP is split by HOST, not by path.
     //
     // Why host and not path: headers() matches the INCOMING request path, and
-    // the invite is served at "/" on the opeyemianduriel.* host via a proxy.ts
-    // rewrite — so its document arrives here as "/", never as
-    // "/wedding-demo/index.html". A path rule would therefore miss the very page
-    // it exists to cover. (Verified by probing both paths against dev.)
+    // each static site is served at "/" on its own host via a proxy.ts rewrite —
+    // so its document arrives here as "/", never as "/wedding-demo/index.html".
+    // A path rule would therefore miss the very page it exists to cover.
+    // (Verified by probing both paths against dev.)
     //
     // The has/missing pair below is mutually exclusive, which matters: Next.js
     // merges ALL matching header rules, and a browser handed two CSP headers
-    // enforces their intersection — silently re-blocking the CDNs the wedding
-    // policy deliberately allows.
-    const onWeddingHost = [
-      { type: "host" as const, value: ".*opeyemianduriel.*" },
+    // enforces their intersection — silently re-blocking the CDNs the static
+    // site policy deliberately allows.
+    //
+    // The host pattern is derived from STATIC_SITES in lib/csp.ts, so adding a
+    // site there updates routing and headers together.
+    const onStaticSiteHost = [
+      { type: "host" as const, value: STATIC_SITE_HOST_REGEX },
     ];
 
     return [
-      // The standalone wedding invite — document and static assets alike.
+      // The standalone static sites — documents and assets alike.
       {
         source: "/:path*",
-        has: onWeddingHost,
-        headers: weddingHeaders,
+        has: onStaticSiteHost,
+        headers: staticSiteHeaders,
       },
       // The HeartCraft app itself.
       {
         source: "/:path*",
-        missing: onWeddingHost,
+        missing: onStaticSiteHost,
         headers: securityHeaders,
       },
     ];

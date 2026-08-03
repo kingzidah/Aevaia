@@ -60,24 +60,52 @@ export const APP_CSP = [
   "manifest-src 'self'",
 ].join("; ");
 
-// ── Wedding invite policy ─────────────────────────────────────────────────────
-// Every host below maps to a real reference in public/wedding-demo/index.html.
-//   script-src  cdn.jsdelivr.net — canvas-confetti + intl-tel-input (and its
+// ── Standalone static sites ───────────────────────────────────────────────────
+// Personal one-off pages served from public/ on their own subdomains. They are
+// not part of the app: no Clerk session, no Stripe, no database — just HTML,
+// CSS, and a little vanilla JS.
+//
+// This table is the single source of truth for BOTH the rewrite in proxy.ts and
+// the host-based header rule in next.config.ts. Adding a site here wires up its
+// routing and its CSP together, so the two can never drift apart — which is the
+// bug that would otherwise ship a new invite with the app's policy and no fonts.
+export const STATIC_SITES = [
+  // Opeyemi & Uriel's wedding invitation
+  { hostMatch: "opeyemianduriel", dir: "/wedding-demo" },
+  // Jasmine's birthday gift
+  { hostMatch: "jasmine", dir: "/jasmine" },
+] as const;
+
+// Regex fragment for next.config.ts `has: [{ type: "host" }]` matching.
+export const STATIC_SITE_HOST_REGEX = `.*(${STATIC_SITES.map(
+  (s) => s.hostMatch,
+).join("|")}).*`;
+
+// ── Static site policy ────────────────────────────────────────────────────────
+// One policy shared by every site in STATIC_SITES. They load the same handful of
+// CDNs, and a single policy is far less likely to rot than one per site.
+//
+// Each host maps to a real reference in those pages:
+//   script-src  cdn.jsdelivr.net — canvas-confetti + intl-tel-input (plus its
 //               lazily-injected utils.js); 'unsafe-inline' for the inline
-//               intlTelInput bootstrap at index.html:261
-//   style-src   fonts.googleapis.com (Cormorant Garamond + Quicksand),
-//               cdnjs.cloudflare.com (Font Awesome), cdn.jsdelivr.net (intl-tel-input)
+//               bootstrap scripts both pages use
+//   style-src   fonts.googleapis.com (Cormorant Garamond, Quicksand),
+//               cdnjs.cloudflare.com (Font Awesome), cdn.jsdelivr.net
 //   font-src    fonts.gstatic.com (Google webfonts) + cdnjs (Font Awesome glyphs)
 //   img-src     cdn.jsdelivr.net — intl-tel-input country flag sprites
-//   connect-src hook.eu1.make.com — the RSVP webhook (app.js:446). Without this,
-//               guests get a silent "Confirm Attendance" failure.
-//   media-src   'self' — background-music.mp3 / voice-note.mp3 are served locally
-//   frame-src   'none' — the page has no iframes; Maps/Calendar use window.open
-// Deliberately NO 'unsafe-eval' and no Clerk/Stripe/Supabase hosts: this page
-// has no session and must never be able to reach the app's auth or billing APIs.
+//   connect-src hook.eu1.make.com — the wedding RSVP webhook. Without it guests
+//               get a silent "Confirm Attendance" failure. The Jasmine page makes
+//               no network calls at all, so this is unused there and harmless:
+//               a static page with no session has nothing to exfiltrate.
+//   media-src   'self' — Jasmine's song files are served locally from public/
+//   frame-src   'none' — neither page uses iframes; Maps/Calendar use window.open
+//
+// Deliberately NO 'unsafe-eval', and no Clerk/Stripe/Supabase/Sentry hosts:
+// these pages have no session and must never reach the app's auth, billing, or
+// telemetry endpoints.
 const JSDELIVR = "https://cdn.jsdelivr.net";
 
-export const WEDDING_CSP = [
+export const STATIC_SITE_CSP = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline' ${JSDELIVR}`,
   `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com ${JSDELIVR}`,
