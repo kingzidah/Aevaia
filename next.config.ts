@@ -41,10 +41,14 @@ const securityHeaders = [
   { key: "X-Frame-Options", value: "DENY" },
   // Sends the full URL as Referer within the same origin; only the origin across origins
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-  // Disables browser features HeartCraft does not use
+  // Disables browser features HeartCraft does not use.
+  // camera=(self) — required by the gate scanner at /wedding/scan, which reads
+  // guest QR codes through getUserMedia. `camera=()` blocks the camera for ALL
+  // origins including our own, so the scanner would fail to start with a
+  // NotAllowedError and no obvious cause. Scoped to self only.
   {
     key: "Permissions-Policy",
-    value: "camera=(), microphone=(), geolocation=(), payment=(self), usb=()",
+    value: "camera=(self), microphone=(), geolocation=(), payment=(self), usb=()",
   },
   // Forces HTTPS for 2 years and includes subdomains in the preload list.
   // Safe on Vercel (always HTTPS); remove if you need to serve over HTTP locally.

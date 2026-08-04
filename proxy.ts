@@ -26,6 +26,9 @@ const isPublicRoute = createRouteMatcher([
   "/api/webhook(.*)", // Stripe / Clerk webhooks (signed separately)
   "/api/gift(.*)",    // gift check-in (runs pre-auth on the viewer)
   "/api/rsvp(.*)",   // RSVP links shared with unauthenticated guests
+  "/api/wedding/rsvp",     // wedding invite RSVP — guests have no accounts
+  "/api/wedding/check-in", // gate scanner; guarded by its own staff PIN,
+                           // not by Clerk (bouncers have no accounts)
   "/gift/(.*)",       // legacy gift viewer
   "/privacy",
   "/terms",
@@ -47,7 +50,16 @@ export const proxy = clerkMiddleware(async (auth, req) => {
   // that contains "opeyemianduriel" (e.g. opeyemianduriel.localhost:3000 or
   // opeyemianduriel.aevaia.com). Returns before auth so Clerk never runs.
   const hostname = req.headers.get('host') ?? '';
-  if (hostname.includes('opeyemianduriel')) {
+
+  // /api/* is deliberately NOT rewritten, even on a subdomain host. Both
+  // rewrites below prefix every path with the site's directory, so without this
+  // an in-page fetch("/api/wedding/rsvp") from the invite would become
+  // /wedding-demo/api/wedding/rsvp and 404 — the RSVP would fail silently for
+  // every guest. Falling through lets those calls reach the real route
+  // handlers, still subject to the public-route allowlist above.
+  const isApiRequest = req.nextUrl.pathname.startsWith('/api/');
+
+  if (!isApiRequest && hostname.includes('opeyemianduriel')) {
     let newPath = req.nextUrl.pathname;
     if (newPath === '/') newPath = '/index.html';
     if (!newPath.startsWith('/wedding-demo')) {
@@ -61,7 +73,7 @@ export const proxy = clerkMiddleware(async (auth, req) => {
   // Serves public/jasmine/ as a standalone static site on any hostname that
   // contains "jasmine" (e.g. jasmine.localhost:3000 or jasmine.aevaia.com).
   // Returns before auth so Clerk never runs. Mirrors the wedding-demo rewrite.
-  if (hostname.includes('jasmine')) {
+  if (!isApiRequest && hostname.includes('jasmine')) {
     let newPath = req.nextUrl.pathname;
     if (newPath === '/') newPath = '/index.html';
     if (!newPath.startsWith('/jasmine')) {
