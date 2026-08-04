@@ -26,6 +26,8 @@ const isPublicRoute = createRouteMatcher([
   "/api/webhook(.*)", // Stripe / Clerk webhooks (signed separately)
   "/api/gift(.*)",    // gift check-in (runs pre-auth on the viewer)
   "/api/rsvp(.*)",   // RSVP links shared with unauthenticated guests
+  "/api/waitlist",   // landing-page waitlist signup — visitors have no accounts
+  "/api/enquiry",    // landing-page "build it for me" enquiry, same reason
   "/api/wedding/rsvp",     // wedding invite RSVP — guests have no accounts
   "/api/wedding/check-in", // gate scanner; guarded by its own staff PIN,
                            // not by Clerk (bouncers have no accounts)
