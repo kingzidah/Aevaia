@@ -377,8 +377,8 @@ button, .gallery-item, .close-modal {
     overflow-y: hidden;
     scroll-snap-type: x mandatory;
     scroll-behavior: smooth;
-    scroll-padding-inline: 10%;
-    padding: 4px 10% 8px;
+    scroll-padding-inline: 8%;
+    padding: 4px 8% 8px;
     margin-bottom: 4px;
     /* Keep the swipe horizontal — without this a diagonal drag scrolls the
        scene vertically and the carousel feels like it is fighting the page. */
@@ -388,16 +388,22 @@ button, .gallery-item, .close-modal {
 }
 .gallery-carousel::-webkit-scrollbar { display: none; }
 
-/* Each slide is one photo. 80% width leaves the neighbouring card peeking at
-   the edge, which is the cue that the strip can be swiped. */
+/* Each slide is one photo, full-bleed. 80% width leaves the neighbouring card
+   peeking at the edge, which is the cue that the strip can be swiped.
+   No white matte and no padding: the picture IS the card, edge to edge, the way
+   app-switcher cards look. The card's aspect-ratio defines the shape and the
+   image fills it. */
 .gallery-frame {
-    flex: 0 0 80%;
+    flex: 0 0 86%;
+    /* 3/4 deliberately, not taller: the photos are 0.79, 0.66 and 0.75 wide-to-
+       tall, so a taller card would crop the sides of the two wider ones and
+       risk clipping an arm or a shoulder out of a couple shot. */
+    aspect-ratio: 3 / 4;
     scroll-snap-align: center;
     scroll-snap-stop: always;
-    border-radius: 14px; overflow: hidden;
-    background: white; padding: 6px;
-    box-shadow: 0 16px 45px rgba(90, 26, 32, 0.18),
-                0 0 0 1px rgba(155, 58, 71, 0.1);
+    border-radius: 20px; overflow: hidden;
+    background: none; padding: 0;
+    box-shadow: 0 18px 50px rgba(90, 26, 32, 0.28);
     cursor: pointer; opacity: 0;
     transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
                 box-shadow 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -420,17 +426,19 @@ button, .gallery-item, .close-modal {
     box-shadow: 0 28px 65px rgba(90, 26, 32, 0.26);
 }
 
-/* object-fit: contain, not cover — the couple asked to see the photos in full,
-   and cover would crop them again.
-   aspect-ratio rather than a fixed vh height: the three photos are 0.79, 0.66,
-   and 0.75 wide-to-tall, so any single fixed height letterboxed at least one of
-   them badly. 3/4 sits in the middle of that range, giving every card the same
-   size with the least empty space around the picture. */
+/* cover, so the picture fills the card completely with no empty space around
+   it. contain was the mistake in the previous pass — it fitted the photo inside
+   the card and left white bars, which is exactly what "it should be full" ruled
+   out.
+   The cards are 3/4 and the photos are 0.79, 0.66, and 0.75 wide-to-tall, so
+   the crop is small: couple3 is exact, couple1 loses a sliver at the sides, and
+   couple2 a little top and bottom. object-position keeps that trim off the
+   faces. */
 .gallery-frame img {
-    width: 100%; height: auto; display: block;
-    aspect-ratio: 3 / 4;
-    object-fit: contain;
-    border-radius: 9px;
+    width: 100%; height: 100%; display: block;
+    object-fit: cover;
+    object-position: center 30%;
+    border-radius: inherit;
 }
 
 /* ── Swipe dots ───────────────────────────────────────────────────────────── */
