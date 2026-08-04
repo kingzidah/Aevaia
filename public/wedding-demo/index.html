@@ -59,16 +59,25 @@
     <section id="scene-gallery" class="scene hidden">
         <h2 class="scene-title">Our Love</h2>
 
-        <div class="gallery-grid">
-            <div class="gallery-frame main-photo" onclick="openModal('/wedding-demo/assets/couple1.jpg')">
+        <!-- Horizontal peek carousel. Uses native CSS scroll-snap rather than a
+             carousel library: touch swiping, momentum, and accessibility come
+             free from the browser, and it adds no script for the CSP to allow. -->
+        <div class="gallery-carousel" id="gallery-carousel">
+            <div class="gallery-frame" onclick="openModal('/wedding-demo/assets/couple1.jpg')">
                 <img src="/wedding-demo/assets/couple1.jpg" alt="Opeyemi and Uriel" loading="lazy">
             </div>
-            <div class="gallery-frame side-photo" onclick="openModal('/wedding-demo/assets/couple2.jpg')">
+            <div class="gallery-frame" onclick="openModal('/wedding-demo/assets/couple2.jpg')">
                 <img src="/wedding-demo/assets/couple2.jpg" alt="Opeyemi and Uriel" loading="lazy">
             </div>
-            <div class="gallery-frame side-photo" onclick="openModal('/wedding-demo/assets/couple3.jpg')">
+            <div class="gallery-frame" onclick="openModal('/wedding-demo/assets/couple3.jpg')">
                 <img src="/wedding-demo/assets/couple3.jpg" alt="Opeyemi and Uriel" loading="lazy">
             </div>
+        </div>
+
+        <div class="gallery-dots" id="gallery-dots" role="group" aria-label="Photo navigation">
+            <button type="button" class="gallery-dot is-active" data-index="0" aria-label="Photo 1"></button>
+            <button type="button" class="gallery-dot" data-index="1" aria-label="Photo 2"></button>
+            <button type="button" class="gallery-dot" data-index="2" aria-label="Photo 3"></button>
         </div>
 
         <button class="next-btn" onclick="nextScene('scene-letter')">

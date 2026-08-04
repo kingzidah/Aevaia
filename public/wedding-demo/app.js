@@ -117,6 +117,82 @@ window.openModal = (src) => {
 };
 window.closeModal = () => document.getElementById('image-modal').classList.add('hidden');
 
+/* ----- gallery carousel dots -----
+   The swiping itself is pure CSS scroll-snap; this only keeps the dots in sync
+   and lets them be tapped. Position is derived from scrollLeft rather than
+   tracked in a variable, so a flick that skips a slide still lands on the right
+   dot. Throttled with rAF because scroll fires far faster than paint. */
+(() => {
+    const track = document.getElementById('gallery-carousel');
+    const dots  = document.getElementById('gallery-dots');
+    if (!track || !dots) return;
+
+    const buttons = [...dots.querySelectorAll('.gallery-dot')];
+
+    const syncDots = () => {
+        const slide = track.scrollWidth / buttons.length;
+        // The gallery scene starts display:none, so on first run scrollWidth is
+        // 0 and this divides by zero — Math.round(NaN) is NaN, every comparison
+        // below fails, and NO dot ends up active. Bail until the track has real
+        // dimensions; the ResizeObserver re-runs this once the scene is shown.
+        if (!slide || !Number.isFinite(slide)) return;
+        const index = Math.min(
+            buttons.length - 1,
+            Math.max(0, Math.round(track.scrollLeft / slide)),
+        );
+        buttons.forEach((b, i) => b.classList.toggle('is-active', i === index));
+    };
+
+    let ticking = false;
+    track.addEventListener('scroll', () => {
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(() => { syncDots(); ticking = false; });
+    }, { passive: true });
+
+    // Fires when the scene becomes visible and the track finally has a width.
+    if (typeof ResizeObserver !== 'undefined') {
+        new ResizeObserver(syncDots).observe(track);
+    }
+
+    // Jumping to a slide when a dot is tapped.
+    //
+    // Two things had to be worked around. Computing the destination from
+    // offsetLeft is wrong (it is measured from the offset parent, not the scroll
+    // container), so the position is taken from getBoundingClientRect deltas
+    // instead — always correct regardless of layout. And `scroll-snap-type:
+    // mandatory` re-snaps *during* a programmatic smooth scroll, which
+    // intermittently dragged the carousel back to the slide it started on; snap
+    // is therefore switched off for the duration and restored once settled.
+    // Swiping by hand is unaffected either way — that is pure CSS.
+    let restoreSnap;
+    const scrollToIndex = (i) => {
+        const target = track.children[i];
+        if (!target) return;
+        const tr = track.getBoundingClientRect();
+        const cr = target.getBoundingClientRect();
+        const delta = (cr.left + cr.width / 2) - (tr.left + tr.width / 2);
+
+        track.style.scrollSnapType = 'none';
+        track.scrollBy({ left: delta, behavior: 'smooth' });
+
+        clearTimeout(restoreSnap);
+        restoreSnap = setTimeout(() => {
+            track.style.scrollSnapType = '';
+            syncDots();
+        }, 600);
+    };
+
+    buttons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            scrollToIndex(Number(btn.dataset.index));
+            pulsePhone([10]);
+        });
+    });
+
+    syncDots();
+})();
+
 /* =========================================
    7. TYPEWRITER (LETTER)
    ========================================= */
