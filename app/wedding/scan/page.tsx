@@ -235,7 +235,7 @@ export default function GateScanner() {
           <input
             value={manualCode}
             onChange={(e) => setManualCode(e.target.value)}
-            placeholder="Or type code: OU-XXXXXXXX"
+            placeholder="Or type the code, e.g. OU-2K6T5N"
             style={{ ...S.input, marginBottom: 0 }}
             autoCapitalize="characters"
           />
@@ -270,7 +270,16 @@ function outcomeBanner(outcome: Outcome | null) {
           : "This ticket has been used",
       };
     case "notfound":
-      return { bg: "#a11", fg: "#fff", icon: "✕", title: "Not on the guest list", detail: outcome.code };
+      // Say what to do, not just what went wrong. A bouncer holding up a queue
+      // needs the next action, and a real guest can be missing from the list for
+      // innocent reasons — an RSVP that never went through, a forwarded ticket.
+      return {
+        bg: "#a11",
+        fg: "#fff",
+        icon: "✕",
+        title: "Not on the guest list",
+        detail: `${outcome.code} — check the printed list before turning anyone away`,
+      };
     case "invalid":
       return { bg: "#a11", fg: "#fff", icon: "✕", title: "Not a wedding ticket", detail: "Wrong QR code" };
     case "error":
