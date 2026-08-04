@@ -370,6 +370,18 @@ button, .gallery-item, .close-modal {
    full, and a fixed slide height keeps the carousel from jumping between
    portrait and landscape shots. */
 .gallery-carousel {
+    /* Card width is 80% of the SCREEN, set in viewport units so it means that
+       literally. A percentage flex-basis would resolve against this track's
+       content box (already reduced by the scene's padding and this element's
+       own padding), which is how "86%" ended up measuring 68% of the screen.
+       Capped at 400px so it does not become absurd on a desktop window. */
+    --card-w: min(80vw, 400px);
+    /* The track's real width: the scene pads 20px each side, and the track is
+       capped at 480px. Stated explicitly because a percentage padding resolves
+       against the containing block, not this element, so it would be wrong at
+       the point the max-width kicks in. */
+    --track-w: min(480px, 100vw - 40px);
+
     width: 100%; max-width: 480px; flex: 0 0 auto;
     display: flex;
     gap: 12px;
@@ -377,8 +389,10 @@ button, .gallery-item, .close-modal {
     overflow-y: hidden;
     scroll-snap-type: x mandatory;
     scroll-behavior: smooth;
-    scroll-padding-inline: 8%;
-    padding: 4px 8% 8px;
+    /* Exactly half the leftover, so the first card sits dead centre at
+       scrollLeft 0 instead of hugging the left edge. */
+    scroll-padding-inline: calc((var(--track-w) - var(--card-w)) / 2);
+    padding: 4px calc((var(--track-w) - var(--card-w)) / 2) 8px;
     margin-bottom: 4px;
     /* Keep the swipe horizontal — without this a diagonal drag scrolls the
        scene vertically and the carousel feels like it is fighting the page. */
@@ -394,7 +408,7 @@ button, .gallery-item, .close-modal {
    app-switcher cards look. The card's aspect-ratio defines the shape and the
    image fills it. */
 .gallery-frame {
-    flex: 0 0 86%;
+    flex: 0 0 var(--card-w);
     /* 3/4 deliberately, not taller: the photos are 0.79, 0.66 and 0.75 wide-to-
        tall, so a taller card would crop the sides of the two wider ones and
        risk clipping an arm or a shoulder out of a couple shot. */
