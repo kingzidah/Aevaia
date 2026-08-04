@@ -6,8 +6,8 @@ import { useState } from "react";
 // Kept together at the top so they can be changed without reading the markup.
 // WHATSAPP_NUMBER is digits only, international format, no + or spaces —
 // that is what wa.me requires.
-const WHATSAPP_NUMBER = "2348000000000"; // TODO: replace with the real number
-const CONTACT_EMAIL = "hello@aevaia.com"; // TODO: replace with the real address
+const WHATSAPP_NUMBER = "4917675460351"; // WhatsApp Business, +49 176 75460351
+const CONTACT_EMAIL = "helloaevaia@gmail.com";
 const WHATSAPP_PREFILL =
   "Hi! I'd like an Aevaia invite built for my event.";
 
