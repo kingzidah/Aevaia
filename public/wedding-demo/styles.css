@@ -1406,3 +1406,89 @@ button, .gallery-item, .close-modal {
     .aevaia-submit-btn { width: 100%; }
     .aevaia-headline   { font-size: 1.5rem; }
 }
+
+/* ── AEVAIA scene: error state + manual-build offer ───────────────────────── */
+/* Added alongside the waitlist so guests who have just seen the invite have a
+   route to commission one, not only a list to join. */
+#aevaia-waitlist .aw-error {
+    color: #f87171;
+    font-size: 0.85rem;
+    margin-top: 16px;
+}
+#aevaia-waitlist .aw-error.hidden { display: none; }
+
+#aevaia-waitlist .aw-divider {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    max-width: 480px;
+    margin: 34px 0 26px;
+}
+#aevaia-waitlist .aw-divider::before,
+#aevaia-waitlist .aw-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: #262626;
+}
+#aevaia-waitlist .aw-divider span {
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #525252;
+}
+
+#aevaia-waitlist .aw-alt-title {
+    font-size: 1.15rem;
+    font-weight: 300;
+    color: #ffffff;
+    margin: 0 0 8px;
+}
+
+#aevaia-waitlist .aw-alt-text {
+    font-size: 0.85rem;
+    color: #737373;
+    max-width: 400px;
+    line-height: 1.65;
+    margin: 0 0 20px;
+}
+
+#aevaia-waitlist .aw-contact-row {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+    max-width: 480px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+#aevaia-waitlist .aw-wa,
+#aevaia-waitlist .aw-mail {
+    flex: 1;
+    min-width: 140px;
+    text-align: center;
+    text-decoration: none;
+    border-radius: 9999px;
+    padding: 13px 22px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    font-family: sans-serif;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+#aevaia-waitlist .aw-wa {
+    background: #25D366;
+    color: #ffffff;
+}
+#aevaia-waitlist .aw-wa:hover { background: #1eb857; }
+
+#aevaia-waitlist .aw-mail {
+    border: 1px solid #404040;
+    color: #ffffff;
+}
+#aevaia-waitlist .aw-mail:hover { border-color: #a855f7; }
+
+@media (max-width: 480px) {
+    #aevaia-waitlist .aw-contact-row { flex-direction: column; }
+}
