@@ -19,10 +19,20 @@ import { rateLimit, getIp } from "@/lib/rate-limit";
 // Ticket QRs may hold the bare code or a URL ending in it. Accept both so the
 // Make.com scenario can embed whichever is easier, and so a bouncer can type a
 // code by hand when a phone screen is too cracked or dim to scan.
+//
+// Current codes win over legacy ones: the OU- pattern is tried first, so a URL
+// that happens to contain six hex characters somewhere (a tracking id, a colour
+// like "ffffff") cannot shadow the real ticket code sitting next to it. The
+// legacy branch is anchored to the whole string for the same reason — it only
+// matches a QR that contains nothing but the old six-character code.
 function extractTicketCode(scanned: string): string | null {
   const direct = scanned.trim().toUpperCase();
-  const match = direct.match(/OU-[0-9A-HJ-NP-Z]{8}/);
-  return match ? match[0] : null;
+
+  const current = direct.match(/OU-[0-9A-HJ-NP-Z]{8}/);
+  if (current) return current[0];
+
+  const legacy = direct.match(/^[0-9A-F]{6}$/);
+  return legacy ? legacy[0] : null;
 }
 
 function pinMatches(supplied: string, expected: string): boolean {
