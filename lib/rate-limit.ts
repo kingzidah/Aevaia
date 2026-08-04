@@ -1,5 +1,6 @@
 import { Ratelimit, type Duration } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
+import { slog } from "./logger";
 
 // Lazy singleton — not constructed until the first rateLimit() call so a
 // missing env var during module import does not crash the entire API route.
@@ -42,12 +43,37 @@ export interface RateLimitResult {
 
 export async function rateLimit(
   key: string,
-  opts: { limit: number; windowMs: number },
+  // `failClosed` makes the Redis-unavailable behaviour explicit per caller:
+  //   • true  → cost-bearing routes (chat, generate, ai/generate, generate/image).
+  //             When Upstash is absent or errors, REJECT rather than wave traffic
+  //             through unmetered onto paid OpenRouter/Replicate calls.
+  //   • false → default. Non-cost-bearing authenticated routes (project-save,
+  //             gifts-create, …) keep failing OPEN so a Redis blip never breaks
+  //             a legitimate user's save. This is a deliberate availability trade-off.
+  // Either way we log loudly (stderr via slog) whenever Redis is unavailable.
+  opts: { limit: number; windowMs: number; failClosed?: boolean },
 ): Promise<RateLimitResult> {
+  // Only the bucket label is logged (e.g. "chat", "ai-generate") — never the
+  // full key, which embeds an IP or user id we don't want in logs (GDPR).
+  const scope = key.split(":")[0];
+
+  // Shared result for every Redis-unavailable branch. failClosed decides the verdict.
+  const unavailable = (reason: string): RateLimitResult => {
+    slog("error", "rate-limit", "redis.unavailable", {
+      reason,
+      scope,
+      failClosed: Boolean(opts.failClosed),
+      verdict: opts.failClosed ? "blocked" : "allowed",
+    });
+    return opts.failClosed
+      ? { success: false, remaining: 0, retryAfter: 60 }
+      : { success: true, remaining: -1, retryAfter: 0 };
+  };
+
   const client = getRedis();
   if (!client) {
-    // No Redis configured (env vars absent in local dev) — fail open.
-    return { success: true, remaining: -1, retryAfter: 0 };
+    // No Redis configured (env vars absent in local dev, or misconfigured prod).
+    return unavailable("not_configured");
   }
   try {
     const { success, remaining, reset } = await getLimiter(client, opts.limit, opts.windowMs).limit(key);
@@ -56,10 +82,9 @@ export async function rateLimit(
       remaining,
       retryAfter: success ? 0 : Math.ceil((reset - Date.now()) / 1000),
     };
-  } catch (err) {
-    // Redis temporarily unavailable — fail open rather than returning a 500 to the client.
-    console.warn("[rate-limit] Redis error, failing open:", err);
-    return { success: true, remaining: -1, retryAfter: 0 };
+  } catch {
+    // Redis reachable at config time but the request failed (network, eviction…).
+    return unavailable("request_error");
   }
 }
 

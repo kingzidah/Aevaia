@@ -21,12 +21,6 @@
 
     <div class="cursor-trail" id="cursor-trail"></div>
 
-    <audio id="bg-music" loop>
-        <source src="/wedding-demo/assets/background-music.mp3" type="audio/mpeg">
-    </audio>
-    <audio id="voice-note">
-        <source src="/wedding-demo/assets/voice-note.mp3" type="audio/mpeg">
-    </audio>
 
     <section id="scene-landing" class="scene active">
         <div class="landing-content">
@@ -92,8 +86,8 @@
 
     <section id="scene-letter" class="scene hidden">
         <div class="glass-envelope">
-            <h1 class="dear-name">To our dearest family &amp; friends,</h1>
             <p class="verse-subtitle">"He makes everything beautiful in its time." – Ecclesiastes 3:11</p>
+            <h1 class="dear-name">To our dearest family &amp; friends,</h1>
 
             <div class="typewriter-container">
                 <p id="typewriter-text"></p>
@@ -105,19 +99,6 @@
                     <p class="hashtag-letter">#OUFOREVER26</p>
                 </div>
 
-                <div id="voice-note-player" class="voice-note-container" title="A message from the couple">
-                    <div class="mic-icon-circle"><i class="fas fa-microphone"></i></div>
-                    <div class="waveform-container">
-                        <div class="waveform-bar bar-1"></div><div class="waveform-bar bar-2"></div>
-                        <div class="waveform-bar bar-3"></div><div class="waveform-bar bar-4"></div>
-                        <div class="waveform-bar bar-5"></div><div class="waveform-bar bar-6"></div>
-                        <div class="waveform-bar bar-7"></div><div class="waveform-bar bar-8"></div>
-                        <div class="waveform-bar bar-9"></div><div class="waveform-bar bar-10"></div>
-                        <div class="waveform-bar bar-11"></div><div class="waveform-bar bar-12"></div>
-                        <div class="waveform-bar bar-13"></div><div class="waveform-bar bar-14"></div>
-                        <div class="waveform-bar bar-15"></div><div class="waveform-bar bar-16"></div>
-                    </div>
-                </div>
             </div>
         </div>
 
@@ -150,28 +131,6 @@
                 <div class="rsvp-field">
                     <label class="rsvp-label" for="rsvp-email">Email Address</label>
                     <input type="email" id="rsvp-email" class="rsvp-input" placeholder="Enter your email address..." autocomplete="email">
-                </div>
-                <div class="rsvp-field">
-                    <label class="rsvp-label">Which side do you belong to?</label>
-                    <div class="custom-select-wrapper" id="rsvp-side-wrapper">
-                        <div class="custom-select-trigger" id="rsvp-side-trigger"
-                             role="combobox" aria-label="Which side do you belong to?"
-                             aria-expanded="false" aria-haspopup="listbox" tabindex="0">
-                            <span class="custom-select-display placeholder" id="rsvp-side-display">Choose your group...</span>
-                            <span class="custom-select-chevron">&#9662;</span>
-                        </div>
-                        <ul class="custom-select-menu" id="rsvp-side-menu" role="listbox" aria-label="Guest group">
-                            <li class="custom-select-item" data-value="Family of the Bride" role="option">Family of the Bride 🌸</li>
-                            <li class="custom-select-item" data-value="Family of the Groom" role="option">Family of the Groom 👔</li>
-                            <li class="custom-select-item" data-value="Friends of the Couple" role="option">Friends of the Couple ✨</li>
-                            <li class="custom-select-item" data-value="Rubycom" role="option">Rubycom 🏢</li>
-                            <li class="custom-select-item" data-value="PTML" role="option">PTML 🚢</li>
-                            <li class="custom-select-item" data-value="Parents' Friends (Bride's Mother)" role="option">Parents' Friends (Bride's Mother) 🕊️</li>
-                            <li class="custom-select-item" data-value="Parents' Friends (Bride's Father)" role="option">Parents' Friends (Bride's Father) 🥂</li>
-                            <li class="custom-select-item" data-value="Parents' Friends (Groom's Mother)" role="option">Parents' Friends (Groom's Mother) 🤍</li>
-                            <li class="custom-select-item" data-value="Parents' Friends (Groom's Father)" role="option">Parents' Friends (Groom's Father) 🍾</li>
-                        </ul>
-                    </div>
                 </div>
                 <button type="button" class="rsvp-submit-btn" id="rsvp-submit-yes">Confirm Attendance 💍</button>
                 <p id="rsvp-submit-error" class="rsvp-submit-error hidden">Something went wrong. Please check your connection and try again.</p>
