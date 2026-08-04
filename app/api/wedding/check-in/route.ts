@@ -46,13 +46,22 @@ export async function POST(request: Request) {
     );
   }
 
-  // ── Rate limit ────────────────────────────────────────────────────────────
-  // Generous for a real gate (a queue moves fast) but low enough that the PIN
-  // cannot be brute-forced from one address.
+  // ── Volume limit ──────────────────────────────────────────────────────────
+  // Generous: a real gate scans fast and a blocked bouncer holds up the queue.
+  // This bucket is about total request volume, NOT about guarding the PIN —
+  // see the separate failure bucket below, which is what actually stops
+  // brute-forcing. Counting both in one bucket would mean either a limit too
+  // high to stop guessing or too low to run a gate.
+  //
+  // failClosed: a rate limiter that evaporates when Redis blips is not a rate
+  // limiter. This endpoint reads the guest list, so it must not be reachable
+  // unmetered. A gate outage falls back to the printed list; an unthrottled
+  // guest-list endpoint does not have a fallback.
   const ip = getIp(request);
   const rl = await rateLimit(`wedding-checkin:${ip}`, {
     limit: 600,
     windowMs: 60 * 60 * 1000,
+    failClosed: true,
   });
   if (!rl.success) {
     return NextResponse.json(
@@ -74,7 +83,26 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: firstZodError(parsed.error) }, { status: 400 });
   }
 
+  // ── PIN, with a dedicated lockout on FAILED attempts ──────────────────────
+  // Incremented only on a wrong PIN, so bouncers using the correct PIN never
+  // consume any of this budget no matter how many guests they scan. That is
+  // what lets it be strict: 10 wrong guesses per hour per IP makes even a
+  // 4-digit PIN (10 000 combinations) take roughly 41 days to exhaust from one
+  // address, versus about 17 hours under the volume limit alone.
+  //
+  // failClosed again — if the counter cannot be kept, guesses are not accepted.
   if (!pinMatches(parsed.data.pin, gatePin)) {
+    const fails = await rateLimit(`wedding-pinfail:${ip}`, {
+      limit: 10,
+      windowMs: 60 * 60 * 1000,
+      failClosed: true,
+    });
+    if (!fails.success) {
+      return NextResponse.json(
+        { error: "Too many incorrect PIN attempts. Try again later." },
+        { status: 429, headers: { "Retry-After": String(fails.retryAfter) } },
+      );
+    }
     return NextResponse.json({ error: "Wrong gate PIN" }, { status: 401 });
   }
 

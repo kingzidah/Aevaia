@@ -36,10 +36,17 @@ export async function POST(request: Request) {
   // Higher than /api/rsvp's 10/hour: a household may legitimately RSVP several
   // guests from one phone on the same network, and a blocked real guest is
   // worse here than a few junk rows.
+  //
+  // failClosed: this is an UNAUTHENTICATED public write, and the table it
+  // writes to is the one bouncers rely on at the gate. Failing open would mean
+  // that during a Redis outage anyone could flood the guest list with junk
+  // rows — and a poisoned guest list on the day is far harder to recover from
+  // than a guest retrying an RSVP a minute later.
   const ip = getIp(request);
   const rl = await rateLimit(`wedding-rsvp:${ip}`, {
     limit: 20,
     windowMs: 60 * 60 * 1000,
+    failClosed: true,
   });
   if (!rl.success) {
     return NextResponse.json(
