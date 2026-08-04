@@ -22,10 +22,17 @@ import { rateLimit, getIp } from "@/lib/rate-limit";
 // the gate, which is exactly when you cannot afford ambiguity.
 const TICKET_ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
 
+// Six characters, not eight. A QR does not care how long the code is, but an
+// SMS cannot carry a QR at all — the guest reads the code aloud or types it,
+// and every extra character is another chance to get it wrong with a queue
+// waiting. 32^6 is still 1.07 billion combinations, and the check-in route
+// allows only 600 attempts per hour per IP, so guessing one is not a route in.
+const TICKET_LENGTH = 6;
+
 function generateTicketCode(): string {
   let body = "";
   // randomInt (CSPRNG), not Math.random: a guessable code is a free entry.
-  for (let i = 0; i < 8; i++) {
+  for (let i = 0; i < TICKET_LENGTH; i++) {
     body += TICKET_ALPHABET[randomInt(TICKET_ALPHABET.length)];
   }
   return `OU-${body}`;

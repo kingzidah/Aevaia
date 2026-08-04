@@ -28,11 +28,22 @@ import { rateLimit, getIp } from "@/lib/rate-limit";
 function extractTicketCode(scanned: string): string | null {
   const direct = scanned.trim().toUpperCase();
 
-  const current = direct.match(/OU-[0-9A-HJ-NP-Z]{8}/);
+  const current = direct.match(/OU-[0-9A-HJKMNP-TV-Z]{6,8}/);
   if (current) return current[0];
 
-  const legacy = direct.match(/^[0-9A-F]{6}$/);
-  return legacy ? legacy[0] : null;
+  // A bare six-character code: either typed off an SMS without the prefix, or a
+  // legacy June code. Anchored to the whole string so a stray six characters
+  // inside a longer URL cannot be mistaken for a ticket.
+  const bare = direct.match(/^[0-9A-HJKMNP-TV-Z]{6}$/) ?? direct.match(/^[0-9A-F]{6}$/);
+  return bare ? bare[0] : null;
+}
+
+// A typed code may arrive with or without the "OU-" prefix, and legacy codes
+// never had one. Look for every form the same six characters could be stored
+// under rather than guessing which era the guest belongs to.
+function candidateCodes(code: string): string[] {
+  if (code.startsWith("OU-")) return [code];
+  return [`OU-${code}`, code];
 }
 
 function pinMatches(supplied: string, expected: string): boolean {
@@ -122,11 +133,13 @@ export async function POST(request: Request) {
   }
 
   // ── Look the guest up ─────────────────────────────────────────────────────
-  const { data: guest, error } = await supabaseAdmin
+  const { data: guests, error } = await supabaseAdmin
     .from("wedding_guests")
-    .select("id, name, checked_in_at")
-    .eq("ticket_code", code)
-    .maybeSingle();
+    .select("id, name, checked_in_at, ticket_code")
+    .in("ticket_code", candidateCodes(code))
+    .limit(1);
+
+  const guest = guests?.[0] ?? null;
 
   if (error) {
     console.error("[api/wedding/check-in] Supabase lookup error:", error);

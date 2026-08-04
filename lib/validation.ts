@@ -198,19 +198,27 @@ export const weddingRsvpSchema = z.object({
 // Fixed alphabet and length, so anything else is rejected before it reaches the
 // database — a scanner pointed at an unrelated QR code fails fast.
 //
-// Two formats are accepted:
-//   OU-XXXXXXXX  current, minted by /api/wedding/rsvp
-//   XXXXXX       legacy 6-hex, minted inside the Make.com scenario before the
-//                gate scanner existed. Guests who RSVP'd in June already have
-//                these in their inbox; rejecting them would turn real invited
-//                guests away at the door for a reason they could not know about.
-// Compared uppercase throughout, and legacy codes are stored uppercase, so the
-// lowercase hex in those older QR images still matches.
+// Three shapes are accepted, all resolved against the same column:
+//   OU-XXXXXX    current, minted by /api/wedding/rsvp
+//   XXXXXX       the same code with the prefix dropped — a guest reading it off
+//                an SMS will usually type just the six characters, and making
+//                them get "OU-" right at a busy gate helps nobody
+//   XXXXXX (hex) legacy codes minted inside the Make.com scenario before the
+//                scanner existed. Guests who RSVP'd in June hold these already;
+//                rejecting them would turn real invited guests away for a
+//                reason they could not know about.
+// The 6-to-8 range covers codes issued before the length was shortened.
+// Everything is compared uppercase, and legacy codes are stored uppercase, so
+// the lowercase hex in those older QR images still matches.
+// Character class is the exact ticket alphabet — no I, L, O or U.
 export const weddingTicketSchema = z
   .string()
   .trim()
   .toUpperCase()
-  .regex(/^(OU-[0-9A-HJ-NP-Z]{8}|[0-9A-F]{6})$/, "Not a valid ticket code");
+  .regex(
+    /^(OU-[0-9A-HJKMNP-TV-Z]{6,8}|[0-9A-HJKMNP-TV-Z]{6}|[0-9A-F]{6})$/,
+    "Not a valid ticket code",
+  );
 
 export const weddingCheckInSchema = z.object({
   // Raw scanner output. May be the bare code or a full URL containing it; the
