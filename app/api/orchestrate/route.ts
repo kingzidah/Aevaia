@@ -13,7 +13,9 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@clerk/nextjs/server';
 import { getOrchestratorService } from '@/services/ai/orchestrator';
+import { rateLimit } from '@/lib/rate-limit';
 import { slog } from '@/lib/logger';
 import type { OrchestrationRequest, ProjectContext } from '@/types/orchestrator';
 
@@ -30,6 +32,9 @@ const PRIVATE_HEADERS: Record<string, string> = {
 };
 
 // ── Input guard ───────────────────────────────────────────────────────────────
+
+// Generous ceiling for a creative brief; blocks cost-abuse via megabyte prompts.
+const MAX_PROMPT_CHARS = 4_000;
 
 function isValidContext(c: unknown): c is ProjectContext {
   if (typeof c !== 'object' || c === null) return false;
@@ -56,6 +61,34 @@ export async function POST(req: NextRequest) {
     'X-Request-Id': requestId,
   };
 
+  // ── Auth: reject unauthenticated callers before any provider call ─────────
+  // Defence in depth — the proxy gates this in production, but a handler-level
+  // check closes the dev gap and survives any public-route allowlist drift.
+  // This is the most expensive route in the app (multi-LLM + Replicate fan-out).
+  const { userId } = await auth();
+  if (!userId) {
+    return NextResponse.json(
+      { success: false, error: 'Authentication required' },
+      { status: 401, headers: responseHeaders },
+    );
+  }
+
+  // ── Rate limit: 10 orchestrations per user per minute ─────────────────────
+  // Each request can fan out to several paid models, so the ceiling is tighter
+  // than single-model routes. failClosed: a Redis outage must not open an
+  // unmetered path onto OpenRouter/Replicate spend.
+  const rl = await rateLimit(`orchestrate:${userId}`, {
+    limit:      10,
+    windowMs:   60 * 1000,
+    failClosed: true,
+  });
+  if (!rl.success) {
+    return NextResponse.json(
+      { success: false, error: "You're generating too quickly. Please wait a moment and try again." },
+      { status: 429, headers: { ...responseHeaders, 'Retry-After': String(rl.retryAfter) } },
+    );
+  }
+
   // ── Body parsing ──────────────────────────────────────────────────────────
   let body: unknown;
   try {
@@ -72,6 +105,13 @@ export async function POST(req: NextRequest) {
   if (typeof rawPrompt !== 'string' || !rawPrompt.trim()) {
     return NextResponse.json(
       { success: false, error: 'rawPrompt is required and must be a non-empty string' },
+      { status: 400, headers: responseHeaders },
+    );
+  }
+
+  if (rawPrompt.length > MAX_PROMPT_CHARS) {
+    return NextResponse.json(
+      { success: false, error: `rawPrompt must be at most ${MAX_PROMPT_CHARS} characters` },
       { status: 400, headers: responseHeaders },
     );
   }

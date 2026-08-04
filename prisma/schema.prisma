@@ -136,6 +136,16 @@ model SupportTicket {
   createdAt DateTime @default(now())
 }
 
+// Idempotency ledger for Stripe webhooks. The Stripe event id is the primary
+// key, so recording it inside the fulfilment transaction makes a duplicate
+// delivery (Stripe guarantees at-least-once) fail the unique constraint and
+// roll the whole transaction back — a webhook retry can never double-credit.
+model ProcessedStripeEvent {
+  id          String   @id // Stripe event id, e.g. evt_1AbCd...
+  type        String
+  processedAt DateTime @default(now())
+}
+
 model WorkspaceAsset {
   id        String    @id @default(uuid())
   projectId String

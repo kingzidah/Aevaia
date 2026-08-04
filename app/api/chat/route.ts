@@ -1,3 +1,4 @@
+import { auth } from "@clerk/nextjs/server";
 import { createOpenAI } from "@ai-sdk/openai";
 import { streamText } from "ai";
 import { chatSchema } from "@/lib/validation";
@@ -95,13 +96,26 @@ const INJECTION_GUARD =
 // ── Route handler ─────────────────────────────────────────────────────────────
 
 export async function POST(request: Request) {
+  // ── Auth: reject unauthenticated callers before any OpenRouter call ───────
+  // Defence in depth — the proxy already gates this in production, but a
+  // handler-level check closes the dev gap and survives any allowlist drift.
+  const { userId } = await auth();
+  if (!userId) {
+    return new Response(
+      JSON.stringify({ error: "Authentication required" }),
+      { status: 401, headers: { "Content-Type": "application/json" } },
+    );
+  }
+
   // ── Rate limit: 30 streaming requests per IP per minute ──────────────────
   // Streaming connections are more expensive to hold open than standard JSON
   // responses, so the limit is slightly higher than the non-streaming AI route
-  // but still bounded.
+  // but still bounded. failClosed: a Redis outage must not open an unmetered
+  // path onto paid OpenRouter calls.
   const rl = await rateLimit(`chat:${getIp(request)}`, {
-    limit:    30,
-    windowMs: 60 * 1000,
+    limit:      30,
+    windowMs:   60 * 1000,
+    failClosed: true,
   });
   if (!rl.success) {
     return new Response(

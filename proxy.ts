@@ -3,7 +3,8 @@
 // the PROXY_FILENAME ("proxy") convention and ignores any middleware.ts present.
 
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest, type NextFetchEvent } from "next/server";
+import { STATIC_SITES, STATIC_SITE_CSP } from "./lib/csp";
 
 // Startup assertion: fail loudly if NODE_ENV is missing or unrecognised so the
 // auth layer never silently misconfigures itself on a custom/misconfigured host.
@@ -18,15 +19,30 @@ if (_env !== "development" && _env !== "production" && _env !== "test") {
 }
 
 // Explicit public-route allowlist — everything else is authenticated.
+//
+// SECURITY — patterns are matched by path-to-regexp and are PREFIX-greedy, so a
+// pattern like "/api/gift(.*)" also matches "/api/gifts/list". Every entry here
+// is therefore anchored as tightly as possible so it exposes ONLY the intended
+// endpoint and never accidentally whitelists a sibling route (e.g. /api/gifts/*).
 const isPublicRoute = createRouteMatcher([
-  "/",               // landing page
-  "/p(.*)",          // public gift viewer
-  "/sign-in(.*)",    // Clerk hosted sign-in
-  "/sign-up(.*)",    // Clerk hosted sign-up
-  "/api/webhook(.*)", // Stripe / Clerk webhooks (signed separately)
-  "/api/gift(.*)",    // gift check-in (runs pre-auth on the viewer)
-  "/api/rsvp(.*)",   // RSVP links shared with unauthenticated guests
-  "/gift/(.*)",       // legacy gift viewer
+  "/",                          // landing page
+  "/p/(.*)",                    // public gift viewer
+  "/sign-in(.*)",               // Clerk hosted sign-in
+  "/sign-up(.*)",               // Clerk hosted sign-up
+  "/api/webhook",               // Stripe webhook (signature-verified)
+  "/api/webhooks/(.*)",         // Clerk/svix webhooks (signature-verified)
+  "/api/gift/check-in",         // guest device check-in (runs pre-auth on viewer)
+  "/api/rsvp",                  // RSVP links shared with unauthenticated guests
+  "/api/wedding/rsvp",          // wedding invite RSVP — guests have no accounts
+  "/api/wedding/check-in",      // gate scanner; guarded by its own staff PIN,
+                                // not by Clerk (bouncers have no accounts)
+  "/monitoring",                // Sentry tunnel (tunnelRoute in next.config.ts).
+                                // Must stay public: errors from signed-out
+                                // visitors on /p/* are exactly the ones worth
+                                // capturing, and an authed tunnel drops them
+                                // silently. Write-only proxy to Sentry — it
+                                // exposes no app data.
+  "/gift/(.*)",                 // legacy gift viewer
   "/privacy",
   "/terms",
   "/contact",
@@ -39,38 +55,11 @@ const isMaintenanceExempt = createRouteMatcher([
   "/sign-in(.*)",     // admin must be able to authenticate
   "/sign-up(.*)",
   "/api/webhook(.*)", // Stripe / Clerk webhooks must never be blocked
+  "/monitoring",      // error reporting must survive maintenance mode — an
+                      // outage is when you most need the errors
 ]);
 
-export const proxy = clerkMiddleware(async (auth, req) => {
-  // ── Wedding subdomain rewrite ───────────────────────────────────────────────
-  // Serves public/wedding-demo/ as a standalone static site on any hostname
-  // that contains "opeyemianduriel" (e.g. opeyemianduriel.localhost:3000 or
-  // opeyemianduriel.aevaia.com). Returns before auth so Clerk never runs.
-  const hostname = req.headers.get('host') ?? '';
-  if (hostname.includes('opeyemianduriel')) {
-    let newPath = req.nextUrl.pathname;
-    if (newPath === '/') newPath = '/index.html';
-    if (!newPath.startsWith('/wedding-demo')) {
-      newPath = '/wedding-demo' + newPath;
-    }
-    req.nextUrl.pathname = newPath;
-    return NextResponse.rewrite(req.nextUrl);
-  }
-
-  // ── Jasmine subdomain rewrite ───────────────────────────────────────────────
-  // Serves public/jasmine/ as a standalone static site on any hostname that
-  // contains "jasmine" (e.g. jasmine.localhost:3000 or jasmine.aevaia.com).
-  // Returns before auth so Clerk never runs. Mirrors the wedding-demo rewrite.
-  if (hostname.includes('jasmine')) {
-    let newPath = req.nextUrl.pathname;
-    if (newPath === '/') newPath = '/index.html';
-    if (!newPath.startsWith('/jasmine')) {
-      newPath = '/jasmine' + newPath;
-    }
-    req.nextUrl.pathname = newPath;
-    return NextResponse.rewrite(req.nextUrl);
-  }
-
+const clerkHandler = clerkMiddleware(async (auth, req) => {
   // ── Maintenance mode ────────────────────────────────────────────────────────
   // Activated by setting MAINTENANCE_MODE=true in .env.local (or Vercel env).
   // The owner bypasses the redirect by setting MAINTENANCE_BYPASS_USER_ID to
@@ -95,6 +84,48 @@ export const proxy = clerkMiddleware(async (auth, req) => {
     await auth.protect();
   }
 });
+
+export function proxy(req: NextRequest, event: NextFetchEvent) {
+  // ── Standalone static site rewrites ─────────────────────────────────────────
+  // Serves each entry in STATIC_SITES (the wedding invite, Jasmine's birthday
+  // page) from its own directory under public/, keyed on hostname — e.g.
+  // opeyemianduriel.aevaia.com → public/wedding-demo/, jasmine.aevaia.com →
+  // public/jasmine/. Also works locally via <name>.localhost:3000.
+  //
+  // This runs OUTSIDE clerkMiddleware on purpose. Both rewrites previously lived
+  // inside the Clerk handler with a comment claiming Clerk never ran — it did.
+  // clerkMiddleware wraps the callback, so its handshake fired first and bounced
+  // every visitor through a `?__clerk_handshake=…` 307 before the page rendered:
+  // extra latency on first load, plus Clerk session cookies set on domains that
+  // have no accounts. Short-circuiting here means these pages touch no auth.
+  const hostname = req.headers.get("host") ?? "";
+  const site = STATIC_SITES.find((s) => hostname.includes(s.hostMatch));
+
+  // /api/* is deliberately NOT rewritten, even on a static-site host. The
+  // rewrite prefixes every path with the site's directory, so without this an
+  // in-page fetch("/api/wedding/rsvp") from the invite would be rewritten to
+  // /wedding-demo/api/wedding/rsvp and 404 — the RSVP would fail silently for
+  // every guest. Falling through lets those calls reach the real route handlers
+  // (still subject to the public-route allowlist above).
+  if (site && !req.nextUrl.pathname.startsWith("/api/")) {
+    let newPath = req.nextUrl.pathname;
+    if (newPath === "/") newPath = "/index.html";
+    if (!newPath.startsWith(site.dir)) {
+      newPath = site.dir + newPath;
+    }
+    req.nextUrl.pathname = newPath;
+
+    const res = NextResponse.rewrite(req.nextUrl);
+    // Belt-and-braces: next.config.ts already applies STATIC_SITE_CSP by host,
+    // but set it here too so these pages are never served under the app's
+    // stricter policy if that host rule is ever edited. Same string, so no
+    // conflicting second header (browsers intersect duplicate CSP headers).
+    res.headers.set("Content-Security-Policy", STATIC_SITE_CSP);
+    return res;
+  }
+
+  return clerkHandler(req, event);
+}
 
 // Run on every request except Next.js internals and static assets so Clerk
 // can hydrate the session on all protected pages and API routes.

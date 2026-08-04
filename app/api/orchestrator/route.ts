@@ -96,9 +96,11 @@ export async function POST(request: Request) {
   }
 
   // ── Rate limit: 30 orchestrator calls per user per minute ────────────────
+  // failClosed: a Redis outage must not open an unmetered path onto OpenRouter.
   const rl = await rateLimit(`orchestrator:${userId}`, {
-    limit:    30,
-    windowMs: 60 * 1000,
+    limit:      30,
+    windowMs:   60 * 1000,
+    failClosed: true,
   });
   if (!rl.success) {
     return NextResponse.json(

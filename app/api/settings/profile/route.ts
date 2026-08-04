@@ -40,10 +40,12 @@ export async function PATCH(request: Request) {
   }
 
   // ── Email uniqueness check ────────────────────────────────────────────────
+  // The User row is keyed by `clerkId` (the Clerk session id); `id` is an
+  // unrelated UUID primary key. Every user lookup must go through `clerkId`.
   if (email) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const current = await (prisma as any).user.findUnique({
-      where:  { id: userId },
+      where:  { clerkId: userId },
       select: { email: true },
     }) as { email: string } | null;
 
@@ -56,7 +58,7 @@ export async function PATCH(request: Request) {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (prisma as any).user.update({
-    where: { id: userId },
+    where: { clerkId: userId },
     data: {
       ...(name !== undefined && { name: name?.trim() || null }),
       ...(email && { email }),

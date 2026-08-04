@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { rsvpSubmitSchema, firstZodError } from "@/lib/validation";
 import { rateLimit, getIp } from "@/lib/rate-limit";
@@ -42,6 +43,25 @@ export async function POST(request: Request) {
   }
 
   const { gift_id, guest_name, attending, message } = parsed.data;
+
+  // ── Verify the gift exists and is published before accepting an RSVP ───────
+  // Without this, the public endpoint would accept rows for any arbitrary or
+  // non-existent gift_id, letting an attacker pollute the rsvps table. Only a
+  // real, live gift can receive RSVPs.
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const project = await (prisma as any).project.findUnique({
+      where:  { id: gift_id },
+      select: { isPublished: true },
+    }) as { isPublished: string } | null;
+
+    if (!project || project.isPublished !== "PUBLISHED") {
+      return NextResponse.json({ error: "This gift is not accepting RSVPs" }, { status: 404 });
+    }
+  } catch (err) {
+    console.error("[api/rsvp] Gift lookup failed:", err);
+    return NextResponse.json({ error: "Failed to save RSVP" }, { status: 500 });
+  }
 
   // ── Insert into Supabase ──────────────────────────────────────────────────
   const { error } = await supabaseAdmin

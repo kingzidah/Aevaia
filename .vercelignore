@@ -1,0 +1,10 @@
+# Never upload local env files to a Vercel deployment.
+# .gitignore already covers these for git-triggered builds; this guards the
+# `vercel deploy` path from the CLI, which uploads the working directory.
+.env
+.env.*
+
+# Local-only artifacts
+dev.db
+.next
+node_modules
