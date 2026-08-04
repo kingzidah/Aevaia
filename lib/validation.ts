@@ -209,3 +209,21 @@ export const weddingCheckInSchema = z.object({
   scanned: z.string().trim().min(1, "Nothing scanned").max(500),
   pin:     z.string().trim().min(1, "Gate PIN is required").max(64),
 });
+
+// ── Landing page: waitlist + manual-build enquiries ───────────────────────────
+
+export const waitlistSchema = z.object({
+  email: emailSchema,
+});
+
+// An enquiry from someone who wants a site hand-built before the app launches.
+// Only name and email are required — every extra required field costs leads,
+// and the rest can be asked for in the reply.
+export const buildEnquirySchema = z.object({
+  name:       z.string().trim().min(1, "Name is required").max(100, "Name must be 100 characters or less"),
+  email:      emailSchema,
+  phone:      z.string().trim().max(32).optional().or(z.literal("")),
+  event_type: z.string().trim().max(60).optional().or(z.literal("")),
+  event_date: z.string().trim().max(60).optional().or(z.literal("")),
+  message:    z.string().trim().max(2_000, "Message must be 2 000 characters or less").optional().or(z.literal("")),
+});
