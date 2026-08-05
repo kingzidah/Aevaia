@@ -1,3 +1,9 @@
+// QR generator, served from our own origin. Vendored rather than imported from
+// a CDN on purpose: this file is a <script type="module">, so a blocked or slow
+// third-party import aborts the WHOLE module and takes the RSVP form down with
+// it — the exact failure described below for the old Firebase import.
+import qrcode from './vendor/qrcode.mjs';
+
 /* =========================================
    1. ANALYTICS
    ========================================= */
@@ -338,6 +344,16 @@ const sideValue = '';
 // on the page — the only delivery route that does not depend on an email
 // arriving, SMS credit, or a WhatsApp template being approved.
 //
+// The QR is drawn ON THE DEVICE from a vendored library, not fetched from an
+// image service. Two reasons:
+//   • The ticket code is a credential — it opens the gate. Putting it in a URL
+//     to a third party writes every guest's code into someone else's request
+//     logs, for a wedding they were never part of.
+//   • It has to work on a bad connection. A remote image is exactly the thing
+//     that fails on venue wifi, and it fails at the moment the guest needs it.
+// The library is served from our own origin rather than a CDN for the same
+// availability reason.
+//
 // If no code came back (our API was unreachable), the card stays hidden rather
 // than showing a broken QR: the guest is still recorded in the spreadsheet, and
 // the gate falls back to the printed list.
@@ -348,11 +364,25 @@ function showTicket(code) {
     const text = document.getElementById('ticket-code-text');
     if (!card || !img || !text) return;
 
-    img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(code);
-    // The code in text is the fallback for a blocked or slow-loading image, so
-    // it is filled in first and never depends on the QR having rendered.
+    // The code in text is filled in FIRST and never depends on the QR: if
+    // drawing fails for any reason, the guest still has something to read out
+    // at the gate, and the gate can type it in.
     text.textContent = code;
     card.classList.remove('hidden');
+
+    try {
+        // typeNumber 0 = auto-size to the data. 'M' correction tolerates a
+        // scuffed or half-lit phone screen without inflating the image.
+        const qr = qrcode(0, 'M');
+        qr.addData(code);
+        qr.make();
+        // 6px cells with a 2-cell quiet zone: comfortably scannable from a
+        // phone held at arm's length, still small enough to screenshot whole.
+        img.src = qr.createDataURL(6, 2);
+    } catch (err) {
+        console.warn('[ticket] QR render failed, code shown as text:', err);
+        img.style.display = 'none';
+    }
 }
 
 function hideChoiceBtns(cb) {
