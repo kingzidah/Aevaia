@@ -333,6 +333,28 @@ const rsvpThanks     = document.getElementById('rsvp-thanks');
 // key with an empty value preserves the payload shape.
 const sideValue = '';
 
+// Fills in the entry ticket on the finale scene. Called right after a
+// successful RSVP, so the guest can screenshot their pass while they are still
+// on the page — the only delivery route that does not depend on an email
+// arriving, SMS credit, or a WhatsApp template being approved.
+//
+// If no code came back (our API was unreachable), the card stays hidden rather
+// than showing a broken QR: the guest is still recorded in the spreadsheet, and
+// the gate falls back to the printed list.
+function showTicket(code) {
+    if (!code) return;
+    const card = document.getElementById('ticket-card');
+    const img  = document.getElementById('ticket-qr');
+    const text = document.getElementById('ticket-code-text');
+    if (!card || !img || !text) return;
+
+    img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(code);
+    // The code in text is the fallback for a blocked or slow-loading image, so
+    // it is filled in first and never depends on the QR having rendered.
+    text.textContent = code;
+    card.classList.remove('hidden');
+}
+
 function hideChoiceBtns(cb) {
     rsvpChoiceBtns.style.opacity = '0';
     rsvpChoiceBtns.style.transform = 'scale(0.95)';
@@ -504,6 +526,7 @@ document.getElementById('rsvp-submit-yes').addEventListener('click', async () =>
         // If we reach here the request was delivered — treat as confirmed
         btn.textContent = 'Confirmed! ✓';
         try { confetti({ particleCount: 100, spread: 90, origin: { y: 0.6 } }); } catch(e){}
+        showTicket(ticketCode);
         setTimeout(() => window.nextScene('scene-finale'), 1500);
 
     } catch (err) {

@@ -181,6 +181,20 @@
             </p>
         </div>
 
+        <!-- ── Entry ticket ────────────────────────────────────────────────
+             Shown straight after a successful RSVP, while the guest is still
+             holding the phone they just booked on. This is the only delivery
+             route that reaches everyone: email needs a valid address they
+             actually check, SMS needs credit, WhatsApp needs a Meta-approved
+             template. The code is printed as text below the QR because it is
+             what still works when the image cannot load. -->
+        <div class="glass-card ticket-card hidden" id="ticket-card">
+            <p class="ticket-label">Your Entry Ticket</p>
+            <img id="ticket-qr" class="ticket-qr" alt="Your entry QR code">
+            <p class="ticket-code" id="ticket-code-text"></p>
+            <p class="ticket-hint">Screenshot this and show it at the gate.<br>A copy is on its way to your email.</p>
+        </div>
+
         <!-- ── Hashtag stamp ── -->
         <div class="hashtag-finale-wrapper">
             <span class="hashtag-finale">#OUFOREVER26</span>

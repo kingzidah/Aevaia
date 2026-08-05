@@ -31,6 +31,8 @@ const isPublicRoute = createRouteMatcher([
   "/api/wedding/rsvp",     // wedding invite RSVP — guests have no accounts
   "/api/wedding/check-in", // gate scanner; guarded by its own staff PIN,
                            // not by Clerk (bouncers have no accounts)
+  "/api/wedding/lookup",   // find a guest by name at the gate, same PIN
+  "/api/wedding/stats",    // live checked-in count for the scanner header
   "/wedding/scan",         // the scanner PAGE itself. Bouncers are venue staff
                            // with no Clerk accounts, so protecting this with
                            // auth makes it unreachable by the only people who

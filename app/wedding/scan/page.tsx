@@ -28,6 +28,13 @@ type Outcome =
 
 const PIN_KEY = "wedding-gate-pin";
 
+type NameHit = {
+  ticket_code: string;
+  name: string;
+  phone_tail: string;
+  checked_in_at: string | null;
+};
+
 export default function GateScanner() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -44,6 +51,11 @@ export default function GateScanner() {
   const [cameraError, setCameraError] = useState<string>("");
   const [outcome, setOutcome] = useState<Outcome | null>(null);
   const [manualCode, setManualCode] = useState("");
+
+  const [nameQuery, setNameQuery] = useState("");
+  const [nameResults, setNameResults] = useState<NameHit[]>([]);
+  const [nameHint, setNameHint] = useState("");
+  const [counts, setCounts] = useState<{ arrived: number; expected: number } | null>(null);
 
   useEffect(() => {
     const stored = sessionStorage.getItem(PIN_KEY);
@@ -73,8 +85,19 @@ export default function GateScanner() {
           setOutcome({ status: "error", message: data?.error ?? "Something went wrong" });
         } else {
           setOutcome(data as Outcome);
+          // Distinct patterns per outcome so a bouncer feels the answer without
+          // reading the screen — one short buzz for go, a stutter for stop.
           if (navigator.vibrate) {
             navigator.vibrate(data.status === "ok" ? [40] : [80, 60, 80]);
+          }
+          // A successful entry clears itself so the next guest is obviously up.
+          // Amber and red stay put: those need a decision, and a banner that
+          // vanishes mid-conversation is how the wrong person gets waved in.
+          if (data.status === "ok") {
+            setNameQuery("");
+            setNameResults([]);
+            void refreshCounts();
+            setTimeout(() => setOutcome(null), 4000);
           }
         }
       } catch {
@@ -88,6 +111,55 @@ export default function GateScanner() {
     },
     [pin],
   );
+
+  const refreshCounts = useCallback(async () => {
+    try {
+      const res = await fetch("/api/wedding/stats", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pin }),
+      });
+      if (res.ok) setCounts(await res.json());
+    } catch {
+      // A failed count must never interrupt the gate — it is a nicety.
+    }
+  }, [pin]);
+
+  // Name lookup for the guest who arrives with nothing: no email, no SMS, no
+  // screenshot. Debounced so it fires once the bouncer stops typing rather than
+  // on every keystroke, which would queue requests behind a slow venue signal.
+  useEffect(() => {
+    if (!pinSaved) return;
+    const q = nameQuery.trim();
+    if (q.length < 3) {
+      setNameResults([]);
+      setNameHint("");
+      return;
+    }
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch("/api/wedding/lookup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ q, pin }),
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        setNameResults(data.results ?? []);
+        setNameHint(
+          data.need ??
+            ((data.results ?? []).length === 0 ? "No guest matches that name" : ""),
+        );
+      } catch {
+        setNameHint("No connection");
+      }
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [nameQuery, pin, pinSaved]);
+
+  useEffect(() => {
+    if (pinSaved) void refreshCounts();
+  }, [pinSaved, refreshCounts]);
 
   const tick = useCallback(() => {
     const video = videoRef.current;
@@ -203,7 +275,15 @@ export default function GateScanner() {
   return (
     <main style={S.page}>
       <div style={S.card}>
-        <h1 style={S.h1}>Gate Check-In</h1>
+        <div style={S.headerRow}>
+          <h1 style={{ ...S.h1, margin: 0, textAlign: "left" }}>Gate Check-In</h1>
+          {counts && (
+            <div style={S.countBadge}>
+              <span style={S.countBig}>{counts.arrived}</span>
+              <span style={S.countSmall}>/ {counts.expected} in</span>
+            </div>
+          )}
+        </div>
 
         {banner && (
           <div style={{ ...S.banner, background: banner.bg, color: banner.fg }}>
@@ -235,7 +315,7 @@ export default function GateScanner() {
           <input
             value={manualCode}
             onChange={(e) => setManualCode(e.target.value)}
-            placeholder="Or type the code, e.g. OU-2K6T5N"
+            placeholder="Type the code, e.g. OU-2K6T5N"
             style={{ ...S.input, marginBottom: 0 }}
             autoCapitalize="characters"
           />
@@ -243,6 +323,35 @@ export default function GateScanner() {
             Check
           </button>
         </form>
+
+        {/* Name lookup — for the guest with no email, no SMS and no screenshot,
+            which on the day is the most common failure by a distance. */}
+        <div style={S.lookupWrap}>
+          <input
+            value={nameQuery}
+            onChange={(e) => setNameQuery(e.target.value)}
+            placeholder="…or search by name (any two names)"
+            style={{ ...S.input, marginBottom: 0 }}
+            autoCapitalize="words"
+          />
+          {nameHint && <p style={S.lookupHint}>{nameHint}</p>}
+
+          {nameResults.map((hit) => (
+            <button
+              key={hit.ticket_code}
+              onClick={() => submitCode(hit.ticket_code)}
+              style={{
+                ...S.hitRow,
+                opacity: hit.checked_in_at ? 0.55 : 1,
+              }}
+            >
+              <span style={S.hitName}>{hit.name}</span>
+              <span style={S.hitMeta}>
+                {hit.checked_in_at ? "already in" : `…${hit.phone_tail}`}
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
     </main>
   );
@@ -367,4 +476,45 @@ const S: Record<string, React.CSSProperties> = {
   bannerIcon: { fontSize: "2rem", fontWeight: 700, lineHeight: 1 },
   bannerTitle: { fontSize: "1.25rem", fontWeight: 700, lineHeight: 1.2 },
   bannerDetail: { fontSize: "0.9rem", opacity: 0.9, marginTop: 2 },
+
+  headerRow: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    margin: "8px 0 16px",
+  },
+  countBadge: {
+    display: "flex",
+    alignItems: "baseline",
+    gap: 5,
+    background: "#1e0d12",
+    border: "1px solid #5a1a20",
+    borderRadius: 999,
+    padding: "6px 14px",
+    whiteSpace: "nowrap",
+  },
+  countBig: { color: "#fff", fontSize: "1.15rem", fontWeight: 700, lineHeight: 1 },
+  countSmall: { color: "#c8a0a8", fontSize: "0.8rem" },
+
+  lookupWrap: { marginTop: 10 },
+  lookupHint: { color: "#c8a0a8", fontSize: "0.82rem", margin: "8px 2px 0" },
+  hitRow: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+    width: "100%",
+    marginTop: 8,
+    // Deliberately tall: this gets tapped one-handed, at night, in a hurry.
+    padding: "15px 16px",
+    borderRadius: 12,
+    border: "1px solid #5a1a20",
+    background: "#1e0d12",
+    color: "#fff",
+    cursor: "pointer",
+    textAlign: "left",
+  },
+  hitName: { fontSize: "1.02rem", fontWeight: 600 },
+  hitMeta: { fontSize: "0.8rem", color: "#c8a0a8", whiteSpace: "nowrap" },
 };
