@@ -32,9 +32,19 @@ const cinzel = Cinzel({
   display: "swap",
 });
 
+// Note: this is the card people see when the link is pasted into WhatsApp,
+// Instagram or an ad — so it describes the service being sold today (hand-built
+// invites and event pages), not the self-serve builder still in development.
 export const metadata: Metadata = {
-  title: "Aevaia — Gift-Giving, Reimagined in 3D",
-  description: "Build cinematic digital gift experiences with 3D canvases, AI-crafted copy, and a secure bouncer gate.",
+  title: "Aevaia — Digital invites, gifts and event pages, made by hand",
+  description:
+    "Custom invite pages, digital gifts and full event experiences — RSVP, galleries, music, digital tickets and gate check-in. Designed and built for your day. Send one link.",
+  openGraph: {
+    title: "Aevaia — Digital invites, gifts and event pages, made by hand",
+    description:
+      "Your day deserves more than a flyer in the group chat. Hand-built invite pages, digital gifts and event experiences.",
+    type: "website",
+  },
 };
 
 export default function RootLayout({

@@ -64,6 +64,15 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // Pin the workspace root. A stray package-lock.json in the home directory
+  // (C:\Users\tayoa) makes Turbopack infer THAT as the root, which resolves
+  // routes against the wrong tree — `next dev` then hangs or 404s every route.
+  // Pinning it here keeps resolution inside this repo regardless of what else
+  // is lying around above it.
+  turbopack: {
+    root: __dirname,
+  },
+
   async headers() {
     return [
       {
