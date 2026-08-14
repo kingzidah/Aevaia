@@ -1,0 +1,639 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Marketing homepage — scoped design system
+
+   Every rule here is a CSS Module, so class names and @keyframes are hashed at
+   build time and this file is only ever loaded by app/page.tsx. Nothing in it
+   can reach the studio, the workspace, or the two demo subdomains — the demos
+   are standalone documents under public/ and load no Next bundle at all.
+
+   This exists as a module rather than as additions to globals.css precisely so
+   that the design's tokens (which are dark-only) cannot leak into routes that
+   still support a light theme.
+
+   DEVIATIONS FROM THE HANDOFF, all deliberate, all listed:
+     · Type floor. The design specifies 9px tag chips and 10.5px section
+       labels. Both are raised to 12px, and body copy to 16px, per the
+       standing "no text under 12px, body >= 16px" rule. Hierarchy is kept by
+       weight, tracking and colour instead of by shrinking below legibility.
+     · Tap targets. Footer links and the nav CTA are padded to 44px minimum.
+     · WhatsApp button uses #062012 on #25d366 as the handoff specifies —
+       that pairing is 8.9:1, where the previous white-on-green was 1.98:1.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.site {
+  /* ── Colour ─────────────────────────────────────────────────────────── */
+  --bg: #0d0a12;
+  --surface: #161120;
+  --surface-2: #141019;
+  --surface-input: #0e0b14;
+  --panel: #120e1a;
+  --chip-violet: #211830;
+  --chip-magenta: #2a1830;
+
+  --border: rgba(255, 255, 255, 0.08);
+  --border-soft: rgba(255, 255, 255, 0.14);
+  --rule: rgba(255, 255, 255, 0.09);
+
+  --text: #f3eefb;
+  --muted: #a99fb8;
+  --muted-2: #b3aac2;
+  --card-body: #c5bdd2;
+  --faint: #8a809c;
+  --faint-2: #6f6580;
+
+  --violet: #8b3fff;
+  --violet-hover: #9d5cff;
+  --violet-light: #b58bff;
+  --violet-lighter: #c79bff;
+  --magenta: #e05fb0;
+  --magenta-light: #f3b0dd;
+
+  --whatsapp: #25d366;
+  --whatsapp-ink: #062012;
+
+  --grad-brand: linear-gradient(90deg, #e05fb0, #8b3fff);
+
+  /* ── Shape ──────────────────────────────────────────────────────────── */
+  --r-btn: 11px;
+  --r-card: 16px;
+  --r-panel: 22px;
+  --r-pill: 999px;
+
+  --wrap: 1120px;
+  --gutter: 22px;
+
+  position: relative;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--mk-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+.site a { color: inherit; text-decoration: none; }
+
+.wrap {
+  max-width: var(--wrap);
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+}
+
+/* ── Scroll reveal ─────────────────────────────────────────────────────────
+   Ships visible. The script adds .revealInit on mount and .revealIn on
+   intersection, so the page reads in full when JS is blocked or slow. */
+.revealInit { opacity: 0; transform: translateY(28px); }
+.revealIn {
+  opacity: 1;
+  transform: none;
+  transition: opacity .8s cubic-bezier(.2, .7, .2, 1),
+              transform .8s cubic-bezier(.2, .7, .2, 1);
+}
+
+/* ── Keyframes ─────────────────────────────────────────────────────────── */
+@keyframes breathe {
+  0%, 100% { transform: translate(-50%, -32%) scale(1);    opacity: .85; }
+  50%      { transform: translate(-50%, -27%) scale(1.14); opacity: 1; }
+}
+@keyframes floaty  { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(8px); } }
+@keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+@keyframes gradmove { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
+@keyframes pulsering {
+  0%   { transform: scale(1);    opacity: .55; }
+  70%  { transform: scale(1.85); opacity: 0; }
+  100% { opacity: 0; }
+}
+@keyframes scrolldot {
+  0%   { transform: translateY(-2px); opacity: 0; }
+  30%  { opacity: 1; }
+  100% { transform: translateY(13px); opacity: 0; }
+}
+
+/* ── Animated gradient text ────────────────────────────────────────────── */
+.gradText {
+  background: linear-gradient(100deg, #f3b0dd, #e05fb0, #8b3fff);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: gradmove 7s linear infinite alternate;
+}
+
+/* ── Typography ────────────────────────────────────────────────────────── */
+.h1 {
+  font-family: var(--mk-serif), serif;
+  font-weight: 600;
+  font-size: clamp(38px, 6vw, 66px);
+  line-height: 1.02;
+  letter-spacing: -.015em;
+  margin: 0 0 22px;
+}
+.h1 em { font-style: italic; }
+
+.h2 {
+  font-family: var(--mk-serif), serif;
+  font-weight: 600;
+  font-size: clamp(28px, 4vw, 46px);
+  line-height: 1.05;
+  letter-spacing: -.01em;
+  margin: 0 0 8px;
+  max-width: 680px;
+}
+
+/* Section index label. 12px, not the handoff's 10.5px — see the deviations
+   note at the top. Tracking and colour carry the hierarchy instead. */
+.label {
+  font-family: var(--mk-mono), monospace;
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: .14em;
+  color: var(--faint);
+  text-transform: uppercase;
+}
+.labelQuiet { composes: label; color: var(--faint-2); letter-spacing: .1em; }
+
+/* Body copy sits at 16px, above the handoff's clamp(14…16) floor. */
+.body {
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--muted-2);
+  margin: 0;
+}
+.bodySm { font-size: 14px; line-height: 1.6; color: var(--muted); margin: 0; }
+
+/* ── Section scaffolding ───────────────────────────────────────────────── */
+.section { padding: 70px 0; }
+
+/* The hairline rule the handoff puts above every section heading, carrying
+   the mono index label. */
+.sectionHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  border-top: 1px solid var(--rule);
+  padding-top: 16px;
+  margin-bottom: 26px;
+}
+
+/* ── Buttons ───────────────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;              /* tap-target floor */
+  padding: 14px 24px;
+  border-radius: var(--r-btn);
+  font-family: var(--mk-sans), sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  border: none;
+  transition: transform .2s, background .2s, border-color .2s;
+}
+.btn:hover { transform: translateY(-2px); }
+
+.btnWhatsapp {
+  composes: btn;
+  position: relative;
+  background: var(--whatsapp);
+  color: var(--whatsapp-ink);   /* 8.9:1 — the handoff's pairing */
+  font-weight: 700;
+}
+/* Pulsing ring. pointer-events:none so it never eats the tap. */
+.btnWhatsapp::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--r-btn);
+  border: 2px solid var(--whatsapp);
+  animation: pulsering 2.6s ease-out infinite;
+  pointer-events: none;
+}
+
+.btnGhost {
+  composes: btn;
+  background: rgba(255, 255, 255, .05);
+  border: 1px solid var(--border-soft);
+  color: var(--text);
+}
+.btnGhost:hover { border-color: var(--violet-light); }
+
+.btnViolet { composes: btn; background: var(--violet); color: #fff; }
+.btnViolet:hover { background: var(--violet-hover); }
+
+.btnGrad {
+  composes: btn;
+  color: #fff;
+  font-weight: 700;
+  background: linear-gradient(90deg, #e05fb0, #8b3fff, #e05fb0);
+  background-size: 200% auto;
+  animation: gradmove 5s linear infinite alternate;
+}
+.btn:disabled { opacity: .6; cursor: default; transform: none; }
+
+/* ── Nav ───────────────────────────────────────────────────────────────── */
+.nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 60;
+  border-bottom: 1px solid transparent;
+  transition: background .3s, border-color .3s, backdrop-filter .3s;
+}
+.navScrolled {
+  background: rgba(13, 10, 18, .82);
+  border-bottom-color: var(--border);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+.navInner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+}
+.wordmark {
+  font-family: var(--mk-sans), sans-serif;
+  font-weight: 800;
+  font-size: 17px;
+  letter-spacing: .02em;
+}
+.navLinks {
+  display: flex;
+  gap: 8px;                       /* was 26px — the spacing now comes from the
+                                     links' own padding, which is what gets
+                                     each one to a 44px-wide tap target */
+  align-items: center;
+  font-family: var(--mk-mono), monospace;
+  font-weight: 500;
+  font-size: 12px;
+  color: var(--muted);
+}
+.navLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 10px;
+  transition: color .2s;
+}
+.navLink:hover { color: var(--text); }
+.navCta {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 16px;
+  background: var(--violet);
+  color: #fff;
+  border-radius: 8px;
+  transition: background .2s, transform .2s;
+}
+.navCta:hover { background: var(--violet-hover); transform: translateY(-1px); }
+
+.menuBtn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 255, 255, .18);
+  border-radius: 9px;
+  background: transparent;
+  cursor: pointer;
+  font-family: var(--mk-mono), monospace;
+  font-weight: 500;
+  font-size: 12px;
+  color: var(--text);
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: rgba(13, 10, 18, .97);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+  padding: 40px;
+  display: none;
+}
+.overlayOpen { display: flex; }
+.overlayLink {
+  font-family: var(--mk-serif), serif;
+  font-size: 34px;
+  padding: 6px 0;
+  min-height: 44px;
+}
+
+/* ── Hero ──────────────────────────────────────────────────────────────── */
+.hero { position: relative; padding: 120px 0 60px; overflow: hidden; }
+
+.heroGlow {
+  position: absolute;
+  top: 0; left: 50%;
+  width: 900px; height: 560px;
+  background: radial-gradient(closest-side,
+    rgba(224, 95, 176, .42), rgba(139, 63, 255, .28) 45%, rgba(13, 10, 18, 0) 75%);
+  filter: blur(6px);
+  animation: breathe 9s ease-in-out infinite;
+  pointer-events: none;
+}
+.heroGlow2 {
+  position: absolute;
+  top: 120px; right: -120px;
+  width: 420px; height: 420px;
+  background: radial-gradient(closest-side, rgba(139, 63, 255, .22), rgba(13, 10, 18, 0) 70%);
+  pointer-events: none;
+}
+
+.marqueeMask {
+  overflow: hidden;
+  height: 22px;
+  margin-bottom: 26px;
+  -webkit-mask: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+  mask: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+}
+.marqueeTrack {
+  display: flex;
+  width: max-content;
+  gap: 34px;
+  animation: marquee 26s linear infinite;
+  font-family: var(--mk-mono), monospace;
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: .28em;
+  color: var(--violet-lighter);
+  white-space: nowrap;
+}
+
+/* Single column while the image slot is empty. Restore
+   `grid-template-columns: 1.12fr .88fr` when the hero screenshot lands. */
+.heroGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 44px;
+  align-items: center;
+  max-width: 820px;
+}
+.heroPhoto {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid var(--rule);
+  box-shadow: 0 30px 70px -30px rgba(139, 63, 255, .5);
+}
+.heroPhoto img { object-fit: cover; }
+
+.scrollCue {
+  width: 22px; height: 34px;
+  border: 1.5px solid rgba(255, 255, 255, .2);
+  border-radius: 12px;
+  display: flex;
+  justify-content: center;
+  padding-top: 7px;
+}
+.scrollDot {
+  width: 3px; height: 7px;
+  border-radius: 2px;
+  background: var(--violet-lighter);
+  animation: scrolldot 1.8s ease-in-out infinite;
+}
+
+/* ── Cards ─────────────────────────────────────────────────────────────── */
+.workGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.trio     { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 44px; }
+.featGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.priceGrid{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; align-items: stretch; }
+.steps    { display: grid; grid-template-columns: 1fr 1fr; gap: 34px 44px; }
+
+.workCard {
+  display: block;
+  border-radius: var(--r-card);
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  transition: transform .3s, border-color .3s;
+}
+.workCard:hover { transform: translateY(-6px); border-color: rgba(181, 139, 255, .5); }
+
+.workPhoto { position: relative; aspect-ratio: 16 / 11; overflow: hidden; background: var(--surface-2); }
+.workPhoto img { object-fit: cover; }
+
+.workPill {
+  position: absolute;
+  top: 13px; left: 13px;
+  font-family: var(--mk-mono), monospace;
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: .14em;
+  background: rgba(13, 10, 18, .72);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  padding: 6px 11px;
+  border-radius: var(--r-pill);
+  text-transform: uppercase;
+}
+.workTitle { font-family: var(--mk-serif), serif; font-size: 26px; font-weight: 600; }
+
+.chip {
+  font-family: var(--mk-mono), monospace;
+  font-weight: 500;
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+.chipViolet  { composes: chip; background: var(--chip-violet);  color: var(--violet-lighter); }
+.chipMagenta { composes: chip; background: var(--chip-magenta); color: var(--magenta-light); }
+
+.doorCard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+  transition: transform .3s, border-color .3s;
+}
+.doorCard:hover { transform: translateY(-5px); border-color: rgba(181, 139, 255, .5); }
+.doorBar { width: 34px; height: 3px; border-radius: 3px; background: var(--grad-brand); margin-bottom: 16px; }
+.doorTitle { font-weight: 700; font-size: 16px; margin-bottom: 6px; }
+
+.featCard {
+  background: var(--surface-2);
+  border: 1px solid rgba(255, 255, 255, .06);
+  border-radius: 12px;
+  padding: 17px;
+  transition: border-color .3s;
+}
+.featCard:hover { border-color: rgba(181, 139, 255, .4); }
+.featTitle { font-weight: 700; font-size: 15px; margin-bottom: 5px; }
+.featBody  { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+/* ── Pricing ───────────────────────────────────────────────────────────── */
+.tier {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  padding: 24px;
+}
+.tierFeatured {
+  composes: tier;
+  position: relative;
+  background: linear-gradient(180deg, #221334, #150f20);
+  border: 1.5px solid var(--violet);
+  box-shadow: 0 30px 70px -34px rgba(139, 63, 255, .7);
+}
+.tierBadge {
+  position: absolute;
+  top: -12px; left: 24px;
+  font-family: var(--mk-mono), monospace;
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: .12em;
+  background: var(--grad-brand);
+  color: #fff;
+  padding: 4px 11px;
+  border-radius: var(--r-pill);
+  text-transform: uppercase;
+}
+.tierName    { font-weight: 700; font-size: 18px; margin-bottom: 4px; }
+.tierTagline { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
+.tierPrice   { font-family: var(--mk-serif), serif; font-size: 44px; font-weight: 600; }
+.tierFeatures {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  font-size: 13px;
+  color: var(--card-body);
+  margin: 18px 0 22px;
+}
+/* NOTE: these compose `btn` DIRECTLY rather than through an intermediate
+   `.tierCta`. Turbopack's CSS-modules implementation does not resolve a
+   transitive `composes` chain — a two-level chain silently dropped `btn` from
+   the class list, which cost these buttons their padding and their 44px
+   min-height. Single-level composition resolves correctly. Keep it flat. */
+.tierCtaGhost {
+  composes: btn;
+  margin-top: auto;
+  width: 100%;
+  font-size: 14px;
+  border: 1px solid rgba(255, 255, 255, .16);
+  color: var(--text);
+  background: transparent;
+}
+.tierCtaGhost:hover { border-color: var(--violet-light); }
+
+.tierCtaSolid {
+  composes: btn;
+  margin-top: auto;
+  width: 100%;
+  font-size: 14px;
+  background: var(--violet);
+  color: #fff;
+}
+.tierCtaSolid:hover { background: var(--violet-hover); }
+
+/* ── Steps ─────────────────────────────────────────────────────────────── */
+.step { border-top: 1px solid rgba(255, 255, 255, .1); padding-top: 18px; }
+.stepNum { font-family: var(--mk-serif), serif; font-size: 40px; font-weight: 600; line-height: 1; }
+.stepTitle { font-weight: 700; font-size: 17px; margin: 10px 0 6px; }
+
+/* ── Enquiry panel ─────────────────────────────────────────────────────── */
+.panel {
+  position: relative;
+  border-radius: var(--r-panel);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  padding: clamp(26px, 5vw, 54px);
+}
+.panelGlow {
+  position: absolute;
+  top: -140px; right: -80px;
+  width: 420px; height: 420px;
+  background: radial-gradient(closest-side, rgba(139, 63, 255, .28), rgba(13, 10, 18, 0) 70%);
+  pointer-events: none;
+}
+.formGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; max-width: 640px; }
+.full { grid-column: 1 / -1; }
+
+.input {
+  width: 100%;
+  min-height: 44px;
+  padding: 14px 16px;
+  background: var(--surface-input);
+  border: 1px solid rgba(255, 255, 255, .1);
+  border-radius: 10px;
+  color: var(--text);
+  font-family: var(--mk-sans), sans-serif;
+  font-size: 16px;               /* 16px also stops iOS zooming the field on focus */
+  outline: none;
+  transition: border-color .2s;
+}
+.input::placeholder { color: var(--faint-2); }
+.input:focus { border-color: var(--violet); }
+.textarea { composes: input; resize: vertical; }
+
+.formError { color: #f87171; font-size: 13px; }
+
+/* ── Footer ────────────────────────────────────────────────────────────── */
+.footer { border-top: 1px solid var(--border); padding: 28px 0; }
+.footerInner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.footerLinks {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-family: var(--mk-mono), monospace;
+  font-weight: 500;
+  font-size: 12px;
+  color: var(--muted);           /* #a99fb8 on #0d0a12 = 7.4:1 */
+}
+/* Padded to a 44px target rather than left as 16px-tall text links. */
+.footerLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 10px;
+  transition: color .2s;
+}
+.footerLink:hover { color: var(--text); }
+
+/* ── Responsive: single breakpoint at 880px, per the handoff ───────────── */
+@media (max-width: 880px) {
+  .heroGrid  { grid-template-columns: 1fr; gap: 30px; }
+  .workGrid,
+  .trio,
+  .featGrid,
+  .priceGrid,
+  .steps     { grid-template-columns: 1fr; }
+  .formGrid  { grid-template-columns: 1fr; }
+  .navLinks  { display: none; }
+  .menuBtn   { display: inline-flex; }
+  .hero      { padding: 100px 0 40px; }
+  .heroGlow  { width: 620px; }
+}
+
+/* ── Reduced motion ────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .revealInit { opacity: 1; transform: none; }
+  .revealIn   { transition: none; }
+  .gradText,
+  .heroGlow,
+  .marqueeTrack,
+  .scrollDot,
+  .btnGrad    { animation: none; }
+  .btnWhatsapp::before { animation: none; opacity: 0; }
+  .btn:hover, .workCard:hover, .doorCard:hover { transform: none; }
+}
