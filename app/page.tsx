@@ -1,32 +1,54 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
+import { Archivo, IBM_Plex_Mono, Playfair_Display } from "next/font/google";
+import s from "./marketing.module.css";
+
+// ── Fonts ─────────────────────────────────────────────────────────────────────
+// Declared HERE rather than in app/layout.tsx on purpose. next/font works in any
+// module, so scoping the three families to this route means the studio, the
+// workspace and every other page keep the fonts they already had. The variables
+// are consumed only inside marketing.module.css.
+const archivo = Archivo({
+  subsets: ["latin"],
+  weight: ["500", "600", "700", "800"],
+  variable: "--mk-sans",
+  display: "swap",
+});
+const plexMono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--mk-mono",
+  display: "swap",
+});
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  style: ["normal", "italic"],
+  variable: "--mk-serif",
+  display: "swap",
+});
 
 // ── Contact details ───────────────────────────────────────────────────────────
-// Kept together at the top so they can be changed without reading the markup.
 // WHATSAPP_NUMBER is digits only, international format, no + or spaces —
-// that is what wa.me requires.
+// that is what wa.me requires. The prefill is unchanged.
 const WHATSAPP_NUMBER = "4917675460351"; // WhatsApp Business, +49 176 75460351
 const CONTACT_EMAIL = "helloaevaia@gmail.com";
 const WHATSAPP_PREFILL = "Hi! I'd like an Aevaia site built for my event.";
 
 // ── Pricing ───────────────────────────────────────────────────────────────────
 // PLACEHOLDER NUMBERS — change these to your real prices before advertising.
-// Every price on the page reads from here, so this block is the only edit needed.
 const CURRENCY = "€";
 
-// Stated identically on every tier and in step 04. Hosting was previously
-// described three different ways on one page ("live for a year", "it stays
-// live", "I keep it running"), which is the kind of contradiction a buyer
-// notices and a seller then has to argue about later.
+// Stated identically on every tier and in step 04, from one constant.
 const HOSTING_TERM = "Your own link, live for a year. After that it's €29/year to keep it up.";
 
 type Package = {
   id: string;
   name: string;
   price: number;
-  from: boolean;     // true renders "from €X" rather than a flat price
+  from: boolean;
   tagline: string;
   features: string[];
   featured?: boolean;
@@ -85,13 +107,13 @@ const PACKAGES: Package[] = [
 ];
 
 // ── The work ──────────────────────────────────────────────────────────────────
-// Real, live, hand-built pieces. To add another, add one object here.
 const WORK = [
   {
     title: "Opeyemi & Uriel",
     kind: "Wedding",
     href: "https://opeyemianduriel.aevaia.com",
     image: "/wedding-demo/assets/couple1.jpg",
+    accent: "violet" as const,
     blurb:
       "A full wedding invite with RSVP, a swipeable gallery, digital tickets, and a QR gate scanner the door staff used on the night to check guests in live.",
     tags: ["Invite", "RSVP", "Tickets & QR", "Gate scanner", "Live count"],
@@ -101,6 +123,7 @@ const WORK = [
     kind: "Birthday gift",
     href: "https://jasmine.aevaia.com",
     image: "/jasmine-og.png",
+    accent: "magenta" as const,
     blurb:
       "A one-of-a-kind birthday experience — an envelope that blooms open, a candle you blow out through your phone's microphone, a rotating soundtrack, and easter eggs hidden for repeat visits.",
     tags: ["Bespoke", "Music", "Animation", "Easter eggs"],
@@ -108,36 +131,26 @@ const WORK = [
 ];
 
 // ── The door ──────────────────────────────────────────────────────────────────
-// Ticketing, check-in and headcount are pulled out of the main grid and shown
-// first, as a named group. They are the part almost nobody else offers, and the
-// part that turns a pretty invite into something that runs an actual event — so
-// burying them ninth in an alphabetical-looking grid undersold them.
 const DOOR_FEATURES = [
-  { title: "Digital tickets", body: "Every guest gets a unique code and a QR they can keep on their phone.", dot: "from-fuchsia-400 to-pink-500" },
-  { title: "Gate check-in", body: "A scanner page for your door staff. No app to install, no accounts.", dot: "from-pink-400 to-rose-500" },
-  { title: "Live guest count", body: "See exactly how many people are inside, as they arrive.", dot: "from-rose-400 to-amber-400" },
+  { title: "Digital tickets", body: "Every guest gets a unique code and a QR they can keep on their phone." },
+  { title: "Gate check-in", body: "A scanner page for your door staff. No app to install, no accounts." },
+  { title: "Live guest count", body: "See exactly how many people are inside, as they arrive." },
 ];
 
 // ── Everything else ───────────────────────────────────────────────────────────
-// `dot` is the gradient on each card's marker — the colour rotation is what
-// keeps this grid from reading as a wall of identical tiles.
 const CAPABILITIES = [
-  { title: "Invite pages", body: "Your date, your photos, your words — not a template with your name pasted in.", dot: "from-violet-400 to-fuchsia-500" },
-  { title: "RSVP & guest list", body: "Guests reply on the page. You watch the list fill up.", dot: "from-fuchsia-400 to-pink-500" },
-  { title: "Photo galleries", body: "Swipeable carousels that feel good on a phone, not a grid of thumbnails.", dot: "from-amber-400 to-yellow-300" },
-  { title: "Music & sound", body: "A soundtrack that fades in, ducks under text, and does not annoy anyone.", dot: "from-teal-300 to-emerald-400" },
-  { title: "Animated scenes", body: "Envelopes that open, letters that unfold, moments that land.", dot: "from-sky-400 to-violet-500" },
-  { title: "Countdowns", body: "Time to the day, ticking, on every phone that opens the link.", dot: "from-indigo-400 to-purple-500" },
-  { title: "Hidden easter eggs", body: "Rewards for the people who come back and look twice.", dot: "from-purple-400 to-fuchsia-500" },
-  { title: "Your own link", body: "yourname.aevaia.com, or a page on your own domain if you have one.", dot: "from-fuchsia-400 to-violet-500" },
-  { title: "Works everywhere", body: "Old Androids, new iPhones, slow data. Tested on real phones.", dot: "from-rose-400 to-purple-500" },
+  { title: "Invite pages", body: "Your date, your photos, your words — not a template with your name pasted in." },
+  { title: "RSVP & guest list", body: "Guests reply on the page. You watch the list fill up." },
+  { title: "Photo galleries", body: "Swipeable carousels that feel good on a phone, not a grid of thumbnails." },
+  { title: "Music & sound", body: "A soundtrack that fades in, ducks under text, and does not annoy anyone." },
+  { title: "Animated scenes", body: "Envelopes that open, letters that unfold, moments that land." },
+  { title: "Countdowns", body: "Time to the day, ticking, on every phone that opens the link." },
+  { title: "Hidden easter eggs", body: "Rewards for the people who come back and look twice." },
+  { title: "Your own link", body: "yourname.aevaia.com, or a page on your own domain if you have one." },
+  { title: "Works everywhere", body: "Old Androids, new iPhones, slow data. Tested on real phones." },
 ];
 
 // ── How it works ──────────────────────────────────────────────────────────────
-// Step 02 was titled with a first-person plural, and step 03 originally read
-// "from the day <plural> agree scope". Both are reworded to the second person
-// ("you approve the scope") because the page is now singular throughout, and a
-// solo operator writing as a company is exactly the tell this removes.
 const STEPS = [
   { n: "01", title: "Message me", body: "WhatsApp or the form below. Tell me the occasion and the date." },
   { n: "02", title: "You approve the scope", body: "I come back with what I'd build and a fixed price. No surprises later." },
@@ -145,27 +158,9 @@ const STEPS = [
   { n: "04", title: "You get your link", body: `Share it however you like. ${HOSTING_TERM}` },
 ];
 
-// A soft drifting colour cloud. These replace the divider lines as the way the
-// page gets structure — light pools instead of rules.
-function Orb({
-  className,
-  duration = "24s",
-  delay = "0s",
-}: {
-  className: string;
-  duration?: string;
-  delay?: string;
-}) {
-  return (
-    <div
-      aria-hidden
-      className={`aevaia-orb pointer-events-none absolute rounded-full blur-3xl ${className}`}
-      style={{ animation: `orb-drift ${duration} ease-in-out infinite`, animationDelay: delay }}
-    />
-  );
-}
+const MARQUEE = "WEDDINGS · BIRTHDAYS · ENGAGEMENTS · NAMING CEREMONIES · GIFTS · EVENT PAGES ·";
 
-export default function StudioLandingPage() {
+export default function MarketingHomePage() {
   const [email, setEmail] = useState("");
   const [waitlistState, setWaitlistState] = useState<"idle" | "sending" | "done" | "error">("idle");
   const [waitlistError, setWaitlistError] = useState("");
@@ -177,38 +172,69 @@ export default function StudioLandingPage() {
   const [enquiryState, setEnquiryState] = useState<"idle" | "sending" | "done" | "error">("idle");
   const [enquiryError, setEnquiryError] = useState("");
 
+  const [navScrolled, setNavScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+
   const whatsappHref = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_PREFILL)}`;
 
-  // Scroll reveal. The markup ships visible; this hides the elements on mount
-  // and fades them back in as they enter view, so a visitor with JS blocked
-  // still sees the whole page rather than a blank one.
+  // ── Scroll reveal ───────────────────────────────────────────────────────────
   useEffect(() => {
-    const nodes = Array.from(document.querySelectorAll<HTMLElement>("[data-reveal]"));
+    const nodes = Array.from(
+      rootRef.current?.querySelectorAll<HTMLElement>("[data-reveal]") ?? [],
+    );
     if (nodes.length === 0) return;
 
-    nodes.forEach(node => node.classList.add("reveal-init"));
+    nodes.forEach(n => n.classList.add(s.revealInit));
 
-    const observer = new IntersectionObserver(
+    const io = new IntersectionObserver(
       entries => {
-        entries.forEach(entry => {
-          if (!entry.isIntersecting) return;
-          entry.target.classList.add("reveal-in");
-          observer.unobserve(entry.target);
+        entries.forEach(e => {
+          if (!e.isIntersecting) return;
+          e.target.classList.add(s.revealIn);
+          io.unobserve(e.target);
         });
       },
-      { rootMargin: "0px 0px -8% 0px", threshold: 0.05 },
+      { threshold: 0.12, rootMargin: "0px 0px -6% 0px" },
     );
-
-    nodes.forEach(node => observer.observe(node));
-    return () => observer.disconnect();
+    nodes.forEach(n => io.observe(n));
+    return () => io.disconnect();
   }, []);
 
-  // Picking a package scrolls to the form and remembers the choice. The enquiry
-  // API's schema has no package column, so the choice rides along at the top of
-  // the message field rather than requiring a database migration.
+  // ── Nav background on scroll ────────────────────────────────────────────────
+  useEffect(() => {
+    const onScroll = () => setNavScrolled(window.scrollY > 24);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Body scroll lock while the mobile overlay is open. Cleared on unmount so a
+  // client-side navigation away from an open menu cannot leave the app frozen.
+  useEffect(() => {
+    document.body.style.overflow = menuOpen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [menuOpen]);
+
+  // Smooth anchor scroll with a 70px offset for the fixed nav.
+  function goTo(id: string) {
+    const target = document.getElementById(id);
+    if (!target) return;
+    const y = target.getBoundingClientRect().top + window.pageYOffset - 70;
+    window.scrollTo({ top: y, behavior: "smooth" });
+  }
+
+  function onAnchor(e: React.MouseEvent<HTMLAnchorElement>, id: string) {
+    e.preventDefault();
+    setMenuOpen(false);
+    goTo(id);
+  }
+
+  // Picking a package tags the enquiry. The API schema has no package column,
+  // so the choice rides at the top of the message field — no migration needed.
   function choosePackage(name: string) {
     setChosenPackage(name);
-    document.getElementById("enquiry")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    goTo("enquiry");
   }
 
   async function handleWaitlist(e: React.FormEvent<HTMLFormElement>) {
@@ -241,8 +267,6 @@ export default function StudioLandingPage() {
     setEnquiryState("sending");
     setEnquiryError("");
 
-    // Prefix the chosen package onto the message, staying inside the schema's
-    // 2 000-character limit even if the visitor writes a long brief.
     const message = chosenPackage
       ? `[Package: ${chosenPackage}]\n${enquiry.message}`.slice(0, 2000)
       : enquiry.message;
@@ -266,192 +290,186 @@ export default function StudioLandingPage() {
     }
   }
 
-  // ── Shared class recipes ────────────────────────────────────────────────────
-  const field =
-    "bg-black/[0.04] dark:bg-white/[0.04] text-neutral-900 placeholder-neutral-400 " +
-    "dark:text-white dark:placeholder-neutral-500 " +
-    "focus:bg-black/[0.06] dark:focus:bg-white/[0.07] " +
-    "focus:ring-2 focus:ring-fuchsia-500/50 " +
-    "rounded-2xl px-5 py-3.5 w-full text-sm outline-none transition-all";
-
-  const section = "w-full max-w-6xl mx-auto px-6";
-
-  const eyebrow =
-    "text-[11px] font-semibold tracking-[0.28em] uppercase " +
-    "bg-gradient-to-r from-violet-500 via-fuchsia-500 to-amber-500 " +
-    "bg-clip-text text-transparent";
-
-  // Surfaces get depth from tint and glow, never from a border.
-  const card =
-    "rounded-[28px] bg-white/70 dark:bg-white/[0.035] backdrop-blur-sm " +
-    "shadow-[0_20px_60px_-32px_rgba(120,60,200,0.55)] " +
-    "dark:shadow-[0_20px_70px_-34px_rgba(190,100,255,0.5)] " +
-    "transition-all duration-500";
-
-  const primaryBtn =
-    "inline-flex items-center justify-center gap-2 rounded-full px-6 py-3.5 text-sm font-medium text-white " +
-    "bg-gradient-to-r from-violet-600 via-fuchsia-600 to-pink-600 bg-[length:200%_100%] bg-left " +
-    "hover:bg-right shadow-[0_10px_40px_-12px_rgba(217,70,239,0.75)] " +
-    "hover:shadow-[0_14px_50px_-10px_rgba(217,70,239,0.95)] " +
-    "transition-all duration-500 hover:-translate-y-0.5";
-
-  const ghostBtn =
-    "inline-flex items-center justify-center gap-2 rounded-full px-6 py-3.5 text-sm font-medium " +
-    "bg-black/[0.04] dark:bg-white/[0.06] hover:bg-black/[0.07] dark:hover:bg-white/[0.11] " +
-    "transition-all duration-300 hover:-translate-y-0.5";
-
-  // Section separation without rules: a colour wash that fades to nothing at
-  // both edges, so there is never a hard line between two sections.
-  const wash =
-    "bg-gradient-to-b from-transparent via-fuchsia-500/[0.055] to-transparent " +
-    "dark:via-fuchsia-500/[0.07]";
-
   return (
-    <main className="relative min-h-screen overflow-x-hidden bg-[#FDFAF7] dark:bg-[#0B0710] text-neutral-900 dark:text-white transition-colors duration-300">
+    <div
+      ref={rootRef}
+      className={`${s.site} ${archivo.variable} ${plexMono.variable} ${playfair.variable}`}
+    >
+      {/* ── Nav ────────────────────────────────────────────────────────────── */}
+      <div className={`${s.nav} ${navScrolled ? s.navScrolled : ""}`}>
+        <div className={`${s.wrap} ${s.navInner}`}>
+          <span className={s.wordmark}>AEVAIA</span>
 
-      {/* ── Ambient colour field ─────────────────────────────────────────────
-          Fixed behind everything. This is what makes the page feel warm
-          rather than like a document.                                       */}
-      <div aria-hidden className="pointer-events-none fixed inset-0 overflow-hidden">
-        <Orb className="w-[46rem] h-[46rem] -top-56 -left-40 bg-violet-500/25 dark:bg-violet-600/25" duration="26s" />
-        <Orb className="w-[38rem] h-[38rem] top-[8%] -right-40 bg-fuchsia-500/20 dark:bg-fuchsia-600/22" duration="31s" delay="-6s" />
-        <Orb className="w-[34rem] h-[34rem] top-[45%] -left-32 bg-amber-400/16 dark:bg-amber-500/14" duration="29s" delay="-12s" />
-        <Orb className="w-[40rem] h-[40rem] bottom-[2%] -right-32 bg-pink-500/18 dark:bg-pink-600/20" duration="34s" delay="-3s" />
+          <nav className={s.navLinks}>
+            <a href="#work" className={s.navLink} onClick={e => onAnchor(e, "work")}>work</a>
+            <a href="#make" className={s.navLink} onClick={e => onAnchor(e, "make")}>what i make</a>
+            <a href="#pricing" className={s.navLink} onClick={e => onAnchor(e, "pricing")}>pricing</a>
+            <a href="#enquiry" className={s.navCta} onClick={e => onAnchor(e, "enquiry")}>message me</a>
+          </nav>
+
+          <button
+            type="button"
+            className={s.menuBtn}
+            aria-expanded={menuOpen}
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            onClick={() => setMenuOpen(o => !o)}
+          >
+            {menuOpen ? "close" : "menu"}
+          </button>
+        </div>
       </div>
 
-      {/* ── Nav ──────────────────────────────────────────────────────────────
-          No bottom border — it separates by blur and translucency alone.    */}
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-[#FDFAF7]/70 dark:bg-[#0B0710]/70">
-        <nav className={`${section} flex items-center justify-between h-16`}>
-          <span className="text-xs font-semibold tracking-[0.3em] uppercase bg-gradient-to-r from-violet-500 via-fuchsia-500 to-amber-500 bg-clip-text text-transparent">
-            AEVAIA
-          </span>
-          <div className="hidden md:flex items-center gap-8 text-sm text-neutral-500 dark:text-neutral-400">
-            <a href="#work" className="hover:text-fuchsia-500 dark:hover:text-fuchsia-400 transition-colors">Work</a>
-            <a href="#make" className="hover:text-fuchsia-500 dark:hover:text-fuchsia-400 transition-colors">What I make</a>
-            <a href="#pricing" className="hover:text-fuchsia-500 dark:hover:text-fuchsia-400 transition-colors">Pricing</a>
-            <a href="#enquiry" className="hover:text-fuchsia-500 dark:hover:text-fuchsia-400 transition-colors">Start</a>
+      {/* ── Mobile overlay ─────────────────────────────────────────────────── */}
+      <div className={`${s.overlay} ${menuOpen ? s.overlayOpen : ""}`}>
+        <a href="#work" className={s.overlayLink} onClick={e => onAnchor(e, "work")}>Work</a>
+        <a href="#make" className={s.overlayLink} onClick={e => onAnchor(e, "make")}>What I make</a>
+        <a href="#pricing" className={s.overlayLink} onClick={e => onAnchor(e, "pricing")}>Pricing</a>
+        <a href="#enquiry" className={s.overlayLink} onClick={e => onAnchor(e, "enquiry")}>Start</a>
+        <a
+          href={whatsappHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={s.btnWhatsapp}
+          style={{ marginTop: 22 }}
+        >
+          Message me
+        </a>
+      </div>
+
+      {/* ── Hero ───────────────────────────────────────────────────────────── */}
+      <header className={s.hero}>
+        <div className={s.heroGlow} aria-hidden />
+        <div className={s.heroGlow2} aria-hidden />
+
+        <div className={s.wrap} style={{ position: "relative" }}>
+          <div className={s.marqueeMask} data-reveal aria-hidden>
+            <div className={s.marqueeTrack}>
+              <span>{MARQUEE}</span>
+              <span>{MARQUEE}</span>
+            </div>
           </div>
-          <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className={primaryBtn + " !py-2 !px-5"}>
-            Message me
-          </a>
-        </nav>
+
+          <div className={s.heroGrid}>
+            <div>
+              <h1 className={s.h1} data-reveal>
+                Your day deserves more than a{" "}
+                <em className={s.gradText}>flyer in the group chat.</em>
+              </h1>
+
+              <p
+                className={s.body}
+                style={{ maxWidth: 520, marginBottom: 30, transitionDelay: ".08s" }}
+                data-reveal
+              >
+                I hand-build the invite, the gift, the whole event page — designed around
+                your photos, your music and your date. You send one link. Send me your
+                photos, the names and the date — I do the rest.
+              </p>
+
+              <div
+                style={{ display: "flex", gap: 12, flexWrap: "wrap", transitionDelay: ".16s" }}
+                data-reveal
+              >
+                <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className={s.btnWhatsapp}>
+                  <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" aria-hidden="true">
+                    <path d="M17.5 14.4c-.3-.2-1.7-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.7 1-.9 1.2-.2.2-.3.2-.6.1-1.7-.8-2.8-1.5-3.9-3.4-.3-.5.3-.5.8-1.5.1-.2 0-.4 0-.5s-.7-1.6-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5.1 4.5 1.9.8 2.6.9 3.5.8.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3z" />
+                    <path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3.1.8.8-3-.2-.3A8.2 8.2 0 1 1 12 20.2z" />
+                  </svg>
+                  Start on WhatsApp
+                </a>
+                <a href="#work" className={s.btnGhost} onClick={e => onAnchor(e, "work")}>
+                  See the work
+                </a>
+              </div>
+
+              {/* Trust line. Deliberately NOT .label — that class is uppercase
+                  mono for index eyebrows, and a full sentence set in it reads
+                  like a system message rather than a human one. */}
+              <p
+                className={s.bodySm}
+                style={{ marginTop: 30, color: "var(--faint)", transitionDelay: ".24s" }}
+                data-reveal
+              >
+                Every piece below was built by hand, for a real person, for a real date.
+              </p>
+            </div>
+
+            {/* The hero image slot is deliberately empty for now. It held a
+                proposal photo, which sold an event rather than the product —
+                a studio that builds websites should show a website. Waiting on
+                a phone-framed screenshot of a real invite to fill it. Until
+                then the hero runs as a single column rather than a 2-up grid
+                with a hole in it. */}
+          </div>
+
+          <div style={{ display: "flex", justifyContent: "center", marginTop: 44 }} data-reveal>
+            <div className={s.scrollCue} aria-hidden>
+              <span className={s.scrollDot} />
+            </div>
+          </div>
+        </div>
       </header>
 
-      {/* ── Hero ─────────────────────────────────────────────────────────────── */}
-      <section className={`relative ${section} pt-20 pb-28 md:pt-32 md:pb-36 text-center flex flex-col items-center`}>
-        {/* Occasion words above the fold: a visitor arriving cold needs to see
-            their own event named before they will read anything else. */}
-        <p className={eyebrow} data-reveal>Weddings · Birthdays · Engagements · Naming ceremonies</p>
+      {/* ── Selected work ──────────────────────────────────────────────────── */}
+      <section id="work" className={s.section}>
+        <div className={s.wrap}>
+          <div className={s.sectionHead} data-reveal>
+            <span className={s.label}>01 / Selected work</span>
+            <span className={s.labelQuiet}>live right now</span>
+          </div>
 
-        <h1
-          className="font-[family-name:var(--font-playfair)] text-[2.6rem] leading-[1.08] md:text-6xl lg:text-7xl font-light mt-7 max-w-4xl"
-          data-reveal
-          style={{ transitionDelay: "60ms" }}
-        >
-          Your day deserves more than{" "}
-          <span className="aevaia-gradient-text italic">a flyer in the group chat.</span>
-        </h1>
-
-        <p
-          className="text-neutral-600 dark:text-neutral-400 mt-7 text-base md:text-lg max-w-2xl leading-relaxed"
-          data-reveal
-          style={{ transitionDelay: "120ms" }}
-        >
-          I hand-build the invite, the gift, the whole event page — designed around your
-          photos, your music and your date. You send one link. Send me your photos, the
-          names and the date — I do the rest.
-        </p>
-
-        <div
-          className="mt-11 flex flex-col sm:flex-row items-stretch gap-3 w-full max-w-md"
-          data-reveal
-          style={{ transitionDelay: "180ms" }}
-        >
-          <a
-            href={whatsappHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-1 inline-flex items-center justify-center gap-2 rounded-full px-6 py-3.5 text-sm font-medium text-white bg-[#25D366] hover:bg-[#1eb857] shadow-[0_10px_40px_-12px_rgba(37,211,102,0.8)] transition-all duration-300 hover:-translate-y-0.5"
-          >
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
-              <path d="M17.5 14.4c-.3-.2-1.7-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.7 1-.9 1.2-.2.2-.3.2-.6.1-1.7-.8-2.8-1.5-3.9-3.4-.3-.5.3-.5.8-1.5.1-.2 0-.4 0-.5s-.7-1.6-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5.1 4.5 1.9.8 2.6.9 3.5.8.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3z" />
-              <path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3.1.8.8-3-.2-.3A8.2 8.2 0 1 1 12 20.2z" />
-            </svg>
-            Start on WhatsApp
-          </a>
-          <a href="#work" className={ghostBtn + " flex-1"}>
-            See the work
-          </a>
-        </div>
-
-        <p
-          className="mt-9 text-xs text-neutral-500 dark:text-neutral-500"
-          data-reveal
-          style={{ transitionDelay: "240ms" }}
-        >
-          Every piece below was built by hand, for a real person, for a real date.
-        </p>
-      </section>
-
-      {/* ── Work ─────────────────────────────────────────────────────────────── */}
-      <section id="work" className={`relative ${wash} py-24 md:py-32`}>
-        <div className={section}>
-          <p className={eyebrow} data-reveal>Selected work</p>
-          <h2
-            className="font-[family-name:var(--font-playfair)] text-3xl md:text-5xl font-light mt-4 max-w-2xl"
-            data-reveal
-            style={{ transitionDelay: "60ms" }}
-          >
+          {/* The handoff repeats the "built by hand" line here, but it already
+              sits in the hero on the live site. Kept once, in the hero. */}
+          <h2 className={s.h2} style={{ marginBottom: 34 }} data-reveal>
             Open them. They are live right now.
           </h2>
 
-          <div className="grid md:grid-cols-2 gap-8 mt-14">
+          <div className={s.workGrid}>
             {WORK.map((piece, i) => (
               <a
                 key={piece.title}
                 href={piece.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`group block overflow-hidden hover:-translate-y-2 hover:shadow-[0_36px_90px_-30px_rgba(217,70,239,0.6)] ${card}`}
+                className={s.workCard}
                 data-reveal
-                style={{ transitionDelay: `${i * 110}ms` }}
+                style={{ transitionDelay: `${i * 0.08}s` }}
               >
-                <div className="relative aspect-[4/3] overflow-hidden">
+                <div className={s.workPhoto}>
                   <Image
                     src={piece.image}
                     alt={`${piece.title} — ${piece.kind}`}
                     fill
-                    sizes="(max-width: 768px) 100vw, 50vw"
-                    className="object-cover transition-transform duration-[900ms] ease-out group-hover:scale-[1.07]"
+                    sizes="(max-width: 880px) 100vw, 50vw"
                   />
-                  {/* Warms the photo into the card instead of cutting it off. */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent" />
-                  <span className="absolute top-4 left-4 text-[10px] uppercase tracking-[0.2em] text-white/95 bg-white/15 backdrop-blur-md px-3 py-1.5 rounded-full">
+                  <span
+                    className={s.workPill}
+                    style={{ color: piece.accent === "violet" ? "var(--violet-lighter)" : "var(--magenta-light)" }}
+                  >
                     {piece.kind}
                   </span>
                 </div>
 
-                <div className="p-7">
-                  <h3 className="font-[family-name:var(--font-playfair)] text-2xl md:text-3xl font-light">
-                    {piece.title}
-                  </h3>
-                  <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-3 leading-relaxed">
+                <div style={{ padding: "20px 20px 22px" }}>
+                  <div className={s.workTitle}>{piece.title}</div>
+                  <p className={s.bodySm} style={{ margin: "6px 0 14px", fontSize: 14 }}>
                     {piece.blurb}
                   </p>
-                  <div className="flex flex-wrap gap-2 mt-5">
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
                     {piece.tags.map(tag => (
-                      <span
-                        key={tag}
-                        className="text-[11px] px-3 py-1.5 rounded-full bg-gradient-to-r from-violet-500/12 to-fuchsia-500/12 text-violet-700 dark:text-fuchsia-200"
-                      >
+                      <span key={tag} className={piece.accent === "violet" ? s.chipViolet : s.chipMagenta}>
                         {tag}
                       </span>
                     ))}
                   </div>
-                  <span className="inline-flex items-center gap-2 mt-7 text-sm font-medium bg-gradient-to-r from-violet-500 to-fuchsia-500 bg-clip-text text-transparent">
-                    Open the live site
-                    <span className="text-fuchsia-500 transition-transform duration-300 group-hover:translate-x-1.5">→</span>
+                  <span
+                    style={{
+                      fontWeight: 600,
+                      fontSize: 14,
+                      color: piece.accent === "violet" ? "var(--violet-light)" : "var(--magenta-light)",
+                    }}
+                  >
+                    Open the live site →
                   </span>
                 </div>
               </a>
@@ -460,132 +478,81 @@ export default function StudioLandingPage() {
         </div>
       </section>
 
-      {/* ── What I make ──────────────────────────────────────────────────────── */}
-      <section id="make" className={`relative ${section} py-24 md:py-32`}>
-        <p className={eyebrow} data-reveal>What I make</p>
-        <h2
-          className="font-[family-name:var(--font-playfair)] text-3xl md:text-5xl font-light mt-4 max-w-2xl"
-          data-reveal
-          style={{ transitionDelay: "60ms" }}
-        >
-          Anything you can describe, I can put on a link.
-        </h2>
+      {/* ── What I make ────────────────────────────────────────────────────── */}
+      <section id="make" className={s.section}>
+        <div className={s.wrap}>
+          <div className={s.sectionHead} data-reveal>
+            <span className={s.label}>02 / What I make</span>
+          </div>
 
-        {/* ── The door ────────────────────────────────────────────────────────
-            Given its own heading, warmer surface and larger type so it reads as
-            a capability nobody else is offering, rather than three more tiles. */}
-        <div className="mt-14" data-reveal>
-          <h3 className="font-[family-name:var(--font-playfair)] text-2xl md:text-3xl font-light">
-            The door
-          </h3>
-          <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-2 max-w-xl">
-            Most invites stop once the guest has replied. These three run the night itself.
-          </p>
-        </div>
+          <h2 className={s.h2} style={{ marginBottom: 34 }} data-reveal>
+            Anything you can describe, I can put on a link.
+          </h2>
 
-        <div className="grid sm:grid-cols-3 gap-4 mt-6">
-          {DOOR_FEATURES.map((item, i) => (
-            <div
-              key={item.title}
-              className={
-                "p-7 hover:-translate-y-1.5 " + card + " " +
-                "bg-gradient-to-b from-fuchsia-500/[0.13] to-violet-500/[0.05] " +
-                "dark:from-fuchsia-500/[0.16] dark:to-violet-600/[0.06] " +
-                "shadow-[0_24px_70px_-30px_rgba(217,70,239,0.7)]"
-              }
-              data-reveal
-              style={{ transitionDelay: `${i * 80}ms` }}
-            >
-              <span className={`block w-10 h-1.5 rounded-full bg-gradient-to-r ${item.dot}`} />
-              <h4 className="text-lg font-medium mt-4">{item.title}</h4>
-              <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-2 leading-relaxed">
-                {item.body}
-              </p>
-            </div>
-          ))}
-        </div>
+          <div className={s.labelQuiet} style={{ marginBottom: 14 }} data-reveal>The door</div>
+          <div className={s.trio}>
+            {DOOR_FEATURES.map((item, i) => (
+              <div key={item.title} className={s.doorCard} data-reveal style={{ transitionDelay: `${i * 0.08}s` }}>
+                <div className={s.doorBar} />
+                <div className={s.doorTitle}>{item.title}</div>
+                <div className={s.featBody}>{item.body}</div>
+              </div>
+            ))}
+          </div>
 
-        {/* ── Everything else ─────────────────────────────────────────────── */}
-        <p className="text-[11px] font-semibold tracking-[0.28em] uppercase text-neutral-500 dark:text-neutral-500 mt-16" data-reveal>
-          And everything else
-        </p>
-
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
-          {CAPABILITIES.map((item, i) => (
-            <div
-              key={item.title}
-              className={`p-6 hover:-translate-y-1.5 hover:bg-white/90 dark:hover:bg-white/[0.07] ${card}`}
-              data-reveal
-              style={{ transitionDelay: `${(i % 3) * 80}ms` }}
-            >
-              <span className={`block w-8 h-1.5 rounded-full bg-gradient-to-r ${item.dot}`} />
-              <h4 className="text-base font-medium mt-4">{item.title}</h4>
-              <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-2 leading-relaxed">
-                {item.body}
-              </p>
-            </div>
-          ))}
+          <div className={s.labelQuiet} style={{ marginBottom: 14 }} data-reveal>And everything else</div>
+          <div className={s.featGrid}>
+            {CAPABILITIES.map((item, i) => (
+              <div key={item.title} className={s.featCard} data-reveal style={{ transitionDelay: `${(i % 2) * 0.05}s` }}>
+                <div className={s.featTitle}>{item.title}</div>
+                <div className={s.featBody}>{item.body}</div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* ── Pricing ──────────────────────────────────────────────────────────── */}
-      <section id="pricing" className={`relative ${wash} py-24 md:py-32`}>
-        <div className={section}>
-          <p className={eyebrow} data-reveal>Pricing</p>
-          <h2
-            className="font-[family-name:var(--font-playfair)] text-3xl md:text-5xl font-light mt-4 max-w-2xl"
-            data-reveal
-            style={{ transitionDelay: "60ms" }}
-          >
+      {/* ── Pricing ────────────────────────────────────────────────────────── */}
+      <section id="pricing" className={s.section}>
+        <div className={s.wrap}>
+          <div className={s.sectionHead} data-reveal>
+            <span className={s.label}>03 / Pricing</span>
+          </div>
+
+          <h2 className={s.h2} style={{ marginBottom: 34 }} data-reveal>
             A fixed price, agreed before anything is built.
           </h2>
 
-          <div className="grid md:grid-cols-3 gap-6 mt-14 items-start">
+          <div className={s.priceGrid}>
             {PACKAGES.map((pkg, i) => (
               <div
                 key={pkg.id}
-                className={
-                  "relative p-8 flex flex-col h-full hover:-translate-y-2 " + card + " " +
-                  (pkg.featured
-                    ? "bg-gradient-to-b from-fuchsia-500/[0.13] to-violet-500/[0.06] dark:from-fuchsia-500/[0.16] dark:to-violet-600/[0.07] " +
-                      "shadow-[0_30px_90px_-30px_rgba(217,70,239,0.75)] md:-mt-4 md:mb-4"
-                    : "")
-                }
+                className={pkg.featured ? s.tierFeatured : s.tier}
                 data-reveal
-                style={{ transitionDelay: `${i * 110}ms` }}
+                style={{ transitionDelay: `${i * 0.08}s` }}
               >
-                {pkg.featured && (
-                  <span className="self-start text-[10px] uppercase tracking-[0.2em] text-white bg-gradient-to-r from-violet-600 to-fuchsia-600 px-3 py-1.5 rounded-full mb-5">
-                    Most chosen
-                  </span>
-                )}
+                {pkg.featured && <span className={s.tierBadge}>Most chosen</span>}
 
-                <h3 className="font-[family-name:var(--font-playfair)] text-2xl md:text-3xl font-light">
-                  {pkg.name}
-                </h3>
-                <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-2">{pkg.tagline}</p>
+                <div className={s.tierName}>{pkg.name}</div>
+                <div className={s.tierTagline}>{pkg.tagline}</div>
 
-                <p className="mt-7 flex items-baseline gap-2">
+                <div style={{ display: "flex", alignItems: "baseline", gap: 7 }}>
                   {pkg.from && (
-                    <span className="text-sm text-neutral-500 dark:text-neutral-500">from</span>
+                    <span className={s.label} style={{ letterSpacing: ".04em" }}>from</span>
                   )}
-                  <span className="font-[family-name:var(--font-playfair)] text-5xl font-light bg-gradient-to-br from-violet-500 via-fuchsia-500 to-amber-500 bg-clip-text text-transparent">
+                  <span className={`${s.tierPrice} ${pkg.featured ? s.gradText : ""}`}>
                     {CURRENCY}{pkg.price}
                   </span>
-                </p>
+                </div>
 
-                <ul className="mt-7 space-y-3.5 flex-1">
-                  {pkg.features.map(feature => (
-                    <li key={feature} className="flex gap-3 text-sm text-neutral-700 dark:text-neutral-300">
-                      <span className="mt-[7px] shrink-0 w-1.5 h-1.5 rounded-full bg-gradient-to-r from-violet-400 to-fuchsia-500" />
-                      <span className="leading-relaxed">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
+                <div className={s.tierFeatures}>
+                  {pkg.features.map(f => <span key={f}>{f}</span>)}
+                </div>
 
                 <button
+                  type="button"
                   onClick={() => choosePackage(pkg.name)}
-                  className={(pkg.featured ? primaryBtn : ghostBtn) + " mt-9 w-full"}
+                  className={pkg.featured ? s.tierCtaSolid : s.tierCtaGhost}
                 >
                   Start with {pkg.name}
                 </button>
@@ -593,199 +560,199 @@ export default function StudioLandingPage() {
             ))}
           </div>
 
-          <p className="text-xs text-neutral-500 dark:text-neutral-500 mt-10 max-w-2xl" data-reveal>
+          <p className={s.bodySm} style={{ margin: "22px 0 0", maxWidth: 620, color: "var(--faint)" }} data-reveal>
             Prices are for the build. Something unusual in mind, or a date that is very
             close? Message me — I&apos;ll tell you honestly what is possible.
           </p>
         </div>
       </section>
 
-      {/* ── How it works ─────────────────────────────────────────────────────── */}
-      <section className={`relative ${section} py-24 md:py-32`}>
-        <p className={eyebrow} data-reveal>How it works</p>
-        <h2
-          className="font-[family-name:var(--font-playfair)] text-3xl md:text-5xl font-light mt-4 max-w-2xl"
-          data-reveal
-          style={{ transitionDelay: "60ms" }}
-        >
-          Four steps, and one of them is yours.
-        </h2>
-
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 mt-14">
-          {STEPS.map((step, i) => (
-            <div key={step.n} data-reveal style={{ transitionDelay: `${i * 90}ms` }}>
-              <span className="font-[family-name:var(--font-playfair)] text-5xl font-light bg-gradient-to-br from-violet-500/70 via-fuchsia-500/70 to-amber-500/70 bg-clip-text text-transparent">
-                {step.n}
-              </span>
-              <h3 className="text-base font-medium mt-4">{step.title}</h3>
-              <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-2 leading-relaxed">
-                {step.body}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── Enquiry ──────────────────────────────────────────────────────────── */}
-      <section id="enquiry" className={`relative ${wash} py-24 md:py-32`}>
-        <div className={`${section} max-w-2xl`}>
-          <p className={eyebrow} data-reveal>Start here</p>
-          <h2
-            className="font-[family-name:var(--font-playfair)] text-3xl md:text-5xl font-light mt-4"
-            data-reveal
-            style={{ transitionDelay: "60ms" }}
-          >
-            Tell me about the day.
-          </h2>
-          <p className="text-neutral-600 dark:text-neutral-400 mt-5 text-sm leading-relaxed" data-reveal>
-            The fastest way is WhatsApp — most people get a reply the same day. If you would
-            rather write it out, the form works just as well.
-          </p>
-
-          <div className="mt-8 flex flex-col sm:flex-row items-stretch gap-3" data-reveal>
-            <a
-              href={whatsappHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex-1 inline-flex items-center justify-center gap-2 rounded-full px-5 py-3.5 text-sm font-medium text-white bg-[#25D366] hover:bg-[#1eb857] shadow-[0_10px_40px_-12px_rgba(37,211,102,0.8)] transition-all duration-300 hover:-translate-y-0.5"
-            >
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
-                <path d="M17.5 14.4c-.3-.2-1.7-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.7 1-.9 1.2-.2.2-.3.2-.6.1-1.7-.8-2.8-1.5-3.9-3.4-.3-.5.3-.5.8-1.5.1-.2 0-.4 0-.5s-.7-1.6-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5.1 4.5 1.9.8 2.6.9 3.5.8.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3z" />
-                <path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3.1.8.8-3-.2-.3A8.2 8.2 0 1 1 12 20.2z" />
-              </svg>
-              WhatsApp
-            </a>
-            <a href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("Aevaia — build request")}`} className={ghostBtn + " flex-1"}>
-              Email
-            </a>
+      {/* ── How it works ───────────────────────────────────────────────────── */}
+      <section className={s.section}>
+        <div className={s.wrap}>
+          <div className={s.sectionHead} data-reveal>
+            <span className={s.label}>04 / How it works</span>
           </div>
 
-          {enquiryState === "done" ? (
-            <div className={`mt-10 p-8 text-center ${card}`}>
-              <p className="font-[family-name:var(--font-playfair)] text-2xl font-light bg-gradient-to-r from-violet-500 via-fuchsia-500 to-amber-500 bg-clip-text text-transparent">
-                Got it.
-              </p>
-              <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-2">
-                I&apos;ll get back to you shortly.
-              </p>
-            </div>
-          ) : (
-            <form onSubmit={handleEnquiry} className={`flex flex-col gap-3 mt-8 p-7 ${card}`} data-reveal>
-              {chosenPackage && (
-                <div className="flex items-center justify-between gap-3 rounded-2xl bg-gradient-to-r from-violet-500/15 to-fuchsia-500/15 px-5 py-3.5">
-                  <span className="text-sm">
-                    Package: <strong className="font-medium">{chosenPackage}</strong>
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setChosenPackage("")}
-                    className="text-xs text-neutral-500 dark:text-neutral-400 hover:text-fuchsia-500 transition-colors"
-                  >
-                    Clear
-                  </button>
-                </div>
-              )}
-              <input
-                required placeholder="Your name" className={field}
-                value={enquiry.name}
-                onChange={e => setEnquiry({ ...enquiry, name: e.target.value })}
-              />
-              <input
-                required type="email" placeholder="Your email" className={field}
-                value={enquiry.email}
-                onChange={e => setEnquiry({ ...enquiry, email: e.target.value })}
-              />
-              <input
-                placeholder="Phone / WhatsApp (optional)" className={field}
-                value={enquiry.phone}
-                onChange={e => setEnquiry({ ...enquiry, phone: e.target.value })}
-              />
-              <div className="flex flex-col sm:flex-row gap-3">
-                <input
-                  placeholder="Occasion (wedding, birthday…)" className={field}
-                  value={enquiry.event_type}
-                  onChange={e => setEnquiry({ ...enquiry, event_type: e.target.value })}
-                />
-                <input
-                  placeholder="Event date" className={field}
-                  value={enquiry.event_date}
-                  onChange={e => setEnquiry({ ...enquiry, event_date: e.target.value })}
-                />
+          <h2 className={s.h2} style={{ marginBottom: 40 }} data-reveal>
+            Four steps, and one of them is yours.
+          </h2>
+
+          <div className={s.steps}>
+            {STEPS.map((step, i) => (
+              <div key={step.n} className={s.step} data-reveal style={{ transitionDelay: `${(i % 2) * 0.08}s` }}>
+                <div className={`${s.stepNum} ${s.gradText}`}>{step.n}</div>
+                <div className={s.stepTitle}>{step.title}</div>
+                <div className={s.bodySm}>{step.body}</div>
               </div>
-              <textarea
-                rows={4} placeholder="What are you imagining? (optional)"
-                className={field + " resize-none"}
-                value={enquiry.message}
-                onChange={e => setEnquiry({ ...enquiry, message: e.target.value })}
-              />
-              <button type="submit" disabled={enquiryState === "sending"} className={primaryBtn + " mt-1 disabled:opacity-60"}>
-                {enquiryState === "sending" ? "Sending…" : "Send enquiry"}
-              </button>
-              {enquiryState === "error" && (
-                <p className="text-red-500 dark:text-red-400 text-xs">{enquiryError}</p>
-              )}
-            </form>
-          )}
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* ── Builder waitlist ─────────────────────────────────────────────────── */}
-      <section className={`relative ${section} py-20`}>
-        <div className={`max-w-3xl mx-auto text-center flex flex-col items-center p-10 ${card}`} data-reveal>
-          {/* Previously "One day you'll be able to build this yourself", which
-              told a visitor about to pay for a hand-built site that they should
-              wait and do it themselves for free. Reframed for a different
-              audience — makers — so it no longer competes with the sale. */}
-          <p className={eyebrow}>Coming later</p>
-          <h2 className="font-[family-name:var(--font-playfair)] text-2xl md:text-3xl font-light mt-4">
+      {/* ── Enquiry ────────────────────────────────────────────────────────── */}
+      <section id="enquiry" className={s.section}>
+        <div className={s.wrap}>
+          <div className={s.panel}>
+            <div className={s.panelGlow} aria-hidden />
+
+            <div style={{ position: "relative" }}>
+              <span className={s.label} data-reveal>05 / Start here</span>
+
+              <h2 className={s.h2} style={{ margin: "12px 0 10px", maxWidth: 560 }} data-reveal>
+                Tell me about the day.
+              </h2>
+
+              <p className={s.bodySm} style={{ maxWidth: 540, margin: "0 0 26px" }} data-reveal>
+                The fastest way is WhatsApp — most people get a reply the same day. If you
+                would rather write it out, the form works just as well.
+              </p>
+
+              <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 28 }} data-reveal>
+                <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className={s.btnWhatsapp}>
+                  <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" aria-hidden="true">
+                    <path d="M17.5 14.4c-.3-.2-1.7-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.7 1-.9 1.2-.2.2-.3.2-.6.1-1.7-.8-2.8-1.5-3.9-3.4-.3-.5.3-.5.8-1.5.1-.2 0-.4 0-.5s-.7-1.6-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5.1 4.5 1.9.8 2.6.9 3.5.8.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3z" />
+                    <path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3.1.8.8-3-.2-.3A8.2 8.2 0 1 1 12 20.2z" />
+                  </svg>
+                  WhatsApp
+                </a>
+                <a href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("Aevaia — build request")}`} className={s.btnGhost}>
+                  Email
+                </a>
+              </div>
+
+              {enquiryState === "done" ? (
+                <div data-reveal>
+                  <p className={`${s.h2} ${s.gradText}`} style={{ fontSize: 32, margin: 0 }}>Got it.</p>
+                  <p className={s.bodySm} style={{ marginTop: 8 }}>I&apos;ll get back to you shortly.</p>
+                </div>
+              ) : (
+                <form onSubmit={handleEnquiry} className={s.formGrid} data-reveal>
+                  {chosenPackage && (
+                    <div
+                      className={s.full}
+                      style={{
+                        display: "flex", alignItems: "center", justifyContent: "space-between",
+                        gap: 12, padding: "12px 16px", borderRadius: 10,
+                        background: "rgba(139,63,255,.14)", fontSize: 14,
+                      }}
+                    >
+                      <span>Package: <strong>{chosenPackage}</strong></span>
+                      <button
+                        type="button"
+                        onClick={() => setChosenPackage("")}
+                        style={{
+                          background: "none", border: "none", color: "var(--muted)",
+                          fontSize: 13, cursor: "pointer", minHeight: 44, padding: "0 8px",
+                        }}
+                      >
+                        Clear
+                      </button>
+                    </div>
+                  )}
+
+                  <input
+                    required placeholder="Your name" className={`${s.input} ${s.full}`}
+                    value={enquiry.name}
+                    onChange={e => setEnquiry({ ...enquiry, name: e.target.value })}
+                  />
+                  <input
+                    required type="email" placeholder="Your email" className={s.input}
+                    value={enquiry.email}
+                    onChange={e => setEnquiry({ ...enquiry, email: e.target.value })}
+                  />
+                  <input
+                    placeholder="Phone / WhatsApp (optional)" className={s.input}
+                    value={enquiry.phone}
+                    onChange={e => setEnquiry({ ...enquiry, phone: e.target.value })}
+                  />
+                  <input
+                    placeholder="Occasion (wedding, birthday…)" className={s.input}
+                    value={enquiry.event_type}
+                    onChange={e => setEnquiry({ ...enquiry, event_type: e.target.value })}
+                  />
+                  <input
+                    placeholder="Event date" className={s.input}
+                    value={enquiry.event_date}
+                    onChange={e => setEnquiry({ ...enquiry, event_date: e.target.value })}
+                  />
+                  <textarea
+                    rows={3} placeholder="What are you imagining?" className={`${s.textarea} ${s.full}`}
+                    value={enquiry.message}
+                    onChange={e => setEnquiry({ ...enquiry, message: e.target.value })}
+                  />
+                  <button type="submit" disabled={enquiryState === "sending"} className={`${s.btnGrad} ${s.full}`}>
+                    {enquiryState === "sending" ? "Sending…" : "Send enquiry"}
+                  </button>
+                  {enquiryState === "error" && (
+                    <p className={`${s.formError} ${s.full}`}>{enquiryError}</p>
+                  )}
+                </form>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Coming later — waitlist ────────────────────────────────────────── */}
+      <section className={s.section} style={{ padding: "40px 0 80px" }}>
+        <div className={s.wrap} style={{ textAlign: "center" }} data-reveal>
+          <span className={s.label}>Coming later</span>
+
+          <h2
+            className={s.h2}
+            style={{ fontSize: "clamp(24px,3.4vw,38px)", margin: "14px auto 10px", maxWidth: 640 }}
+          >
             For makers, later
           </h2>
-          <p className="text-neutral-600 dark:text-neutral-400 mt-3 text-sm max-w-lg">
+
+          <p className={s.bodySm} style={{ maxWidth: 480, margin: "0 auto 22px" }}>
             I&apos;m building a studio for people who want to make their own. Different
             thing, different day — leave your email if that&apos;s you.
           </p>
 
-          <div className="mt-7 w-full max-w-md">
-            {waitlistState === "done" ? (
-              <p className="font-medium bg-gradient-to-r from-violet-500 to-fuchsia-500 bg-clip-text text-transparent">
-                You&apos;re on the list. I&apos;ll be in touch.
-              </p>
-            ) : (
-              <form onSubmit={handleWaitlist} className="flex flex-col sm:flex-row items-center gap-3 w-full">
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  placeholder="Enter your email address"
-                  className={field.replace("rounded-2xl", "rounded-full")}
-                />
-                <button type="submit" disabled={waitlistState === "sending"} className={ghostBtn + " whitespace-nowrap shrink-0 disabled:opacity-60"}>
-                  {waitlistState === "sending" ? "Joining…" : "Join waitlist"}
-                </button>
-              </form>
-            )}
-            {waitlistState === "error" && (
-              <p className="text-red-500 dark:text-red-400 text-xs mt-3">{waitlistError}</p>
-            )}
-          </div>
+          {waitlistState === "done" ? (
+            <p className={s.gradText} style={{ fontWeight: 700 }}>
+              You&apos;re on the list. I&apos;ll be in touch.
+            </p>
+          ) : (
+            <form
+              onSubmit={handleWaitlist}
+              style={{ display: "flex", gap: 10, maxWidth: 440, margin: "0 auto", flexWrap: "wrap" }}
+            >
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="Enter your email address"
+                className={s.input}
+                style={{ flex: 1, minWidth: 200 }}
+              />
+              <button type="submit" disabled={waitlistState === "sending"} className={s.btnViolet}>
+                {waitlistState === "sending" ? "Joining…" : "Join waitlist"}
+              </button>
+            </form>
+          )}
+
+          {waitlistState === "error" && (
+            <p className={s.formError} style={{ marginTop: 12 }}>{waitlistError}</p>
+          )}
         </div>
       </section>
 
-      {/* ── Footer ───────────────────────────────────────────────────────────── */}
-      <footer className={`relative ${section} py-12`}>
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <span className="text-xs font-semibold tracking-[0.3em] uppercase bg-gradient-to-r from-violet-500/70 to-fuchsia-500/70 bg-clip-text text-transparent">
-            AEVAIA
-          </span>
-          <div className="flex items-center gap-6 text-xs text-neutral-500 dark:text-neutral-500">
-            <a href="/contact" className="hover:text-fuchsia-500 transition-colors">Contact</a>
-            <a href="/impressum" className="hover:text-fuchsia-500 transition-colors">Impressum</a>
-            <a href="/privacy" className="hover:text-fuchsia-500 transition-colors">Privacy</a>
-            <a href="/terms" className="hover:text-fuchsia-500 transition-colors">Terms</a>
+      {/* ── Footer ─────────────────────────────────────────────────────────── */}
+      <footer className={s.footer}>
+        <div className={`${s.wrap} ${s.footerInner}`}>
+          <span className={s.wordmark} style={{ fontSize: 15 }}>AEVAIA</span>
+          <div className={s.footerLinks}>
+            <a href="/contact" className={s.footerLink}>Contact</a>
+            <a href="/impressum" className={s.footerLink}>Impressum</a>
+            <a href="/privacy" className={s.footerLink}>Privacy</a>
+            <a href="/terms" className={s.footerLink}>Terms</a>
           </div>
         </div>
       </footer>
-    </main>
+    </div>
   );
 }
