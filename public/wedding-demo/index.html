@@ -213,44 +213,10 @@
             <button type="button" class="calendar-btn" onclick="addToCalendar()">
                 Add to Calendar 📅
             </button>
-            <button type="button" class="calendar-btn" onclick="nextScene('aevaia-waitlist')">
-                Create your own invitation
-            </button>
         </div>
 
     </section>
 
-    <!-- ── AEVAIA Waitlist Scene ─────────────────────────────────────── -->
-    <section id="aevaia-waitlist" class="scene hidden">
-
-        <p class="aw-brand">AEVAIA</p>
-
-        <h2 class="aw-headline">The future of digital gifting and event experiences is almost here.</h2>
-
-        <p class="aw-subtext">The self-serve builder is still in the works. Join the waitlist for early access — or if your date is coming up, we'll build yours by hand in the meantime.</p>
-
-        <form id="aevaia-waitlist-form" class="aw-form">
-            <input type="email" id="aevaia-email-input" class="aw-input" placeholder="Enter your email address" required>
-            <button type="submit" class="aw-submit">Join Waitlist</button>
-        </form>
-
-        <p class="aw-success hidden" id="aevaia-success-msg">You're on the list. We'll be in touch.</p>
-        <p class="aw-error hidden" id="aevaia-error-msg">Something went wrong. Please try again.</p>
-
-        <!-- Manual-build offer. Guests reaching this scene have just experienced
-             the product first-hand, so this is the warmest traffic the invite
-             produces — worth an explicit route to a real conversation. -->
-        <div class="aw-divider"><span>or</span></div>
-
-        <p class="aw-alt-title">Need one before then?</p>
-        <p class="aw-alt-text">We'll design and build yours personally — the same way this one was made.</p>
-
-        <div class="aw-contact-row">
-            <a class="aw-wa" href="https://wa.me/4917675460351?text=Hi!%20I'd%20like%20an%20Aevaia%20invite%20built%20for%20my%20event." target="_blank" rel="noopener noreferrer">WhatsApp</a>
-            <a class="aw-mail" href="mailto:helloaevaia@gmail.com?subject=Aevaia%20%E2%80%94%20build%20request">Email</a>
-        </div>
-
-    </section>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@23.8.1/build/js/intlTelInput.min.js"></script>
@@ -265,47 +231,5 @@
     })();
     </script>
     <script type="module" src="/wedding-demo/app.js"></script>
-    <script>
-    (function () {
-        // Waitlist signups from inside the invite. This used to hide the form
-        // and show "You're on the list" without sending anything anywhere —
-        // every address collected here was discarded. It now posts to the same
-        // endpoint as the main site, so these signups land in one list.
-        //
-        // Same-origin: proxy.ts deliberately does not rewrite /api/* on this
-        // host, so the request reaches the real route instead of being turned
-        // into /wedding-demo/api/waitlist.
-        var form = document.getElementById('aevaia-waitlist-form');
-        if (!form) return;
-        form.addEventListener('submit', function (e) {
-            e.preventDefault();
-            var input = document.getElementById('aevaia-email-input');
-            var btn   = form.querySelector('.aw-submit');
-            var ok    = document.getElementById('aevaia-success-msg');
-            var err   = document.getElementById('aevaia-error-msg');
-            if (!input || !input.value.trim()) return;
-
-            if (err) err.classList.add('hidden');
-            if (btn) { btn.disabled = true; btn.textContent = 'Joining...'; }
-
-            fetch('/api/waitlist', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: input.value.trim() })
-            })
-            .then(function (res) {
-                if (!res.ok) throw new Error('failed');
-                form.style.display = 'none';
-                if (ok) ok.classList.remove('hidden');
-            })
-            .catch(function () {
-                if (err) err.classList.remove('hidden');
-                if (btn) { btn.disabled = false; btn.textContent = 'Join Waitlist'; }
-            });
-        });
-    })();
-    </script>
-
-    <div class="aevaia-fixed-watermark">POWERED BY AEVAIA</div>
 </body>
 </html>

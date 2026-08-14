@@ -44,6 +44,10 @@ const isPublicRoute = createRouteMatcher([
   "/privacy",
   "/terms",
   "/contact",
+  "/impressum",       // operator disclosure. Must be reachable WITHOUT an
+                      // account — an Impressum behind a login does not satisfy
+                      // the duty it exists to meet. Omitting it here is what
+                      // made /wedding/scan 404 for signed-out visitors.
 ]);
 
 // Routes that must remain reachable during maintenance so the admin can log in

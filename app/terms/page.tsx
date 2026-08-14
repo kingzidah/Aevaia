@@ -168,6 +168,8 @@ export default function TermsPage() {
       <footer className="border-t border-zinc-200 dark:border-white/5 px-6 md:px-12 py-8 flex flex-col md:flex-row items-center justify-between gap-4 max-w-3xl mx-auto">
         <p className="text-xs text-neutral-700">© {new Date().getFullYear()} Aevaia</p>
         <div className="flex items-center gap-4 text-xs text-neutral-700">
+          <Link href="/impressum" className="hover:text-neutral-400 transition-colors">Impressum</Link>
+          <span>·</span>
           <Link href="/privacy" className="hover:text-neutral-400 transition-colors">Privacy</Link>
           <span>·</span>
           <Link href="/terms"   className="hover:text-neutral-400 transition-colors font-medium text-neutral-500">Terms</Link>

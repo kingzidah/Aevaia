@@ -16,6 +16,12 @@ const WHATSAPP_PREFILL = "Hi! I'd like an Aevaia site built for my event.";
 // Every price on the page reads from here, so this block is the only edit needed.
 const CURRENCY = "€";
 
+// Stated identically on every tier and in step 04. Hosting was previously
+// described three different ways on one page ("live for a year", "it stays
+// live", "I keep it running"), which is the kind of contradiction a buyer
+// notices and a seller then has to argue about later.
+const HOSTING_TERM = "Your own link, live for a year. After that it's €29/year to keep it up.";
+
 type Package = {
   id: string;
   name: string;
@@ -39,7 +45,7 @@ const PACKAGES: Package[] = [
       "RSVP that lands in your inbox",
       "Venue details, map and directions",
       "Built for phones first — it opens perfectly in WhatsApp",
-      "Your own link, live for a year",
+      HOSTING_TERM,
     ],
   },
   {
@@ -57,6 +63,7 @@ const PACKAGES: Package[] = [
       "Digital tickets with a QR code for every guest",
       "A gate scanner your bouncers can use on any phone",
       "Live checked-in count on the night",
+      HOSTING_TERM,
     ],
   },
   {
@@ -71,7 +78,8 @@ const PACKAGES: Package[] = [
       "Personal voice notes, letters, hidden messages",
       "Easter eggs that reward people for coming back",
       "Your own subdomain — yourname.aevaia.com",
-      "Revisions until it is right",
+      "Three rounds of revisions included.",
+      HOSTING_TERM,
     ],
   },
 ];
@@ -99,15 +107,23 @@ const WORK = [
   },
 ];
 
-// ── What we make ──────────────────────────────────────────────────────────────
+// ── The door ──────────────────────────────────────────────────────────────────
+// Ticketing, check-in and headcount are pulled out of the main grid and shown
+// first, as a named group. They are the part almost nobody else offers, and the
+// part that turns a pretty invite into something that runs an actual event — so
+// burying them ninth in an alphabetical-looking grid undersold them.
+const DOOR_FEATURES = [
+  { title: "Digital tickets", body: "Every guest gets a unique code and a QR they can keep on their phone.", dot: "from-fuchsia-400 to-pink-500" },
+  { title: "Gate check-in", body: "A scanner page for your door staff. No app to install, no accounts.", dot: "from-pink-400 to-rose-500" },
+  { title: "Live guest count", body: "See exactly how many people are inside, as they arrive.", dot: "from-rose-400 to-amber-400" },
+];
+
+// ── Everything else ───────────────────────────────────────────────────────────
 // `dot` is the gradient on each card's marker — the colour rotation is what
 // keeps this grid from reading as a wall of identical tiles.
 const CAPABILITIES = [
   { title: "Invite pages", body: "Your date, your photos, your words — not a template with your name pasted in.", dot: "from-violet-400 to-fuchsia-500" },
   { title: "RSVP & guest list", body: "Guests reply on the page. You watch the list fill up.", dot: "from-fuchsia-400 to-pink-500" },
-  { title: "Digital tickets", body: "Every guest gets a unique code and a QR they can keep on their phone.", dot: "from-pink-400 to-rose-500" },
-  { title: "Gate check-in", body: "A scanner page for your door staff. No app to install, no accounts.", dot: "from-rose-400 to-orange-400" },
-  { title: "Live guest count", body: "See exactly how many people are inside, as they arrive.", dot: "from-orange-400 to-amber-400" },
   { title: "Photo galleries", body: "Swipeable carousels that feel good on a phone, not a grid of thumbnails.", dot: "from-amber-400 to-yellow-300" },
   { title: "Music & sound", body: "A soundtrack that fades in, ducks under text, and does not annoy anyone.", dot: "from-teal-300 to-emerald-400" },
   { title: "Animated scenes", body: "Envelopes that open, letters that unfold, moments that land.", dot: "from-sky-400 to-violet-500" },
@@ -118,11 +134,15 @@ const CAPABILITIES = [
 ];
 
 // ── How it works ──────────────────────────────────────────────────────────────
+// Step 02 was titled with a first-person plural, and step 03 originally read
+// "from the day <plural> agree scope". Both are reworded to the second person
+// ("you approve the scope") because the page is now singular throughout, and a
+// solo operator writing as a company is exactly the tell this removes.
 const STEPS = [
   { n: "01", title: "Message me", body: "WhatsApp or the form below. Tell me the occasion and the date." },
-  { n: "02", title: "We agree the scope", body: "I come back with what I'd build and a fixed price. No surprises later." },
-  { n: "03", title: "I build it by hand", body: "Usually a few days. You see it come together and say what to change." },
-  { n: "04", title: "You get your link", body: "Share it however you like. It stays live, and I keep it running." },
+  { n: "02", title: "You approve the scope", body: "I come back with what I'd build and a fixed price. No surprises later." },
+  { n: "03", title: "I build it by hand", body: "Usually 7–10 days from the day you approve the scope. Tight date? Ask — rush is often possible." },
+  { n: "04", title: "You get your link", body: `Share it however you like. ${HOSTING_TERM}` },
 ];
 
 // A soft drifting colour cloud. These replace the divider lines as the way the
@@ -308,19 +328,21 @@ export default function StudioLandingPage() {
           </span>
           <div className="hidden md:flex items-center gap-8 text-sm text-neutral-500 dark:text-neutral-400">
             <a href="#work" className="hover:text-fuchsia-500 dark:hover:text-fuchsia-400 transition-colors">Work</a>
-            <a href="#make" className="hover:text-fuchsia-500 dark:hover:text-fuchsia-400 transition-colors">What we make</a>
+            <a href="#make" className="hover:text-fuchsia-500 dark:hover:text-fuchsia-400 transition-colors">What I make</a>
             <a href="#pricing" className="hover:text-fuchsia-500 dark:hover:text-fuchsia-400 transition-colors">Pricing</a>
             <a href="#enquiry" className="hover:text-fuchsia-500 dark:hover:text-fuchsia-400 transition-colors">Start</a>
           </div>
           <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className={primaryBtn + " !py-2 !px-5"}>
-            Message us
+            Message me
           </a>
         </nav>
       </header>
 
       {/* ── Hero ─────────────────────────────────────────────────────────────── */}
       <section className={`relative ${section} pt-20 pb-28 md:pt-32 md:pb-36 text-center flex flex-col items-center`}>
-        <p className={eyebrow} data-reveal>Digital invites · Gifts · Event pages</p>
+        {/* Occasion words above the fold: a visitor arriving cold needs to see
+            their own event named before they will read anything else. */}
+        <p className={eyebrow} data-reveal>Weddings · Birthdays · Engagements · Naming ceremonies</p>
 
         <h1
           className="font-[family-name:var(--font-playfair)] text-[2.6rem] leading-[1.08] md:text-6xl lg:text-7xl font-light mt-7 max-w-4xl"
@@ -336,9 +358,9 @@ export default function StudioLandingPage() {
           data-reveal
           style={{ transitionDelay: "120ms" }}
         >
-          We hand-build the invite, the gift, the whole event page — designed around your
-          photos, your music and your date. You send one link. Everyone who opens it
-          remembers it.
+          I hand-build the invite, the gift, the whole event page — designed around your
+          photos, your music and your date. You send one link. Send me your photos, the
+          names and the date — I do the rest.
         </p>
 
         <div
@@ -438,18 +460,57 @@ export default function StudioLandingPage() {
         </div>
       </section>
 
-      {/* ── What we make ─────────────────────────────────────────────────────── */}
+      {/* ── What I make ──────────────────────────────────────────────────────── */}
       <section id="make" className={`relative ${section} py-24 md:py-32`}>
-        <p className={eyebrow} data-reveal>What we make</p>
+        <p className={eyebrow} data-reveal>What I make</p>
         <h2
           className="font-[family-name:var(--font-playfair)] text-3xl md:text-5xl font-light mt-4 max-w-2xl"
           data-reveal
           style={{ transitionDelay: "60ms" }}
         >
-          Anything you can describe, we can put on a link.
+          Anything you can describe, I can put on a link.
         </h2>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-14">
+        {/* ── The door ────────────────────────────────────────────────────────
+            Given its own heading, warmer surface and larger type so it reads as
+            a capability nobody else is offering, rather than three more tiles. */}
+        <div className="mt-14" data-reveal>
+          <h3 className="font-[family-name:var(--font-playfair)] text-2xl md:text-3xl font-light">
+            The door
+          </h3>
+          <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-2 max-w-xl">
+            Most invites stop once the guest has replied. These three run the night itself.
+          </p>
+        </div>
+
+        <div className="grid sm:grid-cols-3 gap-4 mt-6">
+          {DOOR_FEATURES.map((item, i) => (
+            <div
+              key={item.title}
+              className={
+                "p-7 hover:-translate-y-1.5 " + card + " " +
+                "bg-gradient-to-b from-fuchsia-500/[0.13] to-violet-500/[0.05] " +
+                "dark:from-fuchsia-500/[0.16] dark:to-violet-600/[0.06] " +
+                "shadow-[0_24px_70px_-30px_rgba(217,70,239,0.7)]"
+              }
+              data-reveal
+              style={{ transitionDelay: `${i * 80}ms` }}
+            >
+              <span className={`block w-10 h-1.5 rounded-full bg-gradient-to-r ${item.dot}`} />
+              <h4 className="text-lg font-medium mt-4">{item.title}</h4>
+              <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-2 leading-relaxed">
+                {item.body}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        {/* ── Everything else ─────────────────────────────────────────────── */}
+        <p className="text-[11px] font-semibold tracking-[0.28em] uppercase text-neutral-500 dark:text-neutral-500 mt-16" data-reveal>
+          And everything else
+        </p>
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
           {CAPABILITIES.map((item, i) => (
             <div
               key={item.title}
@@ -458,7 +519,7 @@ export default function StudioLandingPage() {
               style={{ transitionDelay: `${(i % 3) * 80}ms` }}
             >
               <span className={`block w-8 h-1.5 rounded-full bg-gradient-to-r ${item.dot}`} />
-              <h3 className="text-base font-medium mt-4">{item.title}</h3>
+              <h4 className="text-base font-medium mt-4">{item.title}</h4>
               <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-2 leading-relaxed">
                 {item.body}
               </p>
@@ -534,7 +595,7 @@ export default function StudioLandingPage() {
 
           <p className="text-xs text-neutral-500 dark:text-neutral-500 mt-10 max-w-2xl" data-reveal>
             Prices are for the build. Something unusual in mind, or a date that is very
-            close? Message us — we will tell you honestly what is possible.
+            close? Message me — I&apos;ll tell you honestly what is possible.
           </p>
         </div>
       </section>
@@ -574,7 +635,7 @@ export default function StudioLandingPage() {
             data-reveal
             style={{ transitionDelay: "60ms" }}
           >
-            Tell us about the day.
+            Tell me about the day.
           </h2>
           <p className="text-neutral-600 dark:text-neutral-400 mt-5 text-sm leading-relaxed" data-reveal>
             The fastest way is WhatsApp — most people get a reply the same day. If you would
@@ -605,7 +666,7 @@ export default function StudioLandingPage() {
                 Got it.
               </p>
               <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-2">
-                We&apos;ll get back to you shortly.
+                I&apos;ll get back to you shortly.
               </p>
             </div>
           ) : (
@@ -671,19 +732,23 @@ export default function StudioLandingPage() {
       {/* ── Builder waitlist ─────────────────────────────────────────────────── */}
       <section className={`relative ${section} py-20`}>
         <div className={`max-w-3xl mx-auto text-center flex flex-col items-center p-10 ${card}`} data-reveal>
+          {/* Previously "One day you'll be able to build this yourself", which
+              told a visitor about to pay for a hand-built site that they should
+              wait and do it themselves for free. Reframed for a different
+              audience — makers — so it no longer competes with the sale. */}
           <p className={eyebrow}>Coming later</p>
           <h2 className="font-[family-name:var(--font-playfair)] text-2xl md:text-3xl font-light mt-4">
-            One day you&apos;ll be able to build this yourself.
+            For makers, later
           </h2>
           <p className="text-neutral-600 dark:text-neutral-400 mt-3 text-sm max-w-lg">
-            We&apos;re building the studio behind all of this into something anyone can use.
-            Leave your email and you&apos;ll be among the first in.
+            I&apos;m building a studio for people who want to make their own. Different
+            thing, different day — leave your email if that&apos;s you.
           </p>
 
           <div className="mt-7 w-full max-w-md">
             {waitlistState === "done" ? (
               <p className="font-medium bg-gradient-to-r from-violet-500 to-fuchsia-500 bg-clip-text text-transparent">
-                You&apos;re on the list. We&apos;ll be in touch.
+                You&apos;re on the list. I&apos;ll be in touch.
               </p>
             ) : (
               <form onSubmit={handleWaitlist} className="flex flex-col sm:flex-row items-center gap-3 w-full">
@@ -715,6 +780,7 @@ export default function StudioLandingPage() {
           </span>
           <div className="flex items-center gap-6 text-xs text-neutral-500 dark:text-neutral-500">
             <a href="/contact" className="hover:text-fuchsia-500 transition-colors">Contact</a>
+            <a href="/impressum" className="hover:text-fuchsia-500 transition-colors">Impressum</a>
             <a href="/privacy" className="hover:text-fuchsia-500 transition-colors">Privacy</a>
             <a href="/terms" className="hover:text-fuchsia-500 transition-colors">Terms</a>
           </div>

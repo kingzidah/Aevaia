@@ -99,9 +99,64 @@ export default function PrivacyPage() {
             </p>
           </section>
 
-          {/* Section 6 */}
+          {/* Section 6 — commissioned work.
+              Everything above this point describes the self-serve Studio. It does
+              NOT cover the hand-built service sold on the home page, where guest
+              lists belonging to a client's event are held on their behalf. That is
+              the data most likely to attract a real complaint, and it was entirely
+              unaddressed. Structure only below — the operator must complete each
+              TODO-OPERATOR before this page can be relied on. */}
           <section>
-            <h2 className="text-base font-bold text-white mb-3">6. Your Rights</h2>
+            <h2 className="text-base font-bold text-white mb-3">6. Commissioned Sites &amp; Guest Data</h2>
+            <p className="text-sm text-neutral-400 leading-relaxed mb-4">
+              This section applies when a site is designed and built to order, rather than
+              created by you in the Studio. In that arrangement guest information is supplied
+              by the client and held on the client&apos;s behalf.
+            </p>
+
+            <dl className="space-y-4">
+              <div>
+                <dt className="text-sm font-semibold text-neutral-200">What guest data is stored</dt>
+                <dd className="text-sm text-neutral-400 leading-relaxed mt-1">
+                  <span className="font-mono text-[11px] uppercase tracking-wider text-amber-400">TODO-OPERATOR</span>
+                  {" "}— list every field collected from a guest (for example name, phone number,
+                  email address, RSVP status, ticket code, check-in time), and state which are
+                  required and which are optional.
+                </dd>
+              </div>
+
+              <div>
+                <dt className="text-sm font-semibold text-neutral-200">Where it is stored</dt>
+                <dd className="text-sm text-neutral-400 leading-relaxed mt-1">
+                  <span className="font-mono text-[11px] uppercase tracking-wider text-amber-400">TODO-OPERATOR</span>
+                  {" "}— name each system that receives guest data and the region it is hosted in,
+                  including any third-party automation or spreadsheet destination.
+                </dd>
+              </div>
+
+              <div>
+                <dt className="text-sm font-semibold text-neutral-200">How long it is kept</dt>
+                <dd className="text-sm text-neutral-400 leading-relaxed mt-1">
+                  <span className="font-mono text-[11px] uppercase tracking-wider text-amber-400">TODO-OPERATOR</span>
+                  {" "}— state the retention period after the event date, and what happens to the
+                  guest list at the end of it.
+                </dd>
+              </div>
+
+              <div>
+                <dt className="text-sm font-semibold text-neutral-200">Controller or processor</dt>
+                <dd className="text-sm text-neutral-400 leading-relaxed mt-1">
+                  <span className="font-mono text-[11px] uppercase tracking-wider text-amber-400">TODO-OPERATOR</span>
+                  {" "}— state whether Aevaia acts as controller or as processor for guest data,
+                  who the counterparty is, and whether a written agreement governs it.
+                </dd>
+              </div>
+            </dl>
+          </section>
+
+          {/* Section 7 */}
+          <section>
+            <h2 className="text-base font-bold text-white mb-3">7. Your Rights</h2>
             <p className="text-sm text-neutral-400 leading-relaxed mb-2">
               Under applicable data-protection law (including GDPR where relevant), you have the right to:
             </p>
@@ -117,18 +172,18 @@ export default function PrivacyPage() {
             </p>
           </section>
 
-          {/* Section 7 */}
+          {/* Section 8 */}
           <section>
-            <h2 className="text-base font-bold text-white mb-3">7. Security</h2>
+            <h2 className="text-base font-bold text-white mb-3">8. Security</h2>
             <p className="text-sm text-neutral-400 leading-relaxed">
               All data is transmitted over TLS. Passwords are hashed with bcrypt (cost factor 12) and never stored in plain text.
               Payment data never transits Aevaia servers. We review and update our security practices regularly.
             </p>
           </section>
 
-          {/* Section 8 */}
+          {/* Section 9 */}
           <section>
-            <h2 className="text-base font-bold text-white mb-3">8. Changes to This Policy</h2>
+            <h2 className="text-base font-bold text-white mb-3">9. Changes to This Policy</h2>
             <p className="text-sm text-neutral-400 leading-relaxed">
               We may update this policy from time to time. The &quot;Last updated&quot; date at the top of this page reflects the most
               recent revision. Continued use of Aevaia after changes constitutes acceptance.
@@ -151,6 +206,8 @@ export default function PrivacyPage() {
       <footer className="border-t border-zinc-200 dark:border-white/5 px-6 md:px-12 py-8 flex flex-col md:flex-row items-center justify-between gap-4 max-w-3xl mx-auto">
         <p className="text-xs text-neutral-700">© {new Date().getFullYear()} Aevaia</p>
         <div className="flex items-center gap-4 text-xs text-neutral-700">
+          <Link href="/impressum" className="hover:text-neutral-400 transition-colors">Impressum</Link>
+          <span>·</span>
           <Link href="/privacy" className="hover:text-neutral-400 transition-colors font-medium text-neutral-500">Privacy</Link>
           <span>·</span>
           <Link href="/terms"   className="hover:text-neutral-400 transition-colors">Terms</Link>
