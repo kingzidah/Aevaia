@@ -259,8 +259,26 @@ export const commissionSchema = z.object({
   email:         emailSchema,
   phone:         z.string().trim().max(32).optional().or(z.literal("")),
   occasion:      z.string().trim().min(1, "Please choose an occasion").max(60),
+
+  // The date arrives one of two ways and never both. `event_on` is a real
+  // calendar date from a native picker — unambiguous, no 12/10 problem.
+  // `event_date` is their own words, for the person who genuinely does not know
+  // the day yet ("sometime in spring"). Anchored YYYY-MM-DD so a malformed
+  // value is rejected here rather than blowing up the Postgres insert.
+  event_on:      z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, "That date did not look right")
+                  .optional().or(z.literal("")),
   event_date:    z.string().trim().max(60).optional().or(z.literal("")),
+
   names_on_site: z.string().trim().max(160).optional().or(z.literal("")),
   brief:         z.string().trim().max(4_000, "Please keep this under 4 000 characters").optional().or(z.literal("")),
   package:       z.string().trim().max(60).optional().or(z.literal("")),
+});
+
+// ── Admin: updating a commission ──────────────────────────────────────────────
+// Only the fields the owner actually edits. Amounts are in minor units so a
+// price is an integer of cents and never a float.
+export const commissionUpdateSchema = z.object({
+  code:       z.string().trim().regex(/^AV-[0-9A-HJKMNP-TV-Z]{6}$/, "Not a valid commission code"),
+  amount_due: z.number().int().min(0).max(100_000_00).optional(),
+  status:     z.enum(["new", "quoted", "building", "delivered", "cancelled"]).optional(),
 });

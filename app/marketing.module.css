@@ -672,6 +672,36 @@
 }
 .select option { background: var(--surface-input); color: var(--text); }
 
+/* Native date input. Left as type="date" on purpose — the OS picker is
+   unambiguous, localised, and already familiar, which no hand-rolled calendar
+   manages. Only the chrome needs coaxing onto the dark ground. */
+.input[type="date"] { color-scheme: dark; }
+.input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: .55;
+  cursor: pointer;
+}
+.input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
+
+.checkRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;              /* the whole row is the tap target */
+  font-size: 14px;
+  color: var(--muted);
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.check {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--violet);
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
 /* ── Confirmation ──────────────────────────────────────────────────────── */
 .codeCard {
   background: linear-gradient(180deg, #221334, #150f20);

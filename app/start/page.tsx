@@ -40,9 +40,15 @@ const PACKAGES = [
 export default function StartPage() {
   const [form, setForm] = useState({
     name: "", email: "", phone: "",
-    occasion: "", event_date: "", names_on_site: "",
+    occasion: "", event_on: "", event_date: "", names_on_site: "",
     brief: "", package: "",
   });
+
+  // Most people know their date, so the picker is the default and gives an
+  // unambiguous value. The minority who genuinely do not ("sometime in spring")
+  // would otherwise be forced to invent one, so they get a text box instead.
+  // Only ever one of the two is submitted.
+  const [dateUnknown, setDateUnknown] = useState(false);
   const [state, setState] = useState<"idle" | "sending" | "done" | "error">("idle");
   const [error, setError] = useState("");
   const [code, setCode] = useState("");
@@ -212,11 +218,44 @@ export default function StartPage() {
                 </div>
 
                 <div className={s.fieldRow}>
-                  <label className={s.fieldLabel} htmlFor="f-date">
-                    The date <span className={s.optional}>— &quot;12 October&quot; or &quot;sometime in spring&quot; both work</span>
+                  <label className={s.fieldLabel} htmlFor={dateUnknown ? "f-date-text" : "f-date"}>
+                    The date
                   </label>
-                  <input id="f-date" className={s.input} value={form.event_date}
-                         onChange={e => set("event_date", e.target.value)} />
+
+                  {dateUnknown ? (
+                    <input
+                      id="f-date-text"
+                      className={s.input}
+                      value={form.event_date}
+                      placeholder="Sometime in spring, or the weekend of the 12th…"
+                      onChange={e => set("event_date", e.target.value)}
+                    />
+                  ) : (
+                    <input
+                      id="f-date"
+                      type="date"
+                      className={s.input}
+                      value={form.event_on}
+                      // Nobody commissions a site for yesterday, and blocking it
+                      // here saves a confusing back-and-forth later.
+                      min={new Date().toISOString().slice(0, 10)}
+                      onChange={e => set("event_on", e.target.value)}
+                    />
+                  )}
+
+                  <label className={s.checkRow}>
+                    <input
+                      type="checkbox"
+                      className={s.check}
+                      checked={dateUnknown}
+                      onChange={e => {
+                        setDateUnknown(e.target.checked);
+                        // Clear the other field so only one ever reaches the API.
+                        setForm(f => ({ ...f, event_on: "", event_date: "" }));
+                      }}
+                    />
+                    I don&apos;t know the exact date yet
+                  </label>
                 </div>
 
                 <div className={s.fieldRow}>
