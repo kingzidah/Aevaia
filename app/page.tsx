@@ -2,33 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import { Archivo, IBM_Plex_Mono, Playfair_Display } from "next/font/google";
+import { marketingFontVars } from "./marketing-fonts";
 import s from "./marketing.module.css";
-
-// ── Fonts ─────────────────────────────────────────────────────────────────────
-// Declared HERE rather than in app/layout.tsx on purpose. next/font works in any
-// module, so scoping the three families to this route means the studio, the
-// workspace and every other page keep the fonts they already had. The variables
-// are consumed only inside marketing.module.css.
-const archivo = Archivo({
-  subsets: ["latin"],
-  weight: ["500", "600", "700", "800"],
-  variable: "--mk-sans",
-  display: "swap",
-});
-const plexMono = IBM_Plex_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500"],
-  variable: "--mk-mono",
-  display: "swap",
-});
-const playfair = Playfair_Display({
-  subsets: ["latin"],
-  weight: ["500", "600", "700"],
-  style: ["normal", "italic"],
-  variable: "--mk-serif",
-  display: "swap",
-});
 
 // ── Contact details ───────────────────────────────────────────────────────────
 // WHATSAPP_NUMBER is digits only, international format, no + or spaces —
@@ -293,7 +268,7 @@ export default function MarketingHomePage() {
   return (
     <div
       ref={rootRef}
-      className={`${s.site} ${archivo.variable} ${plexMono.variable} ${playfair.variable}`}
+      className={`${s.site} ${marketingFontVars}`}
     >
       {/* ── Nav ────────────────────────────────────────────────────────────── */}
       <div className={`${s.nav} ${navScrolled ? s.navScrolled : ""}`}>

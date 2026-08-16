@@ -48,6 +48,11 @@ const isPublicRoute = createRouteMatcher([
                       // account — an Impressum behind a login does not satisfy
                       // the duty it exists to meet. Omitting it here is what
                       // made /wedding/scan 404 for signed-out visitors.
+  "/start",           // commission brief. The entire point is that a client
+                      // never makes an account, so this must be public — and it
+                      // is pasted into DMs, where a 404 reads as a dead scam
+                      // link rather than a misconfiguration.
+  "/api/commission",  // the write behind it, same reason.
 ]);
 
 // Routes that must remain reachable during maintenance so the admin can log in

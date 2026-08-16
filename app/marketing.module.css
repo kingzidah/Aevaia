@@ -582,6 +582,114 @@
 
 .formError { color: #f87171; font-size: 13px; }
 
+/* ── /start — the commission brief ─────────────────────────────────────────
+   A stranger arriving here has been handed a link in a DM and has every right
+   to be suspicious. Everything below is aimed at that: the page is on the same
+   domain and in the same skin as the site they just left, it says plainly what
+   happens next, and it never asks for payment details. */
+
+.startNarrow { max-width: 660px; }
+
+/* The wordmark used as a link (nav and footer on /start) rather than as plain
+   text. Padded to a 44px target — as standalone navigation it gets no relief
+   from the WCAG 2.5.8 inline exemption that covers links sitting inside a
+   sentence, which is why the three in-prose links here are left alone. */
+.wordmarkLink {
+  composes: wordmark;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  min-width: 44px;
+}
+
+.trustRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 22px 0 0;
+}
+.trustItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--mk-mono), monospace;
+  font-size: 12px;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  padding: 7px 13px;
+}
+.trustTick { color: var(--whatsapp); font-weight: 700; }
+
+/* Numbered because these genuinely are sequential — it is what happens after
+   the form, in order. */
+.flow { display: grid; gap: 2px; margin: 26px 0 0; counter-reset: flowstep; }
+.flowStep {
+  counter-increment: flowstep;
+  display: grid;
+  grid-template-columns: 26px 1fr;
+  gap: 13px;
+  align-items: start;
+  padding: 13px 0;
+  border-top: 1px solid var(--rule);
+}
+.flowStep::before {
+  content: counter(flowstep);
+  font-family: var(--mk-mono), monospace;
+  font-size: 12px;
+  color: var(--violet-lighter);
+  background: var(--chip-violet);
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+.flowTitle { font-weight: 700; font-size: 15px; margin-bottom: 3px; }
+
+.fieldRow { display: grid; gap: 7px; margin-bottom: 16px; }
+.fieldLabel {
+  font-family: var(--mk-mono), monospace;
+  font-size: 12px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.optional { color: var(--faint-2); text-transform: none; letter-spacing: 0; }
+
+.select {
+  composes: input;
+  appearance: none;
+  cursor: pointer;
+  /* Chevron drawn in the background so no icon font is needed. */
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+    linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position: calc(100% - 20px) 21px, calc(100% - 15px) 21px;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 44px;
+}
+.select option { background: var(--surface-input); color: var(--text); }
+
+/* ── Confirmation ──────────────────────────────────────────────────────── */
+.codeCard {
+  background: linear-gradient(180deg, #221334, #150f20);
+  border: 1.5px solid var(--violet);
+  border-radius: var(--r-card);
+  box-shadow: 0 30px 70px -34px rgba(139, 63, 255, .7);
+  padding: 30px 26px;
+  text-align: center;
+}
+.codeValue {
+  font-family: var(--mk-mono), monospace;
+  font-size: clamp(28px, 7vw, 38px);
+  font-weight: 500;
+  letter-spacing: .1em;
+  margin: 12px 0 6px;
+  word-break: break-all;
+}
+
 /* ── Footer ────────────────────────────────────────────────────────────── */
 .footer { border-top: 1px solid var(--border); padding: 28px 0; }
 .footerInner {

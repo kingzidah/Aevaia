@@ -244,3 +244,23 @@ export const buildEnquirySchema = z.object({
   event_date: z.string().trim().max(60).optional().or(z.literal("")),
   message:    z.string().trim().max(2_000, "Message must be 2 000 characters or less").optional().or(z.literal("")),
 });
+
+// ── Commission brief (/start) ─────────────────────────────────────────────────
+//
+// The point at which an enquiry becomes a job: this is what mints a commission
+// code. Deliberately stricter than buildEnquirySchema — that one optimises for
+// not losing a curious visitor, this one is filled in by somebody who has
+// already decided, and the answers become the brief the work is built from.
+//
+// Still only three required fields. Everything else can be chased in the reply,
+// and a long required form is how you lose the person who was ready to pay.
+export const commissionSchema = z.object({
+  name:          z.string().trim().min(1, "Please tell me your name").max(100, "Name must be 100 characters or less"),
+  email:         emailSchema,
+  phone:         z.string().trim().max(32).optional().or(z.literal("")),
+  occasion:      z.string().trim().min(1, "Please choose an occasion").max(60),
+  event_date:    z.string().trim().max(60).optional().or(z.literal("")),
+  names_on_site: z.string().trim().max(160).optional().or(z.literal("")),
+  brief:         z.string().trim().max(4_000, "Please keep this under 4 000 characters").optional().or(z.literal("")),
+  package:       z.string().trim().max(60).optional().or(z.literal("")),
+});
