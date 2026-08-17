@@ -103,6 +103,20 @@ export const proxy = clerkMiddleware(async (auth, req) => {
     return NextResponse.rewrite(req.nextUrl);
   }
 
+  // ── Yvana subdomain rewrite ─────────────────────────────────────────────────
+  // Serves public/yvana/ as a standalone static site on any hostname containing
+  // "yvana" (yvana.aevaia.com, or yvana.localhost:3000). Mirrors the jasmine
+  // and wedding rewrites; returns before auth so Clerk never runs.
+  if (!isApiRequest && hostname.includes('yvana')) {
+    let newPath = req.nextUrl.pathname;
+    if (newPath === '/') newPath = '/index.html';
+    if (!newPath.startsWith('/yvana')) {
+      newPath = '/yvana' + newPath;
+    }
+    req.nextUrl.pathname = newPath;
+    return NextResponse.rewrite(req.nextUrl);
+  }
+
   // ── Maintenance mode ────────────────────────────────────────────────────────
   // Activated by setting MAINTENANCE_MODE=true in .env.local (or Vercel env).
   // The owner bypasses the redirect by setting MAINTENANCE_BYPASS_USER_ID to

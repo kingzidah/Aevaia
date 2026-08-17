@@ -10,10 +10,11 @@ import s from "./marketing.module.css";
 // that is what wa.me requires. The prefill is unchanged.
 const WHATSAPP_NUMBER = "4917675460351"; // WhatsApp Business, +49 176 75460351
 
-// aevaia.com has MX records pointing at ImprovMX, so this forwards to the Gmail
-// inbox. VERIFY the alias actually exists before trusting it — if it does not,
-// every emailed enquiry disappears silently rather than bouncing anywhere useful.
-const CONTACT_EMAIL = "hello@aevaia.com";
+// Back to the Gmail deliberately. hello@aevaia.com is the address to end up on,
+// but it needs a mailbox behind it — and an address that looks professional
+// while silently dropping enquiries is far worse than a plain Gmail that
+// actually arrives. Switch this the day the mailbox exists and is tested.
+const CONTACT_EMAIL = "helloaevaia@gmail.com";
 const WHATSAPP_PREFILL = "Hi! I'd like an Aevaia site built for my event.";
 
 // ── Pricing ───────────────────────────────────────────────────────────────────
@@ -163,14 +164,12 @@ const WORK = [
   {
     // The first one ever built, and the piece that started the studio.
     //
-    // Deliberately has NO href. The real site carries five photographs of a
-    // named private person and a letter written to her; putting it behind a
-    // public link would publish both to anyone the URL reaches. The cover is a
-    // screenshot of the opening screen only — no photographs render on it.
-    // What is shown here is the craft, not her gift.
+    // Published at the owner's explicit instruction. Note what that means: the
+    // site carries five photographs of a named private person and a letter
+    // written to her, and it is now reachable by anyone with the link.
     title: "Yvana",
     kind: "Birthday gift",
-    href: null,
+    href: "https://yvana.aevaia.com",
     image: "/hero-yvana.png",
     accent: "magenta" as const,
     blurb:
@@ -444,7 +443,7 @@ export default function MarketingHomePage() {
         <div className={s.wrap}>
           <div className={s.sectionHead} data-reveal>
             <span className={s.label}>01 / Selected work</span>
-            <span className={s.labelQuiet}>two are live</span>
+            <span className={s.labelQuiet}>live right now</span>
           </div>
 
           {/* Was "Open them. They are live right now." Yvana's piece is private
@@ -452,7 +451,7 @@ export default function MarketingHomePage() {
               count is stated instead — it still invites the click, and it does
               not promise something one of the three cards cannot deliver. */}
           <h2 className={s.h2} style={{ marginBottom: 34 }} data-reveal>
-            Three built by hand. Two you can open right now.
+            Three built by hand. All three open.
           </h2>
 
           <div className={s.workGrid}>
