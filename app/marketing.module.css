@@ -526,6 +526,47 @@
 .featTitle { font-weight: 700; font-size: 15px; margin-bottom: 5px; }
 .featBody  { font-size: 13px; color: var(--muted); line-height: 1.5; }
 
+/* ── Audience toggle ───────────────────────────────────────────────────────
+   Two ladders behind one control, so neither buyer is shown the other's
+   numbers. Built from real buttons with role="tab" rather than styled divs, so
+   it is reachable by keyboard and announced correctly. */
+.audienceToggle {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+.audienceBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 22px;
+  border: none;
+  border-radius: var(--r-pill);
+  font-family: var(--mk-sans), sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background .25s, color .25s;
+}
+.audienceOn  { composes: audienceBtn; background: var(--violet); color: #fff; }
+.audienceOff { composes: audienceBtn; background: transparent; color: var(--muted); }
+.audienceOff:hover { color: var(--text); }
+
+.rushNote {
+  margin: 20px 0 0;
+  padding: 13px 18px;
+  border-radius: 10px;
+  background: var(--chip-magenta);
+  color: var(--magenta-light);
+  font-size: 14px;
+  max-width: 620px;
+}
+
 /* ── Pricing ───────────────────────────────────────────────────────────── */
 .tier {
   display: flex;

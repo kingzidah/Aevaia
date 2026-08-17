@@ -9,17 +9,24 @@ import s from "./marketing.module.css";
 // WHATSAPP_NUMBER is digits only, international format, no + or spaces —
 // that is what wa.me requires. The prefill is unchanged.
 const WHATSAPP_NUMBER = "4917675460351"; // WhatsApp Business, +49 176 75460351
-const CONTACT_EMAIL = "helloaevaia@gmail.com";
+
+// aevaia.com has MX records pointing at ImprovMX, so this forwards to the Gmail
+// inbox. VERIFY the alias actually exists before trusting it — if it does not,
+// every emailed enquiry disappears silently rather than bouncing anywhere useful.
+const CONTACT_EMAIL = "hello@aevaia.com";
 const WHATSAPP_PREFILL = "Hi! I'd like an Aevaia site built for my event.";
 
 // ── Pricing ───────────────────────────────────────────────────────────────────
 // PLACEHOLDER NUMBERS — change these to your real prices before advertising.
 const CURRENCY = "€";
 
-// Stated identically on every tier and in step 04, from one constant.
-const HOSTING_TERM = "Your own link, live for a year. After that it's €29/year to keep it up.";
+// Stated ONCE, as small print under the whole pricing section. It used to sit
+// in all three tier cards and again in step 04 — four times on one page, which
+// made a routine renewal read like a catch being repeated at you.
+const RENEWAL_NOTE =
+  "All prices include your link live for one year. After that it's €29/year to keep it online.";
 
-type Package = {
+type Tier = {
   id: string;
   name: string;
   price: number;
@@ -29,11 +36,16 @@ type Package = {
   featured?: boolean;
 };
 
-const PACKAGES: Package[] = [
+// Two ladders, because they are two different buyers holding two different
+// reference prices. Someone planning a wedding is comparing this to their
+// photographer; someone buying a gift is comparing it to flowers. A single list
+// spanning €79 to €1,200 makes the gift look extravagant and the wedding look
+// cheap, and loses both.
+const EVENT_TIERS: Tier[] = [
   {
     id: "invite",
     name: "The Invite",
-    price: 149,
+    price: 249,
     from: false,
     tagline: "One beautiful page for one beautiful day.",
     features: [
@@ -42,13 +54,12 @@ const PACKAGES: Package[] = [
       "RSVP that lands in your inbox",
       "Venue details, map and directions",
       "Built for phones first — it opens perfectly in WhatsApp",
-      HOSTING_TERM,
     ],
   },
   {
     id: "event",
     name: "The Full Event",
-    price: 349,
+    price: 749,
     from: false,
     tagline: "The invite, the guest list, and the door.",
     featured: true,
@@ -60,26 +71,72 @@ const PACKAGES: Package[] = [
       "Digital tickets with a QR code for every guest",
       "A gate scanner your bouncers can use on any phone",
       "Live checked-in count on the night",
-      HOSTING_TERM,
     ],
   },
   {
-    id: "bespoke",
-    name: "Bespoke",
-    price: 599,
+    id: "bespoke-event",
+    name: "Bespoke Event",
+    price: 1200,
     from: true,
-    tagline: "Something nobody has seen before.",
+    tagline: "Built from nothing, around your idea.",
     features: [
-      "Built from scratch around your idea",
+      "Designed from scratch — no template underneath",
       "Custom animated scenes and interactions",
       "Personal voice notes, letters, hidden messages",
       "Easter eggs that reward people for coming back",
       "Your own subdomain — yourname.aevaia.com",
-      "Three rounds of revisions included.",
-      HOSTING_TERM,
+      "Three rounds of revisions included",
     ],
   },
 ];
+
+const GIFT_TIERS: Tier[] = [
+  {
+    id: "gift-design",
+    name: "Gift, from a design",
+    price: 79,
+    from: false,
+    tagline: "Pick a look. I make it theirs.",
+    features: [
+      "Choose one of the designs",
+      "Your photos, their name, your song swapped in",
+      "Animated scenes, sound, the whole experience",
+      "Your own link to send them",
+    ],
+  },
+  {
+    id: "gift-extended",
+    name: "Gift, extended",
+    price: 149,
+    from: false,
+    tagline: "The same, with your voice in it.",
+    featured: true,
+    features: [
+      "Everything in Gift, from a design",
+      "A voice note, recorded by you",
+      "Extra animated scenes",
+      "A hidden message or two",
+    ],
+  },
+  {
+    id: "gift-bespoke",
+    name: "Gift, bespoke",
+    price: 399,
+    from: true,
+    tagline: "One of a kind, for one person.",
+    features: [
+      "Built from scratch for them alone",
+      "Any idea you can describe",
+      "Games, letters, whatever the moment needs",
+      "Taken on selectively — ask early",
+    ],
+  },
+];
+
+// Gift buyers are almost always late, and speed is worth more to them than any
+// feature. Offered on gifts only: an event has a fixed date weeks out, so rush
+// means nothing there.
+const RUSH_NOTE = "Need it sooner? +€40 and it's delivered within 48 hours.";
 
 // ── The work ──────────────────────────────────────────────────────────────────
 const WORK = [
@@ -147,22 +204,24 @@ const STEPS = [
   { n: "01", title: "Message me", body: "WhatsApp or the form below. Tell me the occasion and the date." },
   { n: "02", title: "You approve the scope", body: "I come back with what I'd build and a fixed price. No surprises later." },
   { n: "03", title: "I build it by hand", body: "Usually 7–10 days from the day you approve the scope. Tight date? Ask — rush is often possible." },
-  { n: "04", title: "You get your link", body: `Share it however you like. ${HOSTING_TERM}` },
+  // The renewal terms used to be repeated here too. They now live once, under
+  // the pricing section.
+  { n: "04", title: "You get your link", body: "Share it however you like, with whoever you like." },
 ];
 
 const MARQUEE = "WEDDINGS · BIRTHDAYS · ENGAGEMENTS · NAMING CEREMONIES · GIFTS · EVENT PAGES ·";
 
 export default function MarketingHomePage() {
-  const [email, setEmail] = useState("");
-  const [waitlistState, setWaitlistState] = useState<"idle" | "sending" | "done" | "error">("idle");
-  const [waitlistError, setWaitlistError] = useState("");
-
   const [enquiry, setEnquiry] = useState({
     name: "", email: "", phone: "", event_type: "", event_date: "", message: "",
   });
   const [chosenPackage, setChosenPackage] = useState("");
   const [enquiryState, setEnquiryState] = useState<"idle" | "sending" | "done" | "error">("idle");
   const [enquiryError, setEnquiryError] = useState("");
+
+  // Defaults to "event": the wedding work is the commercial proof, and an event
+  // buyer is worth roughly five times a gift buyer.
+  const [audience, setAudience] = useState<"event" | "gift">("event");
 
   const [navScrolled, setNavScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -227,30 +286,6 @@ export default function MarketingHomePage() {
   function choosePackage(name: string) {
     setChosenPackage(name);
     goTo("enquiry");
-  }
-
-  async function handleWaitlist(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    if (!email.trim() || waitlistState === "sending") return;
-    setWaitlistState("sending");
-    setWaitlistError("");
-    try {
-      const res = await fetch("/api/waitlist", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim() }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setWaitlistError(data?.error ?? "Something went wrong. Please try again.");
-        setWaitlistState("error");
-        return;
-      }
-      setWaitlistState("done");
-    } catch {
-      setWaitlistError("No connection. Please try again.");
-      setWaitlistState("error");
-    }
   }
 
   async function handleEnquiry(e: React.FormEvent<HTMLFormElement>) {
@@ -523,12 +558,42 @@ export default function MarketingHomePage() {
             <span className={s.label}>03 / Pricing</span>
           </div>
 
-          <h2 className={s.h2} style={{ marginBottom: 34 }} data-reveal>
+          <h2 className={s.h2} style={{ marginBottom: 24 }} data-reveal>
             A fixed price, agreed before anything is built.
           </h2>
 
+          {/* The toggle exists so a gift buyer never sees €1,200 and a wedding
+              buyer never sees €79. Each audience gets a ladder that makes sense
+              against what they are actually comparing it to. */}
+          <div className={s.audienceToggle} role="tablist" aria-label="Who is this for" data-reveal>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={audience === "event"}
+              className={audience === "event" ? s.audienceOn : s.audienceOff}
+              onClick={() => setAudience("event")}
+            >
+              For an event
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={audience === "gift"}
+              className={audience === "gift" ? s.audienceOn : s.audienceOff}
+              onClick={() => setAudience("gift")}
+            >
+              For one person
+            </button>
+          </div>
+
+          <p className={s.bodySm} style={{ margin: "0 0 26px", maxWidth: 560 }} data-reveal>
+            {audience === "event"
+              ? "Weddings, engagements, naming ceremonies — anything with a guest list and a door."
+              : "A birthday, an apology, a just-because. One person opens it, and it was made for them."}
+          </p>
+
           <div className={s.priceGrid}>
-            {PACKAGES.map((pkg, i) => (
+            {(audience === "event" ? EVENT_TIERS : GIFT_TIERS).map((pkg, i) => (
               <div
                 key={pkg.id}
                 className={pkg.featured ? s.tierFeatured : s.tier}
@@ -544,8 +609,10 @@ export default function MarketingHomePage() {
                   {pkg.from && (
                     <span className={s.label} style={{ letterSpacing: ".04em" }}>from</span>
                   )}
+                  {/* Grouped thousands: "€1200" reads as a serial number,
+                      "€1,200" reads as a price. */}
                   <span className={`${s.tierPrice} ${pkg.featured ? s.gradText : ""}`}>
-                    {CURRENCY}{pkg.price}
+                    {CURRENCY}{pkg.price.toLocaleString("en-GB")}
                   </span>
                 </div>
 
@@ -564,9 +631,18 @@ export default function MarketingHomePage() {
             ))}
           </div>
 
+          {audience === "gift" && (
+            <p className={s.rushNote} data-reveal>{RUSH_NOTE}</p>
+          )}
+
           <p className={s.bodySm} style={{ margin: "22px 0 0", maxWidth: 620, color: "var(--faint)" }} data-reveal>
             Prices are for the build. Something unusual in mind, or a date that is very
             close? Message me — I&apos;ll tell you honestly what is possible.
+          </p>
+
+          {/* The renewal terms, stated once for the whole section. */}
+          <p className={s.bodySm} style={{ margin: "10px 0 0", maxWidth: 620, color: "var(--faint-2)", fontSize: 13 }} data-reveal>
+            {RENEWAL_NOTE}
           </p>
         </div>
       </section>
@@ -698,52 +774,10 @@ export default function MarketingHomePage() {
         </div>
       </section>
 
-      {/* ── Coming later — waitlist ────────────────────────────────────────── */}
-      <section className={s.section} style={{ padding: "40px 0 80px" }}>
-        <div className={s.wrap} style={{ textAlign: "center" }} data-reveal>
-          <span className={s.label}>Coming later</span>
-
-          <h2
-            className={s.h2}
-            style={{ fontSize: "clamp(24px,3.4vw,38px)", margin: "14px auto 10px", maxWidth: 640 }}
-          >
-            For makers, later
-          </h2>
-
-          <p className={s.bodySm} style={{ maxWidth: 480, margin: "0 auto 22px" }}>
-            I&apos;m building a studio for people who want to make their own. Different
-            thing, different day — leave your email if that&apos;s you.
-          </p>
-
-          {waitlistState === "done" ? (
-            <p className={s.gradText} style={{ fontWeight: 700 }}>
-              You&apos;re on the list. I&apos;ll be in touch.
-            </p>
-          ) : (
-            <form
-              onSubmit={handleWaitlist}
-              style={{ display: "flex", gap: 10, maxWidth: 440, margin: "0 auto", flexWrap: "wrap" }}
-            >
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="Enter your email address"
-                className={s.input}
-                style={{ flex: 1, minWidth: 200 }}
-              />
-              <button type="submit" disabled={waitlistState === "sending"} className={s.btnViolet}>
-                {waitlistState === "sending" ? "Joining…" : "Join waitlist"}
-              </button>
-            </form>
-          )}
-
-          {waitlistState === "error" && (
-            <p className={s.formError} style={{ marginTop: 12 }}>{waitlistError}</p>
-          )}
-        </div>
-      </section>
+      {/* The "For makers, later" waitlist section stood here. Removed: it told
+          a visitor who was about to pay for hand-built work that the real
+          attention was going somewhere else. The waitlist endpoint and the
+          section's code remain in git history if the idea comes back. */}
 
       {/* ── Footer ─────────────────────────────────────────────────────────── */}
       <footer className={s.footer}>
