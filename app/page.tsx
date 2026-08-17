@@ -386,31 +386,14 @@ export default function MarketingHomePage() {
               </p>
             </div>
 
-            {/* A real screenshot of a real delivered site, in a phone, because
-                that is the form the client actually receives it in. Replaced the
-                proposal photo that used to sit here — that sold an event, and a
-                studio that builds websites should show a website. Swap the src
-                and the caption to feature a different piece. */}
-            <div style={{ position: "relative", transitionDelay: ".14s" }} data-reveal>
-              <div className={s.phone}>
-                <span className={s.phoneNotch} aria-hidden />
-                <div className={s.phoneScreen}>
-                  <Image
-                    src="/hero-jasmine.png"
-                    alt="Jasmine's birthday gift site, open on a phone"
-                    fill
-                    priority
-                    sizes="(max-width: 880px) 300px, 300px"
-                  />
-                </div>
-              </div>
-              <span className={s.phoneCaption}>
-                Jasmine&apos;s birthday gift ·{" "}
-                <a href="https://jasmine.aevaia.com" target="_blank" rel="noopener noreferrer">
-                  open it
-                </a>
-              </span>
-            </div>
+            {/* Hero image slot, currently empty by request.
+                It held Jasmine's opening screen in a phone frame. Worth noting
+                for whatever replaces it: that screen and Yvana's are nearly
+                identical — same greeting, same two buttons — so showing one in
+                the hero while the other sits in the gallery read as the same
+                page twice. A piece with a distinct look, or a later scene
+                rather than a landing screen, avoids that.
+                The phone frame itself is kept in marketing.module.css. */}
           </div>
 
           <div style={{ display: "flex", justifyContent: "center", marginTop: 44 }} data-reveal>
