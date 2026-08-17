@@ -369,12 +369,31 @@ export default function MarketingHomePage() {
               </p>
             </div>
 
-            {/* The hero image slot is deliberately empty for now. It held a
-                proposal photo, which sold an event rather than the product —
-                a studio that builds websites should show a website. Waiting on
-                a phone-framed screenshot of a real invite to fill it. Until
-                then the hero runs as a single column rather than a 2-up grid
-                with a hole in it. */}
+            {/* A real screenshot of a real delivered site, in a phone, because
+                that is the form the client actually receives it in. Replaced the
+                proposal photo that used to sit here — that sold an event, and a
+                studio that builds websites should show a website. Swap the src
+                and the caption to feature a different piece. */}
+            <div style={{ position: "relative", transitionDelay: ".14s" }} data-reveal>
+              <div className={s.phone}>
+                <span className={s.phoneNotch} aria-hidden />
+                <div className={s.phoneScreen}>
+                  <Image
+                    src="/hero-jasmine.png"
+                    alt="Jasmine's birthday gift site, open on a phone"
+                    fill
+                    priority
+                    sizes="(max-width: 880px) 300px, 300px"
+                  />
+                </div>
+              </div>
+              <span className={s.phoneCaption}>
+                Jasmine&apos;s birthday gift ·{" "}
+                <a href="https://jasmine.aevaia.com" target="_blank" rel="noopener noreferrer">
+                  open it
+                </a>
+              </span>
+            </div>
           </div>
 
           <div style={{ display: "flex", justifyContent: "center", marginTop: 44 }} data-reveal>

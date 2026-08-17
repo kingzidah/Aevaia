@@ -54,6 +54,17 @@ type OwnerNotice = {
 async function notifyOwner(n: OwnerNotice): Promise<void> {
   const to = process.env.OWNER_EMAIL ?? "helloaevaia@gmail.com";
 
+  // Sender is configurable because the domain and the code ship on different
+  // clocks. aevaia.com is not yet verified in Resend — DKIM passes but both SPF
+  // records on send.aevaia.com are missing — and until it is, anything sent as
+  // hello@aevaia.com is rejected outright.
+  //
+  // Setting MAIL_FROM="Aevaia <onboarding@resend.dev>" makes notifications work
+  // immediately: Resend's shared sender needs no DNS, and only delivers to the
+  // account owner's own address, which is exactly who this email is for. Drop
+  // the override once the domain verifies.
+  const from = process.env.MAIL_FROM ?? "Aevaia <hello@aevaia.com>";
+
   if (!process.env.RESEND_API_KEY) {
     console.error("[api/commission] RESEND_API_KEY not set — no notification sent for", n.code);
     return;
@@ -95,7 +106,7 @@ async function notifyOwner(n: OwnerNotice): Promise<void> {
     const { Resend } = await import("resend");
     const resend = new Resend(process.env.RESEND_API_KEY);
     const { error } = await resend.emails.send({
-      from: "Aevaia <hello@aevaia.com>",
+      from,
       to,
       // replyTo means hitting reply in the inbox goes straight to the client
       // rather than back to the sending address.

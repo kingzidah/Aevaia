@@ -371,15 +371,65 @@
   white-space: nowrap;
 }
 
-/* Single column while the image slot is empty. Restore
-   `grid-template-columns: 1.12fr .88fr` when the hero screenshot lands. */
 .heroGrid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: 1.12fr .88fr;
   gap: 44px;
   align-items: center;
-  max-width: 820px;
 }
+
+/* ── Phone frame ───────────────────────────────────────────────────────────
+   The hero shows a real screenshot of a real delivered site, inside a phone,
+   because that is the form the client actually receives it in. The frame is
+   drawn in CSS rather than composited into the image so the screenshot stays a
+   clean, replaceable asset — swapping in a different piece of work is one line
+   in the JSX. */
+.phone {
+  position: relative;
+  width: 100%;
+  max-width: 300px;
+  margin: 0 auto;
+  aspect-ratio: 390 / 844;
+  border-radius: 40px;
+  padding: 9px;
+  background: linear-gradient(160deg, #3a2f4d, #17111f 40%, #241a33);
+  box-shadow:
+    0 40px 90px -34px rgba(139, 63, 255, .75),
+    0 0 0 1px rgba(255, 255, 255, .07) inset;
+}
+.phoneScreen {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 32px;
+  overflow: hidden;
+  background: #000;
+}
+.phoneScreen img { object-fit: cover; object-position: top center; }
+
+/* The speaker notch. Small, and purely so the frame reads as a phone at a
+   glance rather than as a rounded rectangle. */
+.phoneNotch {
+  position: absolute;
+  top: 17px; left: 50%;
+  transform: translateX(-50%);
+  width: 58px; height: 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, .16);
+  z-index: 2;
+}
+
+/* Caption naming the piece, so nobody has to guess whether it is a mockup. */
+.phoneCaption {
+  display: block;
+  text-align: center;
+  margin-top: 16px;
+  font-family: var(--mk-mono), monospace;
+  font-size: 12px;
+  letter-spacing: .08em;
+  color: var(--faint);
+}
+.phoneCaption a { color: var(--violet-light); }
 .heroPhoto {
   position: relative;
   aspect-ratio: 4 / 5;

@@ -36,6 +36,11 @@ const cinzel = Cinzel({
 // Instagram or an ad — so it describes the service being sold today (hand-built
 // invites and event pages), not the self-serve builder still in development.
 export const metadata: Metadata = {
+  // Required for the Open Graph image below to resolve. Without it Next emits a
+  // relative og:image path, and WhatsApp, Instagram and iMessage all need an
+  // absolute URL — they would silently show no picture at all.
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "https://www.aevaia.com"),
+
   title: "Aevaia — Digital invites, gifts and event pages, made by hand",
   description:
     "Custom invite pages, digital gifts and full event experiences — RSVP, galleries, music, digital tickets and gate check-in. Designed and built for your day. Send one link.",
@@ -44,6 +49,19 @@ export const metadata: Metadata = {
     description:
       "Your day deserves more than a flyer in the group chat. Hand-built invite pages, digital gifts and event experiences.",
     type: "website",
+    url: "/",
+    siteName: "Aevaia",
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "Aevaia — hand-built invites, gifts and event pages" }],
+  },
+  // WhatsApp reads Open Graph, but iMessage and X prefer the Twitter card, and
+  // summary_large_image is what produces a full-width picture rather than a
+  // thumbnail beside the text.
+  twitter: {
+    card: "summary_large_image",
+    title: "Aevaia — Digital invites, gifts and event pages, made by hand",
+    description:
+      "Your day deserves more than a flyer in the group chat. Hand-built invite pages, digital gifts and event experiences.",
+    images: ["/og.png"],
   },
 };
 
