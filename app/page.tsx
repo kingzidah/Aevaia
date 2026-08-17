@@ -103,6 +103,23 @@ const WORK = [
       "A one-of-a-kind birthday experience — an envelope that blooms open, a candle you blow out through your phone's microphone, a rotating soundtrack, and easter eggs hidden for repeat visits.",
     tags: ["Bespoke", "Music", "Animation", "Easter eggs"],
   },
+  {
+    // The first one ever built, and the piece that started the studio.
+    //
+    // Deliberately has NO href. The real site carries five photographs of a
+    // named private person and a letter written to her; putting it behind a
+    // public link would publish both to anyone the URL reaches. The cover is a
+    // screenshot of the opening screen only — no photographs render on it.
+    // What is shown here is the craft, not her gift.
+    title: "Yvana",
+    kind: "Birthday gift",
+    href: null,
+    image: "/hero-yvana.png",
+    accent: "magenta" as const,
+    blurb:
+      "The first one, and the reason the studio exists. A “no” button that runs away from your thumb, a candle blown out through the microphone, a stack of photos that fans open when you tap it, a letter that types itself alongside a voice note, and a shell game hiding the real present.",
+    tags: ["Bespoke", "Mic candle", "Animation", "Voice note", "Game"],
+  },
 ];
 
 // ── The door ──────────────────────────────────────────────────────────────────
@@ -409,22 +426,29 @@ export default function MarketingHomePage() {
         <div className={s.wrap}>
           <div className={s.sectionHead} data-reveal>
             <span className={s.label}>01 / Selected work</span>
-            <span className={s.labelQuiet}>live right now</span>
+            <span className={s.labelQuiet}>two are live</span>
           </div>
 
-          {/* The handoff repeats the "built by hand" line here, but it already
-              sits in the hero on the live site. Kept once, in the hero. */}
+          {/* Was "Open them. They are live right now." Yvana's piece is private
+              and cannot be opened, so that line no longer told the truth. The
+              count is stated instead — it still invites the click, and it does
+              not promise something one of the three cards cannot deliver. */}
           <h2 className={s.h2} style={{ marginBottom: 34 }} data-reveal>
-            Open them. They are live right now.
+            Three built by hand. Two you can open right now.
           </h2>
 
           <div className={s.workGrid}>
-            {WORK.map((piece, i) => (
-              <a
+            {WORK.map((piece, i) => {
+              // A piece without an href is private work — it renders as a card
+              // rather than a link, so there is nothing to click through to.
+              const Card = piece.href ? "a" : "div";
+              const linkProps = piece.href
+                ? { href: piece.href, target: "_blank", rel: "noopener noreferrer" }
+                : {};
+              return (
+              <Card
                 key={piece.title}
-                href={piece.href}
-                target="_blank"
-                rel="noopener noreferrer"
+                {...linkProps}
                 className={s.workCard}
                 data-reveal
                 style={{ transitionDelay: `${i * 0.08}s` }}
@@ -460,14 +484,17 @@ export default function MarketingHomePage() {
                     style={{
                       fontWeight: 600,
                       fontSize: 14,
-                      color: piece.accent === "violet" ? "var(--violet-light)" : "var(--magenta-light)",
+                      color: piece.href
+                        ? (piece.accent === "violet" ? "var(--violet-light)" : "var(--magenta-light)")
+                        : "var(--faint)",
                     }}
                   >
-                    Open the live site →
+                    {piece.href ? "Open the live site →" : "Private — built for one person"}
                   </span>
                 </div>
-              </a>
-            ))}
+              </Card>
+              );
+            })}
           </div>
         </div>
       </section>
