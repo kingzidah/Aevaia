@@ -324,7 +324,10 @@ export default function MarketingHomePage() {
       {/* ── Nav ────────────────────────────────────────────────────────────── */}
       <div className={`${s.nav} ${navScrolled ? s.navScrolled : ""}`}>
         <div className={`${s.wrap} ${s.navInner}`}>
-          <span className={s.wordmark}>AEVAIA</span>
+          <span className={s.lockup}>
+            <Image src="/logo-mark.png" alt="" width={26} height={26} className={s.lockupMark} priority />
+            <span className={s.wordmark}>AEVAIA</span>
+          </span>
 
           <nav className={s.navLinks}>
             <a href="#work" className={s.navLink} onClick={e => onAnchor(e, "work")}>work</a>
@@ -781,7 +784,10 @@ export default function MarketingHomePage() {
       {/* ── Footer ─────────────────────────────────────────────────────────── */}
       <footer className={s.footer}>
         <div className={`${s.wrap} ${s.footerInner}`}>
-          <span className={s.wordmark} style={{ fontSize: 15 }}>AEVAIA</span>
+          <span className={s.lockup}>
+            <Image src="/logo-mark.png" alt="" width={22} height={22} className={s.lockupMarkSm} />
+            <span className={s.wordmark} style={{ fontSize: 15 }}>AEVAIA</span>
+          </span>
           <div className={s.footerLinks}>
             <a href="/contact" className={s.footerLink}>Contact</a>
             <a href="/impressum" className={s.footerLink}>Impressum</a>

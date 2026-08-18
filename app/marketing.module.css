@@ -869,3 +869,20 @@
   .btnWhatsapp::before { animation: none; opacity: 0; }
   .btn:hover, .workCard:hover, .doorCard:hover { transform: none; }
 }
+
+/* ── Logo lockup ───────────────────────────────────────────────────────────
+   The mark beside the wordmark. Kept as a lockup rather than replacing the
+   text: at nav size the "A" alone is not yet recognisable to anyone, and the
+   name is the thing a stranger needs to remember. */
+.lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+}
+.lockupMark {
+  width: 26px;
+  height: 26px;
+  flex: 0 0 auto;
+  object-fit: contain;
+}
+.lockupMarkSm { composes: lockupMark; width: 22px; height: 22px; }

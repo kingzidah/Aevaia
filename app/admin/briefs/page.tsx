@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState, useCallback } from "react";
 import { marketingFontVars } from "../../marketing-fonts";
 import s from "../../marketing.module.css";
@@ -118,7 +119,10 @@ export default function AdminBriefsPage() {
     <div className={`${s.site} ${marketingFontVars}`}>
       <div className={`${s.nav} ${s.navScrolled}`}>
         <div className={`${s.wrap} ${s.navInner}`}>
-          <a href="/" className={s.wordmarkLink}>AEVAIA</a>
+          <a href="/" className={`${s.wordmarkLink} ${s.lockup}`}>
+            <Image src="/logo-mark.png" alt="" width={24} height={24} className={s.lockupMark} />
+            AEVAIA
+          </a>
           <button type="button" onClick={() => void load()} className={s.navLink}
                   style={{ background: "none", border: "none", cursor: "pointer",
                            fontFamily: "var(--mk-mono), monospace", fontSize: 12, color: "var(--muted)" }}>

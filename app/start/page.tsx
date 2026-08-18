@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import { marketingFontVars } from "../marketing-fonts";
 import s from "../marketing.module.css";
@@ -93,7 +94,10 @@ export default function StartPage() {
           be one tap from the actual site, not stranded on a form. */}
       <div className={`${s.nav} ${s.navScrolled}`}>
         <div className={`${s.wrap} ${s.navInner}`}>
-          <a href="/" className={s.wordmarkLink}>AEVAIA</a>
+          <a href="/" className={`${s.wordmarkLink} ${s.lockup}`}>
+            <Image src="/logo-mark.png" alt="" width={24} height={24} className={s.lockupMark} />
+            AEVAIA
+          </a>
           <a href="/" className={s.navLink} style={{ fontFamily: "var(--mk-mono), monospace", fontSize: 12 }}>
             ← the studio
           </a>
