@@ -56,11 +56,36 @@ type SpreadsheetRow = {
   ticketCode: string;
 };
 
+// Resolves the webhook URL from the environment first, then from app_config in
+// Supabase.
+//
+// The database fallback exists so this works without a deployment environment
+// variable. Committing the URL to a file is not an option — the repository is
+// public, so that is no better than the browser JavaScript it came out of. The
+// row sits behind RLS with no policies, reachable only by the service role,
+// whose credentials are already present in production.
+async function resolveWebhookUrl(): Promise<string | null> {
+  const fromEnv = process.env.WEDDING_SPREADSHEET_WEBHOOK_URL;
+  if (fromEnv) return fromEnv;
+
+  const { data, error } = await supabaseAdmin
+    .from("app_config")
+    .select("value")
+    .eq("key", "wedding_spreadsheet_webhook_url")
+    .maybeSingle();
+
+  if (error) {
+    console.error("[api/wedding/rsvp] could not read webhook url from app_config:", error);
+    return null;
+  }
+  return data?.value ?? null;
+}
+
 async function forwardToSpreadsheet(row: SpreadsheetRow): Promise<void> {
-  const url = process.env.WEDDING_SPREADSHEET_WEBHOOK_URL;
+  const url = await resolveWebhookUrl();
   if (!url) {
     console.error(
-      "[api/wedding/rsvp] WEDDING_SPREADSHEET_WEBHOOK_URL not set — guest saved to Postgres but NOT forwarded to the spreadsheet:",
+      "[api/wedding/rsvp] no spreadsheet webhook configured — guest saved to Postgres but NOT forwarded:",
       row.ticketCode,
     );
     return;
