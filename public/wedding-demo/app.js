@@ -321,9 +321,10 @@ window.addToCalendar = function() {
 /* =========================================
    11. RSVP FORM
    ========================================= */
-// Replace with your webhook URL (Google Apps Script, Zapier, Make, Pipedream, etc.)
-// If using Google Apps Script, add mode: 'no-cors' to the fetch options below.
-const SPREADSHEET_WEBHOOK_URL = "https://hook.eu1.make.com/y38cnhn39qk3yjtva8a2vjmrwbch7qu5";
+// The spreadsheet webhook now runs server-side in /api/wedding/rsvp. Its URL
+// used to sit here in plain sight, which meant anyone who opened view-source
+// could post arbitrary guests into the couple's sheet forever. Do not put it
+// back in a file the browser can read.
 const rsvpChoiceBtns = document.getElementById('rsvp-choice-btns');
 const rsvpYesForm    = document.getElementById('rsvp-yes-form');
 const rsvpNoForm     = document.getElementById('rsvp-no-form');
@@ -521,6 +522,7 @@ document.getElementById('rsvp-submit-yes').addEventListener('click', async () =>
     // guest recorded in the spreadsheet with no scannable ticket (the gate can
     // fall back to the printed list) than lose the RSVP entirely.
     let ticketCode = '';
+    let rsvpSaved = false;
     try {
         const ticketRes = await fetch('/api/wedding/rsvp', {
             method: 'POST',
@@ -534,6 +536,7 @@ document.getElementById('rsvp-submit-yes').addEventListener('click', async () =>
         if (ticketRes.ok) {
             const ticketJson = await ticketRes.json();
             ticketCode = ticketJson.ticket_code || '';
+            rsvpSaved = true;
         } else {
             console.warn('[rsvp] ticket registration failed:', ticketRes.status);
         }
@@ -543,27 +546,20 @@ document.getElementById('rsvp-submit-yes').addEventListener('click', async () =>
 
     guestData.ticketCode = ticketCode;
 
-    // ── POST to spreadsheet webhook ───────────────────────────────────────────
-    try {
-        await fetch(SPREADSHEET_WEBHOOK_URL, {
-            method: 'POST',
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(guestData),
-        });
-
-        // If we reach here the request was delivered — treat as confirmed
-        btn.textContent = 'Confirmed! ✓';
+    // ── Confirm ──────────────────────────────────────────────────────────────
+    // Driven by the RSVP response, not by the spreadsheet. The guest is saved
+    // the moment /api/wedding/rsvp returns 200; the sheet is a copy that the
+    // server forwards afterwards. Tying confirmation to the sheet meant a Make
+    // outage told an already-saved guest that it had failed, and they submitted
+    // again -- producing duplicates in the list the gate relies on.
+    if (rsvpSaved) {
+        btn.textContent = 'Confirmed! \u2713';
         try { confetti({ particleCount: 100, spread: 90, origin: { y: 0.6 } }); } catch(e){}
         showTicket(ticketCode);
         setTimeout(() => window.nextScene('scene-finale'), 1500);
-
-    } catch (err) {
-        console.error('Webhook Error:', err);
-        // Only a real network failure (offline, DNS, etc.) reaches here
+    } else {
         btn.disabled    = false;
-        btn.textContent = 'Confirm Attendance 💍';
+        btn.textContent = 'Confirm Attendance \uD83D\uDC8D';
         submitErr.classList.remove('hidden');
         pulsePhone([80, 50, 80]);
     }

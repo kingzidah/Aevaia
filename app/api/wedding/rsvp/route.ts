@@ -38,6 +38,51 @@ function generateTicketCode(): string {
   return `OU-${body}`;
 }
 
+// Posts the guest to the couple's Make.com scenario, which writes their
+// spreadsheet. Never throws: by the time this runs the guest is already saved
+// in Postgres, and a spreadsheet hiccup must not turn a successful RSVP into an
+// error the guest sees and retries.
+//
+// The URL lives in WEDDING_SPREADSHEET_WEBHOOK_URL. If it is unset the call is
+// skipped and logged loudly — the RSVP still succeeds, because losing the row
+// from the sheet is recoverable and losing the guest is not.
+type SpreadsheetRow = {
+  name: string;
+  phone: string;
+  email: string;
+  group: string;
+  timestamp: string;
+  inviteLink: string;
+  ticketCode: string;
+};
+
+async function forwardToSpreadsheet(row: SpreadsheetRow): Promise<void> {
+  const url = process.env.WEDDING_SPREADSHEET_WEBHOOK_URL;
+  if (!url) {
+    console.error(
+      "[api/wedding/rsvp] WEDDING_SPREADSHEET_WEBHOOK_URL not set — guest saved to Postgres but NOT forwarded to the spreadsheet:",
+      row.ticketCode,
+    );
+    return;
+  }
+
+  try {
+    // Bounded: a hanging webhook must not hold the guest on a spinner at the
+    // moment they are trying to RSVP.
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(row),
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) {
+      console.error("[api/wedding/rsvp] spreadsheet webhook returned", res.status, "for", row.ticketCode);
+    }
+  } catch (err) {
+    console.error("[api/wedding/rsvp] spreadsheet webhook failed for", row.ticketCode, err);
+  }
+}
+
 export async function POST(request: Request) {
   // ── Rate limit ────────────────────────────────────────────────────────────
   // Higher than /api/rsvp's 10/hour: a household may legitimately RSVP several
@@ -94,6 +139,30 @@ export async function POST(request: Request) {
     ]);
 
     if (!error) {
+      // Forward to the couple's spreadsheet from HERE, not from the browser.
+      //
+      // This call used to live in public/wedding-demo/app.js with the webhook
+      // URL hardcoded beside it, which put the address of their spreadsheet in
+      // a file anyone could read from view-source. Anybody who copied it could
+      // post arbitrary guests into their sheet indefinitely, without ever
+      // visiting the invite. Server-side, the URL is never sent to a browser.
+      //
+      // Awaited, not fire-and-forget: a serverless function can be frozen the
+      // moment it returns, and a dangling promise would be killed mid-flight,
+      // losing the row from the couple's sheet.
+      await forwardToSpreadsheet({
+        name,
+        phone,
+        email: email || "",
+        // Shape below is byte-compatible with what the browser used to send.
+        // The Make scenario maps fields into columns BY NAME, so dropping a key
+        // or renaming one silently shifts their spreadsheet.
+        group: "",
+        timestamp: new Date().toISOString(),
+        inviteLink: "https://opeyemianduriel.aevaia.com",
+        ticketCode,
+      });
+
       return NextResponse.json({ success: true, ticket_code: ticketCode }, { status: 200 });
     }
 
