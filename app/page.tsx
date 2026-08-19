@@ -144,7 +144,13 @@ const WORK = [
   {
     title: "Opeyemi & Uriel",
     kind: "Wedding",
-    href: "https://opeyemianduriel.aevaia.com",
+    // Points at the DEMO, not the couple's live invite. Their wedding is
+    // 28 November 2026 and their guest list is being built right now — the real
+    // site's RSVP writes straight into it, so every portfolio visitor who
+    // clicked through could add a row. The demo is letter-for-letter identical
+    // and mints its ticket in the browser, writing nowhere.
+    href: "/demo/wedding/index.html",
+    demo: true,
     image: "/wedding-demo/assets/couple1.jpg",
     accent: "violet" as const,
     blurb:
@@ -509,7 +515,11 @@ export default function MarketingHomePage() {
                         : "var(--faint)",
                     }}
                   >
-                    {piece.href ? "Open the live site →" : "Private — built for one person"}
+                    {!piece.href
+                      ? "Private — built for one person"
+                      : "demo" in piece && piece.demo
+                        ? "Open the demo →"
+                        : "Open the live site →"}
                   </span>
                 </div>
               </Card>
