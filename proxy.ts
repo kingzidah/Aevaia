@@ -53,6 +53,13 @@ const isPublicRoute = createRouteMatcher([
                       // is pasted into DMs, where a 404 reads as a dead scam
                       // link rather than a misconfiguration.
   "/api/commission",  // the write behind it, same reason.
+  "/demo(.*)",        // the portfolio demos. These are marketing — the whole
+                      // point is that a stranger can open them without an
+                      // account — and they are what the home page links to.
+  "/robots.txt",      // crawler directives, and the sitemap pointer.
+  "/sitemap.xml",     // Both were 404 in production: neither extension was
+                      // excluded by the matcher below, so Clerk protected them
+                      // and no search engine could read either one.
 ]);
 
 // Routes that must remain reachable during maintenance so the admin can log in
@@ -62,6 +69,17 @@ const isStudioRoute = createRouteMatcher([
   "/studio(.*)",
   "/workspace(.*)",
   "/dashboard(.*)",
+]);
+
+// Pages that require a session. Everything else that is not on the public
+// allowlist falls through to Next.js, which renders the branded 404 for a path
+// that does not exist. See the enforcement block below for why.
+const isPrivatePage = createRouteMatcher([
+  "/admin(.*)",
+  "/dashboard(.*)",
+  "/settings(.*)",
+  "/studio(.*)",
+  "/workspace(.*)",
 ]);
 
 const isMaintenanceExempt = createRouteMatcher([
@@ -161,8 +179,27 @@ export const proxy = clerkMiddleware(async (auth, req) => {
   // In development, session processing still runs (so auth() works in route
   // handlers) but protect() enforcement is skipped — this lets the studio be
   // used without requiring a production sign-in flow locally.
+  //
+  // API routes stay DENY-BY-DEFAULT: anything not on the public allowlist above
+  // requires a session. Most of them write data, and a new route added without
+  // a moment's thought about auth should fail closed rather than open.
+  //
+  // Page routes are the exception, and only because deny-by-default was
+  // producing a worse outcome than it prevented: a mistyped URL — and this site
+  // is built to be pasted into WhatsApp, where links get mangled — was not
+  // reaching the 404 page. It was non-public, so protect() bounced the visitor
+  // to a Clerk sign-in screen titled "My Application", asking a stranger to log
+  // into a product that is not for sale. Unknown paths now fall through to the
+  // branded 404.
+  //
+  // The private pages are enumerated rather than inferred. The full page route
+  // table is: /, /contact, /impressum, /privacy, /terms, /start, /maintenance,
+  // /sign-in, /sign-up, /p/[id], /gift/[id], /wedding/scan — all public by
+  // design — plus the five below. Add a private page and add it here too.
   if (process.env.NODE_ENV !== "development" && !isPublicRoute(req)) {
-    await auth.protect();
+    if (req.nextUrl.pathname.startsWith("/api/") || isPrivatePage(req)) {
+      await auth.protect();
+    }
   }
 });
 
@@ -170,7 +207,7 @@ export const proxy = clerkMiddleware(async (auth, req) => {
 // can hydrate the session on all protected pages and API routes.
 export const config = {
   matcher: [
-    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    "/((?!_next|[^?]*\\.(?:html?|css|m?js(?!on)|jpe?g|webp|avif|png|gif|svg|ttf|woff2?|ico|csv|txt|xml|mp3|mp4|m4a|wav|docx?|xlsx?|zip|webmanifest)).*)",
     "/(api|trpc)(.*)",
   ],
 };
