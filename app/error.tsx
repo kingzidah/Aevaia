@@ -39,6 +39,11 @@ export default function Error({
 
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 30 }}>
             <button type="button" onClick={reset} className={s.btnViolet}>Try again</button>
+            {/* Deliberately a plain anchor, not next/link. This is the error
+                boundary: the router is one of the things that may have just
+                broken, and a hard navigation recovers where a client-side one
+                would fail silently and strand the visitor here. */}
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
             <a href="/" className={s.btnGhost}>Back to the studio</a>
             <a
               href="https://wa.me/4917675460351?text=Hi!%20I%20hit%20an%20error%20on%20aevaia.com."

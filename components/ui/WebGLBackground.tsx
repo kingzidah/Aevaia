@@ -17,6 +17,27 @@ export interface WebGLBackgroundProps {
 
 // ── Starfield — particles rushing toward camera, parallax on mouse ─────────
 
+// ── Deterministic particle placement ─────────────────────────────────────────
+//
+// These layouts used Math.random() inside useMemo. useMemo is a performance
+// hint, not a guarantee — React is free to throw a memo away and recompute it —
+// so every particle could silently jump to a new position mid-scene on a gift
+// page somebody is watching. It also stopped the React Compiler optimising
+// these components at all.
+//
+// A tiny seeded generator (mulberry32) makes the layout a pure function of its
+// inputs: the same count and spread always produce the same starfield, so a
+// recompute is invisible, while different scenes still look different.
+function mulberry32(seed: number): () => number {
+  let t = seed >>> 0;
+  return () => {
+    t = (t + 0x6d2b79f5) >>> 0;
+    let r = Math.imul(t ^ (t >>> 15), 1 | t);
+    r = (r + Math.imul(r ^ (r >>> 7), 61 | r)) ^ r;
+    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
 interface StarfieldProps { count: number; speed: number; color: string; }
 
 function StarfieldSystem({ count, speed, color }: StarfieldProps) {
@@ -25,11 +46,12 @@ function StarfieldSystem({ count, speed, color }: StarfieldProps) {
   const DEPTH  = 24;
 
   const positions = useMemo(() => {
+    const rand = mulberry32(count * 2654435761);
     const a = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
-      a[i * 3]     = (Math.random() - 0.5) * SPREAD;
-      a[i * 3 + 1] = (Math.random() - 0.5) * SPREAD;
-      a[i * 3 + 2] = (Math.random() - 0.5) * DEPTH;
+      a[i * 3]     = (rand() - 0.5) * SPREAD;
+      a[i * 3 + 1] = (rand() - 0.5) * SPREAD;
+      a[i * 3 + 2] = (rand() - 0.5) * DEPTH;
     }
     return a;
   }, [count, SPREAD, DEPTH]);
@@ -128,11 +150,12 @@ function ClassicParticles({ count, color, speed, size, spread }: ClassicProps) {
   const pts = useRef<THREE.Points>(null);
 
   const positions = useMemo(() => {
+    const rand = mulberry32(count * 40503 + Math.round(spread * 1000));
     const a = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
-      a[i * 3]     = (Math.random() - 0.5) * spread;
-      a[i * 3 + 1] = (Math.random() - 0.5) * spread;
-      a[i * 3 + 2] = (Math.random() - 0.5) * (spread * 0.12);
+      a[i * 3]     = (rand() - 0.5) * spread;
+      a[i * 3 + 1] = (rand() - 0.5) * spread;
+      a[i * 3 + 2] = (rand() - 0.5) * (spread * 0.12);
     }
     return a;
   }, [count, spread]);

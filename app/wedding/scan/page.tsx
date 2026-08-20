@@ -44,6 +44,14 @@ export default function GateScanner() {
   // same code firing on every animation frame while the QR stays in view.
   const busyRef = useRef(false);
   const lastCodeRef = useRef<string>("");
+  // The scan loop reads this rather than the `scanning` state: a running
+  // requestAnimationFrame callback holds the state value from the render that
+  // created it, so it can never see a later `false` and would spin forever.
+  const scanningRef = useRef(false);
+  // Always points at the CURRENT tick. The loop dispatches through this ref so
+  // that a new PIN (and therefore a new submitCode) takes effect immediately
+  // instead of the loop staying bound to the closure it started with.
+  const tickRef = useRef<() => void>(() => {});
 
   const [pin, setPin] = useState("");
   const [pinSaved, setPinSaved] = useState(false);
@@ -64,6 +72,19 @@ export default function GateScanner() {
       setPinSaved(true);
     }
   }, []);
+
+  const refreshCounts = useCallback(async () => {
+    try {
+      const res = await fetch("/api/wedding/stats", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pin }),
+      });
+      if (res.ok) setCounts(await res.json());
+    } catch {
+      // A failed count must never interrupt the gate — it is a nicety.
+    }
+  }, [pin]);
 
   const submitCode = useCallback(
     async (scanned: string) => {
@@ -109,21 +130,8 @@ export default function GateScanner() {
         }, 1200);
       }
     },
-    [pin],
+    [pin, refreshCounts],
   );
-
-  const refreshCounts = useCallback(async () => {
-    try {
-      const res = await fetch("/api/wedding/stats", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pin }),
-      });
-      if (res.ok) setCounts(await res.json());
-    } catch {
-      // A failed count must never interrupt the gate — it is a nicety.
-    }
-  }, [pin]);
 
   // Name lookup for the guest who arrives with nothing: no email, no SMS, no
   // screenshot. Debounced so it fires once the bouncer stops typing rather than
@@ -162,6 +170,11 @@ export default function GateScanner() {
   }, [pinSaved, refreshCounts]);
 
   const tick = useCallback(() => {
+    // Stop cleanly once scanning ends. Without this the loop keeps requesting
+    // frames after the camera is gone — including on the PIN screen, where the
+    // video element has unmounted — draining a phone battery at the door.
+    if (!scanningRef.current) return;
+
     const video = videoRef.current;
     const canvas = canvasRef.current;
 
@@ -186,8 +199,30 @@ export default function GateScanner() {
         }
       }
     }
-    rafRef.current = requestAnimationFrame(tick);
+    // Dispatch through the ref, not through `tick` itself. A self-referencing
+    // callback keeps the loop pinned to the closure it started with, so after a
+    // wrong PIN was corrected every scan still went out with the OLD pin and
+    // came back 401 — the scanner broke permanently until the page reloaded.
+    rafRef.current = requestAnimationFrame(() => tickRef.current());
   }, [submitCode]);
+
+  // Keep the loop pointing at the newest tick.
+  useEffect(() => {
+    tickRef.current = tick;
+  }, [tick]);
+
+  const stopCamera = useCallback(() => {
+    scanningRef.current = false;
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+    if (videoRef.current) videoRef.current.srcObject = null;
+    lastCodeRef.current = "";
+    setScanning(false);
+  }, []);
 
   const startCamera = useCallback(async () => {
     setCameraError("");
@@ -204,7 +239,8 @@ export default function GateScanner() {
         await videoRef.current.play();
       }
       setScanning(true);
-      rafRef.current = requestAnimationFrame(tick);
+      scanningRef.current = true;
+      rafRef.current = requestAnimationFrame(() => tickRef.current());
     } catch (err) {
       const name = err instanceof Error ? err.name : "";
       setCameraError(
@@ -215,11 +251,20 @@ export default function GateScanner() {
             : "Could not start the camera. Make sure this page is open over HTTPS.",
       );
     }
-  }, [tick]);
+  }, []);
+
+  // A wrong PIN sends the page back to the gate screen, which unmounts the
+  // video element but used to leave the camera running and its indicator light
+  // on — and left a scan loop alive that resubmitted with the rejected PIN.
+  // Releasing it here is both the privacy fix and the correctness fix.
+  useEffect(() => {
+    if (!pinSaved) stopCamera();
+  }, [pinSaved, stopCamera]);
 
   // Always release the camera when leaving the page.
   useEffect(() => {
     return () => {
+      scanningRef.current = false;
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       streamRef.current?.getTracks().forEach((t) => t.stop());
     };
@@ -306,7 +351,15 @@ export default function GateScanner() {
             Start camera
           </button>
         ) : (
-          <p style={S.hint}>Point at the QR code on the guest&apos;s ticket.</p>
+          <>
+            <p style={S.hint}>Point at the QR code on the guest&apos;s ticket.</p>
+            {/* There was no way to turn the camera off short of closing the
+                page. Door staff hand this phone around, and a camera nobody
+                can stop is both a battery problem and an awkward one. */}
+            <button onClick={stopCamera} style={S.secondaryBtn}>
+              Stop camera
+            </button>
+          </>
         )}
 
         {cameraError && <p style={S.errorText}>{cameraError}</p>}

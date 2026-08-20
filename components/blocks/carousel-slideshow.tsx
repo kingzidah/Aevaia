@@ -75,22 +75,22 @@ export default function CarouselSlideshow({ images, properties, onImagesChange }
   const [direction, setDirection] = useState(1);
 
   // Resolve image list — properties override, then block.images
-  const resolved = properties?.images?.filter(Boolean) ?? images?.filter(Boolean) ?? [];
-
-  // Show the uploader / empty state when no user images have been set
-  if (resolved.length === 0) {
-    return (
-      <div className="w-full py-1">
-        <EmptyState onImagesChange={onImagesChange} />
-      </div>
-    );
-  }
-
-  const slides = resolved;
+  const slides = properties?.images?.filter(Boolean) ?? images?.filter(Boolean) ?? [];
   const total  = slides.length;
 
+  // ── Every hook must run before the empty-state return ──────────────────────
+  //
+  // These two useCallbacks used to sit BELOW an early return for the empty
+  // case, so the component called two hooks when it had no images and four
+  // once it had some. React counts hooks per render and throws "Rendered more
+  // hooks than during the previous render", unmounting the whole tree — which
+  // is exactly what adding the first photo to a new carousel did, and what a
+  // published gift would do if its images resolved a render late.
+  //
+  // Hooks are unconditional now and the early return happens after them.
   const go = useCallback((delta: number, e?: React.MouseEvent) => {
     e?.stopPropagation();
+    if (total === 0) return;
     setDirection(delta);
     setIndex(i => (i + delta + total) % total);
   }, [total]);
@@ -101,6 +101,20 @@ export default function CarouselSlideshow({ images, properties, onImagesChange }
     setIndex(i);
   }, [index]);
 
+  // Show the uploader / empty state when no user images have been set
+  if (total === 0) {
+    return (
+      <div className="w-full py-1">
+        <EmptyState onImagesChange={onImagesChange} />
+      </div>
+    );
+  }
+
+  // Guard against a stale index after the image list shrinks — deleting slides
+  // in the editor used to leave index pointing past the end, which rendered an
+  // <img> with src={undefined} and a broken-image icon.
+  const safeIndex = Math.min(index, total - 1);
+
   return (
     <div className="w-full py-1">
       {/* ── Main slide frame ── */}
@@ -109,15 +123,15 @@ export default function CarouselSlideshow({ images, properties, onImagesChange }
         {/* Slides */}
         <AnimatePresence custom={direction} initial={false}>
           <motion.img
-            key={index}
+            key={safeIndex}
             custom={direction}
             variants={variants}
             initial="enter"
             animate="center"
             exit="exit"
             transition={TRANSITION}
-            src={slides[index]}
-            alt={`Slide ${index + 1} of ${total}`}
+            src={slides[safeIndex]}
+            alt={`Slide ${safeIndex + 1} of ${total}`}
             draggable={false}
             className="absolute inset-0 w-full h-full object-cover select-none"
           />
@@ -162,7 +176,7 @@ export default function CarouselSlideshow({ images, properties, onImagesChange }
                 aria-label={`Go to slide ${i + 1}`}
                 onClick={(e) => goTo(i, e)}
                 className={`rounded-full transition-all duration-300 ${
-                  i === index
+                  i === safeIndex
                     ? "w-5 h-1.5 bg-white shadow-[0_0_6px_rgba(255,255,255,0.6)]"
                     : "w-1.5 h-1.5 bg-white/45 hover:bg-white/70"
                 }`}
@@ -174,7 +188,7 @@ export default function CarouselSlideshow({ images, properties, onImagesChange }
         {/* Slide counter badge */}
         {total > 1 && (
           <div className="absolute top-3 right-3 z-20 px-2 py-0.5 rounded-full bg-black/35 backdrop-blur-sm border border-white/10 text-[10px] font-semibold text-white/80 tabular-nums pointer-events-none">
-            {index + 1} / {total}
+            {safeIndex + 1} / {total}
           </div>
         )}
       </div>
