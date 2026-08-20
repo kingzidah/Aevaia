@@ -20,6 +20,18 @@ import { rateLimit, getIp } from "@/lib/rate-limit";
 // Prefixes count, so "ade agbo" finds "Adetayo Agbomabiwon" — fewer keystrokes
 // with a queue building.
 
+// How many candidates the database may hand back for ranking. Two matching
+// name parts is a tight filter, so a real query returns a handful; this only
+// caps the pathological case where someone types two very common prefixes.
+const MAX_CANDIDATES = 200;
+
+interface GuestRow {
+  ticket_code: string;
+  name: string;
+  phone: string | null;
+  checked_in_at: string | null;
+}
+
 function pinMatches(supplied: string, expected: string): boolean {
   const a = Buffer.from(supplied);
   const b = Buffer.from(expected);
@@ -98,17 +110,30 @@ export async function POST(request: Request) {
     return NextResponse.json({ results: [], need: "Type at least two names" }, { status: 200 });
   }
 
-  const { data, error } = await supabaseAdmin
-    .from("wedding_guests")
-    .select("ticket_code, name, phone, checked_in_at")
-    .limit(2000);
+  // The filter runs in Postgres, not here.
+  //
+  // This used to select every guest with .limit(2000) and no ORDER BY, then
+  // score them in JavaScript. Under 2000 guests that works. Over it, Postgres
+  // returns an arbitrary subset, so a guest who IS on the list gets told they
+  // are not — at the door, with a queue behind them. The stated goal is 10,000
+  // guests per event, so this was a real failure waiting for a big wedding.
+  //
+  // wedding_guest_lookup() applies a deliberately looser version of the rule
+  // below (it ignores the one-to-one token pairing), which makes its output a
+  // strict superset of anything scoreMatch could rank at 2 or above. The exact
+  // ranking still happens here, so matching behaviour is unchanged and the
+  // subtle rules live in one language rather than two.
+  const { data, error } = await supabaseAdmin.rpc("wedding_guest_lookup", {
+    q_tokens: queryTokens,
+    max_rows: MAX_CANDIDATES,
+  });
 
   if (error) {
     console.error("[api/wedding/lookup] Supabase error:", error);
     return NextResponse.json({ error: "Lookup failed" }, { status: 500 });
   }
 
-  const results = (data ?? [])
+  const results = ((data ?? []) as GuestRow[])
     .map((g) => ({ guest: g, score: scoreMatch(queryTokens, tokenise(g.name)) }))
     .filter((r) => r.score >= 2)
     .sort((a, b) => b.score - a.score || a.guest.name.localeCompare(b.guest.name))
