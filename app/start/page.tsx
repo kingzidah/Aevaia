@@ -1,9 +1,12 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 import { marketingFontVars } from "../marketing-fonts";
 import s from "../marketing.module.css";
+import { Analytics } from "@vercel/analytics/react";
+import { trackConversion } from "@/lib/analytics";
 
 // ── /start — the commission brief ─────────────────────────────────────────────
 //
@@ -81,6 +84,8 @@ export default function StartPage() {
       }
       setCode(data.code);
       setState("done");
+      // The code itself is never sent — only the fact that a brief landed.
+      trackConversion("brief_submitted", { from: "start" });
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch {
       setError("No connection. Please check your signal and try again.");
@@ -94,13 +99,13 @@ export default function StartPage() {
           be one tap from the actual site, not stranded on a form. */}
       <div className={`${s.nav} ${s.navScrolled}`}>
         <div className={`${s.wrap} ${s.navInner}`}>
-          <a href="/" className={`${s.wordmarkLink} ${s.lockup}`}>
+          <Link href="/" className={`${s.wordmarkLink} ${s.lockup}`}>
             <Image src="/logo-mark.png" alt="" width={24} height={24} className={s.lockupMark} />
             AEVAIA
-          </a>
-          <a href="/" className={s.navLink} style={{ fontFamily: "var(--mk-mono), monospace", fontSize: 12 }}>
+          </Link>
+          <Link href="/" className={s.navLink} style={{ fontFamily: "var(--mk-mono), monospace", fontSize: 12 }}>
             ← the studio
-          </a>
+          </Link>
         </div>
       </div>
 
@@ -331,7 +336,7 @@ export default function StartPage() {
 
       <footer className={s.footer}>
         <div className={`${s.wrap} ${s.footerInner}`}>
-          <a href="/" className={s.wordmarkLink} style={{ fontSize: 15 }}>AEVAIA</a>
+          <Link href="/" className={s.wordmarkLink} style={{ fontSize: 15 }}>AEVAIA</Link>
           <div className={s.footerLinks}>
             <a href="/contact" className={s.footerLink}>Contact</a>
             <a href="/impressum" className={s.footerLink}>Impressum</a>
@@ -340,6 +345,7 @@ export default function StartPage() {
           </div>
         </div>
       </footer>
+      <Analytics />
     </div>
   );
 }

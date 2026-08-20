@@ -44,6 +44,7 @@
     "@types/dompurify": "^3.0.5",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.38.0",
+    "@vercel/analytics": "^2.0.1",
     "ai": "^6.0.184",
     "canvas-confetti": "^1.9.4",
     "framer-motion": "^12.38.0",

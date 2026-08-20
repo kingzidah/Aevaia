@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { marketingFontVars } from "./marketing-fonts";
 import s from "./marketing.module.css";
+import { Analytics } from "@vercel/analytics/react";
+import { trackConversion } from "@/lib/analytics";
 
 // ── Contact details ───────────────────────────────────────────────────────────
 // WHATSAPP_NUMBER is digits only, international format, no + or spaces —
@@ -363,6 +365,7 @@ export default function MarketingHomePage() {
         <a href="#enquiry" className={s.overlayLink} onClick={e => onAnchor(e, "enquiry")}>Start</a>
         <a
           href={whatsappHref}
+          onClick={() => trackConversion("whatsapp_click", { from: "menu" })}
           target="_blank"
           rel="noopener noreferrer"
           className={s.btnWhatsapp}
@@ -406,7 +409,13 @@ export default function MarketingHomePage() {
                 style={{ display: "flex", gap: 12, flexWrap: "wrap", transitionDelay: ".16s" }}
                 data-reveal
               >
-                <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className={s.btnWhatsapp}>
+                <a
+                  href={whatsappHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={s.btnWhatsapp}
+                  onClick={() => trackConversion("whatsapp_click", { from: "hero" })}
+                >
                   <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" aria-hidden="true">
                     <path d="M17.5 14.4c-.3-.2-1.7-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.7 1-.9 1.2-.2.2-.3.2-.6.1-1.7-.8-2.8-1.5-3.9-3.4-.3-.5.3-.5.8-1.5.1-.2 0-.4 0-.5s-.7-1.6-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5.1 4.5 1.9.8 2.6.9 3.5.8.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3z" />
                     <path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3.1.8.8-3-.2-.3A8.2 8.2 0 1 1 12 20.2z" />
@@ -702,14 +711,21 @@ export default function MarketingHomePage() {
               </p>
 
               <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 28 }} data-reveal>
-                <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className={s.btnWhatsapp}>
+                <a
+                  href={whatsappHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={s.btnWhatsapp}
+                  onClick={() => trackConversion("whatsapp_click", { from: "footer" })}
+                >
                   <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" aria-hidden="true">
                     <path d="M17.5 14.4c-.3-.2-1.7-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.7 1-.9 1.2-.2.2-.3.2-.6.1-1.7-.8-2.8-1.5-3.9-3.4-.3-.5.3-.5.8-1.5.1-.2 0-.4 0-.5s-.7-1.6-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5.1 4.5 1.9.8 2.6.9 3.5.8.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3z" />
                     <path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3.1.8.8-3-.2-.3A8.2 8.2 0 1 1 12 20.2z" />
                   </svg>
                   WhatsApp
                 </a>
-                <a href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("Aevaia — build request")}`} className={s.btnGhost}>
+                <a href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("Aevaia — build request")}`} className={s.btnGhost}
+                  onClick={() => trackConversion("email_click", { from: "footer" })}>
                   Email
                 </a>
               </div>
@@ -807,6 +823,11 @@ export default function MarketingHomePage() {
           </div>
         </div>
       </footer>
+
+      {/* Mounted per-route rather than in the root layout: the layout is shared
+          with the studio and the client gift pages, and a visitor's private
+          invite is not something to send page views about. */}
+      <Analytics />
     </div>
   );
 }
