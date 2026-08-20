@@ -16,6 +16,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getOrchestratorService } from '@/services/ai/orchestrator';
 import { slog } from '@/lib/logger';
 import type { OrchestrationRequest, ProjectContext } from '@/types/orchestrator';
+import { studioDisabledResponse } from "@/lib/studio-gate";
 
 export const runtime    = 'nodejs';
 export const maxDuration = 300;
@@ -46,6 +47,11 @@ function isValidContext(c: unknown): c is ProjectContext {
 // ── Handler ───────────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
+  // Studio is not launched. These routes spend real money or move money and
+  // were reachable without authentication — see lib/studio-gate.ts.
+  const disabled = studioDisabledResponse();
+  if (disabled) return disabled;
+
   // Unique ID for log correlation — surfaced in X-Request-Id so clients can
   // include it in bug reports without us exposing internal stack data.
   const requestId = crypto.randomUUID();

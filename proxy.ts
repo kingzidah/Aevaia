@@ -57,6 +57,13 @@ const isPublicRoute = createRouteMatcher([
 
 // Routes that must remain reachable during maintenance so the admin can log in
 // and so external services (Stripe, Clerk) can still call our webhooks.
+// The unlaunched Studio surfaces. Kept in one place so nothing is missed.
+const isStudioRoute = createRouteMatcher([
+  "/studio(.*)",
+  "/workspace(.*)",
+  "/dashboard(.*)",
+]);
+
 const isMaintenanceExempt = createRouteMatcher([
   "/maintenance",     // the page itself — must never self-redirect
   "/sign-in(.*)",     // admin must be able to authenticate
@@ -130,6 +137,23 @@ export const proxy = clerkMiddleware(async (auth, req) => {
 
     if (!isOwner) {
       return NextResponse.redirect(new URL("/maintenance", req.url));
+    }
+  }
+
+  // ── Studio lockdown ─────────────────────────────────────────────────────────
+  // The self-serve Studio is unfinished and unlaunched. Nothing on the marketing
+  // site links to it, but sign-up is open, so anyone who created an account
+  // could walk straight into it by typing the path. Owner only until it ships.
+  //
+  // Redirects rather than 404s so the owner is not confused by a dead route, and
+  // so a signed-out visitor lands somewhere useful instead of nowhere.
+  if (isStudioRoute(req)) {
+    const { userId } = await auth();
+    const ownerId = process.env.ADMIN_USER_ID ?? process.env.MAINTENANCE_BYPASS_USER_ID ?? "";
+    // Fails CLOSED: with no owner configured nobody gets in, rather than
+    // defaulting to "any signed-in user".
+    if (!ownerId || !userId || userId !== ownerId) {
+      return NextResponse.redirect(new URL("/", req.url));
     }
   }
 

@@ -52,3 +52,7 @@ next-env.d.ts
 /.clerk/
 desktop.ini
 .gstack/
+
+# Private planning + reconnaissance notes. The repo is PUBLIC; this folder
+# lists the app's weaknesses and must never be pushed.
+docs/

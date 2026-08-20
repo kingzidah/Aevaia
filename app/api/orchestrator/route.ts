@@ -3,6 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import OpenAI from "openai";
 import { orchestratorSchema, firstZodError } from "@/lib/validation";
 import { rateLimit } from "@/lib/rate-limit";
+import { studioDisabledResponse } from "@/lib/studio-gate";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -85,6 +86,11 @@ function validate(raw: unknown): OrchestratorPayload {
 // ── POST /api/orchestrator ────────────────────────────────────────────────────
 
 export async function POST(request: Request) {
+  // Studio is not launched. These routes spend real money or move money and
+  // were reachable without authentication — see lib/studio-gate.ts.
+  const disabled = studioDisabledResponse();
+  if (disabled) return disabled;
+
   // ── Auth ────────────────────────────────────────────────────────────────────
   const { userId } = await auth();
   if (!userId) {
