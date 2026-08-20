@@ -1,12 +1,18 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
+import { studioDisabledResponse } from "@/lib/studio-gate";
 
 // GET /api/user/credits
 // Returns the authenticated user's Aevaia AI generation credit balance.
 // The User row is created lazily on first image generation via generateCanvasImage,
 // so users who have never generated an image will get the default of 1 000.
 export async function GET() {
+  // Studio is not launched. These routes spend real money or move money and
+  // were reachable without authentication — see lib/studio-gate.ts.
+  const disabled = studioDisabledResponse();
+  if (disabled) return disabled;
+
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

@@ -18,7 +18,8 @@ const CONTACT_EMAIL = "helloaevaia@gmail.com";
 const WHATSAPP_PREFILL = "Hi! I'd like an Aevaia site built for my event.";
 
 // ── Pricing ───────────────────────────────────────────────────────────────────
-// PLACEHOLDER NUMBERS — change these to your real prices before advertising.
+// Confirmed prices. Events 249/749/from 1,200 · Gifts 79/149/from 399 ·
+// +40 rush on gifts · 29/year renewal, stated once under the section.
 const CURRENCY = "€";
 
 // Stated ONCE, as small print under the whole pricing section. It used to sit

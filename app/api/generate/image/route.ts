@@ -2,11 +2,17 @@ import { NextResponse } from "next/server";
 import Replicate from "replicate";
 import { imageGenerateSchema, firstZodError } from "@/lib/validation";
 import { rateLimit, getIp } from "@/lib/rate-limit";
+import { studioDisabledResponse } from "@/lib/studio-gate";
 
 // POST /api/generate/image
 // Body: { prompt: string; theme?: string }
 // Returns: { imageUrl: string }
 export async function POST(req: Request) {
+  // Studio is not launched. These routes spend real money or move money and
+  // were reachable without authentication — see lib/studio-gate.ts.
+  const disabled = studioDisabledResponse();
+  if (disabled) return disabled;
+
   // ── Guard: require API key before doing anything else ────────────────────
   // Replicate is expensive; fail fast if not configured rather than silently
   // constructing the client with an empty token.

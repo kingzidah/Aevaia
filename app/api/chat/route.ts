@@ -2,6 +2,7 @@ import { createOpenAI } from "@ai-sdk/openai";
 import { streamText } from "ai";
 import { chatSchema } from "@/lib/validation";
 import { rateLimit, getIp } from "@/lib/rate-limit";
+import { studioDisabledResponse } from "@/lib/studio-gate";
 
 // ── Provider ──────────────────────────────────────────────────────────────────
 
@@ -95,6 +96,11 @@ const INJECTION_GUARD =
 // ── Route handler ─────────────────────────────────────────────────────────────
 
 export async function POST(request: Request) {
+  // Studio is not launched. These routes spend real money or move money and
+  // were reachable without authentication — see lib/studio-gate.ts.
+  const disabled = studioDisabledResponse();
+  if (disabled) return disabled;
+
   // ── Rate limit: 30 streaming requests per IP per minute ──────────────────
   // Streaming connections are more expensive to hold open than standard JSON
   // responses, so the limit is slightly higher than the non-streaming AI route

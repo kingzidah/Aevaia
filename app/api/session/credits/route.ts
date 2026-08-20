@@ -1,9 +1,15 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { studioDisabledResponse } from "@/lib/studio-gate";
 
 // GET /api/session/credits?id=<sessionId>
 // Returns the remaining aiCredits for a UsageTracking session row.
 export async function GET(request: Request) {
+  // Studio is not launched. These routes spend real money or move money and
+  // were reachable without authentication — see lib/studio-gate.ts.
+  const disabled = studioDisabledResponse();
+  if (disabled) return disabled;
+
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id")?.trim();
 

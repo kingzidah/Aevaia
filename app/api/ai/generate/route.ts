@@ -4,6 +4,7 @@ import { generateText } from "ai";
 import { prisma } from "@/lib/prisma";
 import { aiGenerateSchema } from "@/lib/validation";
 import { rateLimit, getIp } from "@/lib/rate-limit";
+import { studioDisabledResponse } from "@/lib/studio-gate";
 
 function getOpenRouter() {
   if (!process.env.OPENROUTER_API_KEY) return null;
@@ -60,6 +61,11 @@ type AllowedModel = typeof ALLOWED_MODELS[number];
 // Body: { prompt: string; tone: string; blockType?: string; sessionId?: string; projectId?: string }
 // Returns: { text: string }  |  403 { error: 'BATTERY_DEPLETED' }
 export async function POST(request: Request) {
+  // Studio is not launched. These routes spend real money or move money and
+  // were reachable without authentication — see lib/studio-gate.ts.
+  const disabled = studioDisabledResponse();
+  if (disabled) return disabled;
+
   // ── Rate limit: 20 AI generations per IP per minute ──────────────────────
   // Protects OpenRouter spend.  Authenticated sessions are also bound by the
   // credit system, but IP limiting adds a second independent backstop.
