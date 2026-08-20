@@ -64,10 +64,53 @@ type SpreadsheetRow = {
 // public, so that is no better than the browser JavaScript it came out of. The
 // row sits behind RLS with no policies, reachable only by the service role,
 // whose credentials are already present in production.
+// Hosts this route is permitted to POST guest data to.
+//
+// Moving the URL into the database turned a compile-time constant into runtime
+// data, and this function feeds it straight to fetch(). That is a trust
+// boundary: anything able to change that row could redirect guest names, phone
+// numbers and email addresses to a server of its choosing, or aim the request
+// at an internal address the server can reach but the internet cannot.
+//
+// Writing to app_config already requires the service role, so an attacker would
+// need credentials that own the database anyway. The allowlist is defence in
+// depth — it means a bad value in that row fails closed instead of exfiltrating
+// a guest list. Add a host here deliberately, never by pattern.
+const WEBHOOK_ALLOWED_HOSTS = new Set(["hook.eu1.make.com", "hook.us1.make.com"]);
+
+function isPermittedWebhook(raw: string): boolean {
+  let url: URL;
+  try {
+    url = new URL(raw);
+  } catch {
+    return false;
+  }
+  // https only: this carries personal data, and http would send it in the clear.
+  if (url.protocol !== "https:") return false;
+  // Exact host match. A suffix check like endsWith(".make.com") would accept
+  // "hook.eu1.make.com.attacker.example".
+  return WEBHOOK_ALLOWED_HOSTS.has(url.hostname);
+}
+
 async function resolveWebhookUrl(): Promise<string | null> {
   const fromEnv = process.env.WEDDING_SPREADSHEET_WEBHOOK_URL;
-  if (fromEnv) return fromEnv;
+  const candidate = fromEnv ?? (await readWebhookFromConfig());
+  if (!candidate) return null;
 
+  // Validated regardless of source. An environment variable is not inherently
+  // more trustworthy than a database row, and a typo there would be just as
+  // capable of posting a guest list somewhere unintended.
+  if (!isPermittedWebhook(candidate)) {
+    console.error(
+      "[api/wedding/rsvp] configured webhook host is not allowlisted — refusing to send guest data. Host:",
+      (() => { try { return new URL(candidate).hostname; } catch { return "unparseable"; } })(),
+    );
+    return null;
+  }
+  return candidate;
+}
+
+async function readWebhookFromConfig(): Promise<string | null> {
   const { data, error } = await supabaseAdmin
     .from("app_config")
     .select("value")
