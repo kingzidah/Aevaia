@@ -231,5 +231,31 @@
     })();
     </script>
     <script type="module" src="/demo/wedding/app.js"></script>
+
+    <!-- Studio attribution. Added by Aevaia; safe to remove if a client asks.
+         Fixed and deliberately low z-index (30) so it sits under every overlay,
+         modal and scene on this page — the highest z-index in use here is over
+         10000, so this can never cover the gift itself.
+
+         The anchor is padded to a 44px-tall hit area while the visible pill
+         stays small: this is somebody's invitation, not a billboard, but a
+         badge too small to tap is no use as marketing either.
+
+         Inline styles only. The CSP allows inline style but no extra network
+         requests, and a badge must never be the thing that fails to load. -->
+    <a href="https://www.aevaia.com/?ref=demo-wedding" target="_blank" rel="noopener"
+       aria-label="Made by Aevaia — open the studio"
+       style="position:fixed;right:4px;bottom:4px;z-index:30;
+              display:inline-flex;align-items:center;justify-content:center;
+              min-height:44px;min-width:44px;padding:8px;text-decoration:none;">
+      <span style="display:inline-flex;align-items:center;gap:6px;
+                   padding:7px 11px;border-radius:999px;
+                   font:500 11px/1 system-ui,-apple-system,Segoe UI,sans-serif;
+                   letter-spacing:.06em;text-transform:uppercase;
+                   color:rgba(255,255,255,.82);background:rgba(18,10,28,.55);
+                   border:1px solid rgba(255,255,255,.14);
+                   -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+                   opacity:.62;transition:opacity .2s ease;">made by Aevaia</span>
+    </a>
 </body>
 </html>

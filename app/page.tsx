@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { marketingFontVars } from "./marketing-fonts";
 import s from "./marketing.module.css";
+import { WORK } from "./work-data";
 import { Analytics } from "@vercel/analytics/react";
 import { trackConversion } from "@/lib/analytics";
 
@@ -141,51 +142,6 @@ const GIFT_TIERS: Tier[] = [
 // feature. Offered on gifts only: an event has a fixed date weeks out, so rush
 // means nothing there.
 const RUSH_NOTE = "Need it sooner? +€40 and it's delivered within 48 hours.";
-
-// ── The work ──────────────────────────────────────────────────────────────────
-const WORK = [
-  {
-    title: "Opeyemi & Uriel",
-    kind: "Wedding",
-    // Points at the DEMO, not the couple's live invite. Their wedding is
-    // 28 November 2026 and their guest list is being built right now — the real
-    // site's RSVP writes straight into it, so every portfolio visitor who
-    // clicked through could add a row. The demo is letter-for-letter identical
-    // and mints its ticket in the browser, writing nowhere.
-    href: "/demo/wedding/index.html",
-    demo: true,
-    image: "/wedding-demo/assets/couple1.jpg",
-    accent: "violet" as const,
-    blurb:
-      "A full wedding invite with RSVP, a swipeable gallery, digital tickets, and a QR gate scanner the door staff used on the night to check guests in live.",
-    tags: ["Invite", "RSVP", "Tickets & QR", "Gate scanner", "Live count"],
-  },
-  {
-    title: "Jasmine",
-    kind: "Birthday gift",
-    href: "https://jasmine.aevaia.com",
-    image: "/jasmine-og.png",
-    accent: "magenta" as const,
-    blurb:
-      "A one-of-a-kind birthday experience — an envelope that blooms open, a candle you blow out through your phone's microphone, a rotating soundtrack, and easter eggs hidden for repeat visits.",
-    tags: ["Bespoke", "Music", "Animation", "Easter eggs"],
-  },
-  {
-    // The first one ever built, and the piece that started the studio.
-    //
-    // Published at the owner's explicit instruction. Note what that means: the
-    // site carries five photographs of a named private person and a letter
-    // written to her, and it is now reachable by anyone with the link.
-    title: "Yvana",
-    kind: "Birthday gift",
-    href: "https://yvana.aevaia.com",
-    image: "/hero-yvana.png",
-    accent: "magenta" as const,
-    blurb:
-      "The first one, and the reason the studio exists. A “no” button that runs away from your thumb, a candle blown out through the microphone, a stack of photos that fans open when you tap it, a letter that types itself alongside a voice note, and a shell game hiding the real present.",
-    tags: ["Bespoke", "Mic candle", "Animation", "Voice note", "Game"],
-  },
-];
 
 // ── The door ──────────────────────────────────────────────────────────────────
 const DOOR_FEATURES = [
@@ -483,7 +439,7 @@ export default function MarketingHomePage() {
                 : {};
               return (
               <Card
-                key={piece.title}
+                key={piece.slug}
                 {...linkProps}
                 className={s.workCard}
                 data-reveal
@@ -535,6 +491,12 @@ export default function MarketingHomePage() {
               </Card>
               );
             })}
+          </div>
+
+          {/* The gallery lives at /work now, so it can grow past what fits in
+              one screen here. */}
+          <div style={{ marginTop: 26 }} data-reveal>
+            <a href="/work" className={s.btnGhost}>See all the work →</a>
           </div>
         </div>
       </section>
@@ -816,6 +778,7 @@ export default function MarketingHomePage() {
             <span className={s.wordmark} style={{ fontSize: 15 }}>AEVAIA</span>
           </span>
           <div className={s.footerLinks}>
+            <a href="/work" className={s.footerLink}>Work</a>
             <a href="/contact" className={s.footerLink}>Contact</a>
             <a href="/impressum" className={s.footerLink}>Impressum</a>
             <a href="/privacy" className={s.footerLink}>Privacy</a>
