@@ -1,9 +1,7 @@
-"use client";
+import type { Metadata } from "next";
+import { LegalPage, LegalSections, Todo, L, type LegalSection } from "../legal-shell";
 
-import { marketingFontVars } from "../marketing-fonts";
-import s from "../marketing.module.css";
-
-// ── Terms of Service ─────────────────────────────────────────────────────────
+// ── Terms of Service ──────────────────────────────────────────────────
 //
 // Rewritten for the business that actually exists. The previous version
 // described the self-serve Studio — tier upgrades, AI credits, account
@@ -11,26 +9,17 @@ import s from "../marketing.module.css";
 // on the home page. A terms page describing a different product is worse than
 // none: it is the document a dispute gets argued from.
 //
-// Restyled to the marketing design system too. It previously used the old
-// zinc/purple look, so a visitor clicking "Terms" appeared to leave the site.
-//
-// TODO-OPERATOR markers below are the points that need a real decision rather
-// than drafting. They are visible on the page on purpose.
+// TODO-OPERATOR markers are points that need a decision rather than drafting.
+// They are visible on the page on purpose.
+
+export const metadata: Metadata = {
+  title: "Terms — Aevaia",
+  description: "Terms for commissioned work: delivery, revisions, hosting and renewal.",
+};
 
 const UPDATED = "20 August 2026";
 
-function Todo({ children }: { children: React.ReactNode }) {
-  return (
-    <span style={{ color: "var(--magenta-light)" }}>
-      <strong style={{ fontFamily: "var(--mk-mono), monospace", fontSize: 12, letterSpacing: ".08em" }}>
-        TODO-OPERATOR
-      </strong>{" "}
-      — {children}
-    </span>
-  );
-}
-
-const SECTIONS: { n: string; title: string; body: React.ReactNode }[] = [
+const SECTIONS: LegalSection[] = [
   {
     n: "01",
     title: "What these terms cover",
@@ -187,58 +176,18 @@ const SECTIONS: { n: string; title: string; body: React.ReactNode }[] = [
 
 export default function TermsPage() {
   return (
-    <div className={`${s.site} ${marketingFontVars}`}>
-      <div className={`${s.nav} ${s.navScrolled}`}>
-        <div className={`${s.wrap} ${s.navInner}`}>
-          <a href="/" className={`${s.wordmarkLink} ${s.lockup}`}>AEVAIA</a>
-          <a href="/" className={s.navLink} style={{ fontFamily: "var(--mk-mono), monospace", fontSize: 12 }}>
-            ← the studio
-          </a>
-        </div>
-      </div>
-
-      <section className={s.section} style={{ paddingTop: 110 }}>
-        <div className={`${s.wrap} ${s.startNarrow}`}>
-          <span className={s.label}>Terms</span>
-          <h1 className={s.h1} style={{ fontSize: "clamp(32px,5.5vw,52px)", marginTop: 14 }}>
-            Terms of service
-          </h1>
-          <p className={s.bodySm} style={{ color: "var(--faint)", marginBottom: 8 }}>
-            Last updated {UPDATED}
-          </p>
-          <p className={s.body} style={{ maxWidth: 560 }}>
-            Plain terms for commissioned work. If anything here is unclear, ask
-            before you agree a price rather than after.
-          </p>
-
-          <div style={{ marginTop: 40 }}>
-            {SECTIONS.map(sec => (
-              <div key={sec.n} className={s.step} style={{ marginBottom: 26 }}>
-                <div className={`${s.stepNum} ${s.gradText}`} style={{ fontSize: 26 }}>{sec.n}</div>
-                <div className={s.stepTitle}>{sec.title}</div>
-                <div className={s.bodySm} style={{ maxWidth: 620 }}>{sec.body}</div>
-              </div>
-            ))}
-          </div>
-
-          <p className={s.bodySm} style={{ marginTop: 34, color: "var(--faint)" }}>
-            Questions? <a href="/contact" style={{ color: "var(--violet-light)" }}>Get in touch</a>. Operator
-            details are on the <a href="/impressum" style={{ color: "var(--violet-light)" }}>Impressum</a>.
-          </p>
-        </div>
-      </section>
-
-      <footer className={s.footer}>
-        <div className={`${s.wrap} ${s.footerInner}`}>
-          <a href="/" className={`${s.wordmarkLink} ${s.lockup}`} style={{ fontSize: 15 }}>AEVAIA</a>
-          <div className={s.footerLinks}>
-            <a href="/contact" className={s.footerLink}>Contact</a>
-            <a href="/impressum" className={s.footerLink}>Impressum</a>
-            <a href="/privacy" className={s.footerLink}>Privacy</a>
-            <a href="/terms" className={s.footerLink}>Terms</a>
-          </div>
-        </div>
-      </footer>
-    </div>
+    <LegalPage
+      eyebrow="Terms"
+      title="Terms of service"
+      updated={UPDATED}
+      intro={
+        <>
+          Plain terms for commissioned work. If anything here is unclear,{" "}
+          <L href="/contact">ask</L> before you agree a price rather than after.
+        </>
+      }
+    >
+      <LegalSections sections={SECTIONS} />
+    </LegalPage>
   );
 }
