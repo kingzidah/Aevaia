@@ -1,0 +1,39 @@
+Image provenance for public/yvana/assets/
+=========================================
+
+p1.jpg - p5.jpg are STOCK PHOTOGRAPHS under the Unsplash License.
+They are NOT photographs of the person this site was originally made for.
+
+Why they are here
+-----------------
+This piece began as a private birthday gift built for one person. It is now
+published as a portfolio demo, and the owner asked that her own photographs not
+be published with it. These stand in for them so the interactions — the photo
+stack that fans open, the modal, the gallery — can be shown without publishing
+anybody's private pictures.
+
+Licence
+-------
+Unsplash License (https://unsplash.com/license): free to use for commercial and
+non-commercial purposes, no permission needed, no attribution required.
+Attribution is recorded here anyway, because knowing where a file came from is
+what makes it safe to keep using.
+
+Source files, fetched 21 August 2026 from images.unsplash.com:
+
+  p1.jpg  photo-1582298538104-fe2e74c27f59
+  p2.jpg  photo-1530047139082-5435ca3c4614
+  p3.jpg  photo-1539635278303-d4002c07eae3
+  p4.jpg  photo-1625283518288-00362afc8663
+  p5.jpg  photo-1511988617509-a57c8a288659
+
+All served at w=1200&h=1800&fit=crop&q=80.
+
+If you add more images here
+---------------------------
+Add the source and licence to this file at the same time. An image with no
+recorded provenance is one nobody can later prove the right to use, and on a
+page that is sold as commercial work that matters.
+
+NOTE: "(Verse 1) (2).mp3" is not covered by this file. It came with the original
+gift and its rights have not been reviewed for public distribution.
